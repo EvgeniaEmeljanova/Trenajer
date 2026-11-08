@@ -7,7 +7,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
-// ТИПЫ СЦЕНАРИЕВ
 type ScenarioType = 'OKS1' | 'OKS2' | 'ANAPHYLAXIS' | 'ZHKK' | 'BOS' | 'TELA' | 'PNEUMOTHORAX' | 'HYPOGLYCEMIA' | 'HYPERGLYCEMIA';
 
 const SCENARIO_TITLES = {
@@ -49,14 +48,12 @@ const ALL_ACTIONS = [
   { id: 'aed', label: 'Работа с АНД' },
 ];
 
-// Порядок действий для проверки
 const SCENARIO_DATA: Record<ScenarioType, { order: string[] }> = {
   OKS1: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call', 'aed'] },
   ANAPHYLAXIS: { order: ['consciousness', 'gloves', 'airway', 'adrenaline', 'oxygen', 'call'] },
   OKS2: { order: [] }, ZHKK: { order: [] }, BOS: { order: [] }, TELA: { order: [] }, PNEUMOTHORAX: { order: [] }, HYPOGLYCEMIA: { order: [] }, HYPERGLYCEMIA: { order: [] },
 };
 
-// Координаты для кликов
 const HOTSPOTS = [
   { id: 'patient', x: 42, y: 25, w: 16, h: 30, label: 'Пациент' },
   { id: 'crash_cart', x: 28, y: 25, w: 12, h: 20, label: 'Укладка' },
@@ -66,6 +63,7 @@ const HOTSPOTS = [
 ];
 
 export default function Home() {
+  // Инициализируем состояние НУЛЕМ, чтобы не было выбора
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [actions, setActions] = useState<Record<string, boolean>>({});
@@ -76,7 +74,7 @@ export default function Home() {
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
 
-  // Состояния челленджей
+  // Челленджи
   const [challenge, setChallenge] = useState<string | null>(null);
   const [capRefillTimer, setCapRefillTimer] = useState(0);
   const [capRefillSuccess, setCapRefillSuccess] = useState(false);
@@ -106,7 +104,7 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
 
-  // Выбор случайного сценария и запуск брифинга
+  // ФУНКЦИЯ ЗАПУСКА (Выбирает случайный сценарий и начинает игру)
   const startExam = () => {
     const keys = Object.keys(SCENARIO_TITLES) as ScenarioType[];
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
@@ -167,7 +165,7 @@ export default function Home() {
     }
   };
 
-  // 1. ЭКРАН БРИФИНГА (Начальный экран)
+  // 1. ЭКРАН БРИФИНГА (Показывается сразу при загрузке)
   if (!gameStarted) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
@@ -229,7 +227,6 @@ export default function Home() {
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
 
-      {/* Челленджи */}
       {challenge === 'pulse' && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm">
