@@ -2,11 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+<<<<<<< HEAD
 import Helper from './Helper';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
+=======
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+
+>>>>>>> bfbf9310a1f024e62c76795ab6c15863997b3f78
 const ROOM_OBJECTS = [
   { id: 'patient', x: 43, y: 40, label: 'Пациент (Осмотр)' },
   { id: 'crash_cart', x: 30, y: 35, label: 'Укладка (Лекарства)' },
@@ -144,11 +152,14 @@ export default function Home() {
           </div>
         </div>
       )}
+<<<<<<< HEAD
       {/* Вызов Аккредика */}
 <Helper 
   message="Привет! Я Аккредик. Твоя задача — пройти станцию за 8.5 минут. Не бойся, я с тобой!" 
   onClose={() => {}} 
 />
+=======
+>>>>>>> bfbf9310a1f024e62c76795ab6c15863997b3f78
     </div>
   );
 }
