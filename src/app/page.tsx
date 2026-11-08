@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,14 +16,13 @@ const SCENARIO_TITLES = {
   BOS: 'Бронхообструктивный синдром (БОС)',
 };
 
-// Упрощенные действия для теста
 const SCENARIO_DATA = {
   OKS1: {
     actions: [
       { id: 'consciousness', label: 'Оценить сознание' },
       { id: 'gloves', label: 'Надеть перчатки' },
       { id: 'call', label: 'Вызвать СМП' },
-      { id: 'aed', label: 'Работа с АНД' }, // <-- Добавили АНД
+      { id: 'aed', label: 'Работа с АНД' },
     ],
     order: ['consciousness', 'gloves', 'call', 'aed']
   },
@@ -61,13 +60,12 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [timeLeft, finished, gameStarted]);
 
-  // Логика таймера АНД
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (aedState === 'analyzing' && aedTimer > 0) {
       timer = setTimeout(() => setAedTimer((t) => t - 1), 1000);
     } else if (aedState === 'analyzing' && aedTimer === 0) {
-      setAedState('shock'); // Анализ завершен, требуется разряд
+      setAedState('shock');
     }
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
@@ -83,10 +81,9 @@ export default function Home() {
 
   const finishScenario = async () => {
     setFinished(true);
-    setScore(100); // Упрощенно для теста
+    setScore(100);
   };
 
-  // --- ЭКРАН ВЫБОРА СЦЕНАРИЯ ---
   if (!gameStarted) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
@@ -103,7 +100,6 @@ export default function Home() {
     );
   }
 
-  // --- ЭКРАН РЕЗУЛЬТАТА ---
   if (finished) {
     return (
       <div className="min-h-screen bg-green-50 p-8 flex flex-col items-center justify-center">
@@ -114,11 +110,9 @@ export default function Home() {
     );
   }
 
-  // --- ИНТЕРФЕЙС КОМНАТЫ ---
   return (
     <div className="min-h-screen bg-gray-900 text-white overflow-hidden relative">
       
-      {/* Таймер */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
         <span className="text-2xl font-mono text-green-400 font-bold tracking-widest">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
@@ -127,14 +121,12 @@ export default function Home() {
       <div className="relative w-full max-w-[1200px] mx-auto">
         <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
         
-        {/* Кликабельные зоны */}
         {HOTSPOTS.map((spot) => (
           <button key={spot.id} onClick={() => setActiveHotspot(spot.id)} className="absolute border-2 border-transparent hover:border-blue-400/70 hover:bg-blue-400/20 rounded-xl transition-all cursor-pointer group z-10" style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, height: `${spot.h}%` }}>
             <span className="hidden group-hover:block absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">{spot.label}</span>
           </button>
         ))}
 
-        {/* Меню действий при клике на объект */}
         {activeHotspot && !aedOpen && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30 p-4 backdrop-blur-sm">
             <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
@@ -156,12 +148,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* --- МИНИ-ИГРА АНД (ДЕФИБРИЛЛЯТОР) --- */}
         {aedOpen && (
           <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 border-4 border-gray-600 rounded-3xl p-8 w-full max-w-md shadow-2xl relative flex flex-col items-center">
               
-              {/* Экран дефибриллятора */}
               <div className="w-full bg-black text-green-400 font-mono text-center p-6 rounded-lg mb-6 border-2 border-gray-700 min-h-[120px] flex flex-col justify-center">
                 {aedState === 'idle' && <span className="text-xl">АНД ГОТОВ К РАБОТЕ</span>}
                 {aedState === 'analyzing' && <span className="text-2xl animate-pulse">АНАЛИЗ РИТМА... {aedTimer}</span>}
@@ -169,7 +159,6 @@ export default function Home() {
                 {aedState === 'success' && <span className="text-2xl text-green-500">РАЗРЯД НАНЕСЕН<br/>ПРОДОЛЖАЙТЕ СЛР</span>}
               </div>
 
-              {/* Кнопки управления */}
               <div className="grid grid-cols-2 gap-4 w-full">
                 <button 
                   onClick={() => { if (aedState === 'idle') { setAedState('analyzing'); setAedTimer(3); } }}
@@ -187,14 +176,10 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Кнопка выхода */}
-              <button onClick={() => setAedOpen(false)} className="mt-6 text-gray-400 hover:text-white underline">
-                Закрыть АНД
-              </button>
+              <button onClick={() => setAedOpen(false)} className="mt-6 text-gray-400 hover:text-white underline">Закрыть АНД</button>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
