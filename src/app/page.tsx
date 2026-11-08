@@ -222,7 +222,7 @@ export default function Home() {
   // 3. ИНТЕРФЕЙС ЭКЗАМЕНА
   return (
     <div className="min-h-screen bg-gray-900 text-white overflow-hidden relative">
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
+     <div className="absolute bottom-4 sm:top-4 sm:bottom-auto left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
         <span className="text-2xl font-mono text-green-400 font-bold tracking-widest">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
