@@ -63,7 +63,6 @@ const HOTSPOTS = [
 ];
 
 export default function Home() {
-  // Инициализируем состояние НУЛЕМ, чтобы не было выбора
   const [scenario, setScenario] = useState<ScenarioType | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [actions, setActions] = useState<Record<string, boolean>>({});
@@ -74,13 +73,11 @@ export default function Home() {
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
 
-  // Челленджи
   const [challenge, setChallenge] = useState<string | null>(null);
   const [capRefillTimer, setCapRefillTimer] = useState(0);
   const [capRefillSuccess, setCapRefillSuccess] = useState(false);
   const capRefillInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // АНД
   const [aedOpen, setAedOpen] = useState(false);
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
@@ -104,7 +101,7 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
 
-  // ФУНКЦИЯ ЗАПУСКА (Выбирает случайный сценарий и начинает игру)
+  // ФУНКЦИЯ СЛУЧАЙНОГО ВЫБОРА
   const startExam = () => {
     const keys = Object.keys(SCENARIO_TITLES) as ScenarioType[];
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
@@ -165,7 +162,7 @@ export default function Home() {
     }
   };
 
-  // 1. ЭКРАН БРИФИНГА (Показывается сразу при загрузке)
+  // 1. ЭКРАН БРИФИНГА (Начальный экран, выбора нет)
   if (!gameStarted) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
@@ -222,7 +219,8 @@ export default function Home() {
   // 3. ИНТЕРФЕЙС ЭКЗАМЕНА
   return (
     <div className="min-h-screen bg-gray-900 text-white overflow-hidden relative">
-     <div className="absolute bottom-4 sm:top-4 sm:bottom-auto left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
+      {/* Таймер (на телефоне внизу, на ПК сверху) */}
+      <div className="absolute bottom-4 sm:top-4 sm:bottom-auto left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
         <span className="text-2xl font-mono text-green-400 font-bold tracking-widest">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
