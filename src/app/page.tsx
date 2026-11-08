@@ -7,6 +7,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
+// --- ТИПЫ СЦЕНАРИЕВ ---
 type ScenarioType = 'OKS1' | 'OKS2' | 'ANAPHYLAXIS' | 'ZHKK' | 'BOS' | 'TELA' | 'PNEUMOTHORAX' | 'HYPOGLYCEMIA' | 'HYPERGLYCEMIA';
 
 const SCENARIO_TITLES = {
@@ -21,6 +22,7 @@ const SCENARIO_TITLES = {
   HYPERGLYCEMIA: 'Гипергликемия',
 };
 
+// --- ВВОДНЫЕ ТЕКСТЫ ---
 const VITALS: Record<ScenarioType, Record<string, string>> = {
   OKS1: {
     consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
@@ -186,6 +188,7 @@ const VITALS: Record<ScenarioType, Record<string, string>> = {
   },
 };
 
+// Действия (полный чек-лист)
 const actionsList = [
   { id: 'consciousness', label: 'Оценить сознание' },
   { id: 'gloves', label: 'Надеть перчатки' },
@@ -212,6 +215,16 @@ const actionsList = [
   { id: 'call', label: 'Вызвать СМП/ОРИТ' },
 ];
 
+// Координаты интерактивных зон (в процентах)
+const HOTSPOTS = [
+  { id: 'patient', x: 42, y: 25, w: 16, h: 30, label: 'Пациент' }, // Голова и тело
+  { id: 'crash_cart', x: 28, y: 25, w: 12, h: 20, label: 'Укладка' }, // Красная тележка
+  { id: 'monitor', x: 60, y: 15, w: 10, h: 18, label: 'Монитор' }, // Монитор
+  { id: 'phone', x: 75, y: 20, w: 8, h: 10, label: 'Телефон' }, // Телефон на столе
+  { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' }, // Красный ящик на стене
+  { id: 'iv_stand', x: 35, y: 10, w: 6, h: 20, label: 'Капельница' }, // Стойка с капельницей
+];
+
 export default function Home() {
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [gameStarted, setGameStarted] = useState(false);
@@ -221,6 +234,7 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
+  const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
 
   useEffect(() => {
     if (!gameStarted || finished) return;
@@ -258,7 +272,7 @@ export default function Home() {
   if (!gameStarted) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-        <h1 className="text-4xl font-bold mb-8 text-center text-red-500">ВЫБЕРИТЕ СЦЕНАРИЙ (ТЕСТ)</h1>
+        <h1 className="text-4xl font-bold mb-8 text-center text-red-500">ВЫБЕРИТЕ СЦЕНАРИЙ</h1>
         <div className="space-y-4 w-full max-w-md">
           {(Object.keys(SCENARIO_TITLES) as ScenarioType[]).map((key) => (
             <button
@@ -335,21 +349,56 @@ export default function Home() {
       <div className="relative w-full max-w-[1200px] mx-auto">
         <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
         
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-4">
-          <div className="bg-black/60 p-4 rounded-2xl backdrop-blur-md max-h-[30vh] overflow-y-auto grid grid-cols-2 md:grid-cols-3 gap-2">
-            {actionsList.map((action) => (
-              <button
-                key={action.id}
-                onClick={() => toggleAction(action.id)}
-                className={`text-left p-2 rounded text-xs transition ${
-                  actions[action.id] ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                {actions[action.id] && '✓ '} {action.label}
+        {/* Интерактивные зоны на картинке */}
+        {HOTSPOTS.map((spot) => (
+          <button
+            key={spot.id}
+            onClick={() => setActiveHotspot(spot.id)}
+            className="absolute border-2 border-transparent hover:border-blue-400/70 hover:bg-blue-400/20 rounded-xl transition-all cursor-pointer group z-10"
+            style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, height: `${spot.h}%` }}
+          >
+            <span className="hidden group-hover:block absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+              {spot.label}
+            </span>
+          </button>
+        ))}
+
+        {/* Всплывающее окно с действиями */}
+        {activeHotspot && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
+              <button onClick={() => setActiveHotspot(null)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 font-bold text-xl">
+                ✕
               </button>
-            ))}
+              <h3 className="text-xl font-bold mb-4 border-b pb-2">
+                Действия для: {HOTSPOTS.find(h => h.id === activeHotspot)?.label}
+              </h3>
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                {actionsList.map((action) => {
+                  // Фильтруем действия в зависимости от места
+                  if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'glucose', 'trachea'].includes(action.id)) return null;
+                  if (activeHotspot === 'crash_cart' && !['gloves', 'oxygen'].includes(action.id)) return null;
+                  if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
+                  if (activeHotspot === 'phone' && action.id !== 'call') return null;
+                  if (activeHotspot === 'aed') return <p key="aed" className="text-gray-500 italic">АНД (В разработке)</p>;
+                  if (activeHotspot === 'iv_stand' && action.id !== 'venous') return null;
+
+                  return (
+                    <button
+                      key={action.id}
+                      onClick={() => toggleAction(action.id)}
+                      className={`w-full text-left p-3 rounded-lg border-2 transition ${
+                        actions[action.id] ? 'bg-green-50 border-green-500 text-green-700 font-medium' : 'border-gray-200 hover:border-blue-300'
+                      }`}
+                    >
+                      {action.label} {actions[action.id] && '✓'}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
