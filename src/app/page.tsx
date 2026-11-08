@@ -22,6 +22,19 @@ const SCENARIO_TITLES = {
   HYPERGLYCEMIA: 'Гипергликемия',
 };
 
+// --- ПРАВИЛЬНЫЙ ПОРЯДОК ДЛЯ КАЖДОГО СЦЕНАРИЯ (по чек-листу) ---
+const CORRECT_ORDER: Record<ScenarioType, string[]> = {
+  OKS1: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+  OKS2: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+  ANAPHYLAXIS: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+  ZHKK: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+  BOS: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+  TELA: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+  PNEUMOTHORAX: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+  HYPOGLYCEMIA: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+  HYPERGLYCEMIA: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+};
+
 // --- ВВОДНЫЕ ТЕКСТЫ ---
 const VITALS: Record<ScenarioType, Record<string, string>> = {
   OKS1: {
@@ -188,7 +201,6 @@ const VITALS: Record<ScenarioType, Record<string, string>> = {
   },
 };
 
-// Действия (полный чек-лист)
 const actionsList = [
   { id: 'consciousness', label: 'Оценить сознание' },
   { id: 'gloves', label: 'Надеть перчатки' },
@@ -215,20 +227,21 @@ const actionsList = [
   { id: 'call', label: 'Вызвать СМП/ОРИТ' },
 ];
 
-// Координаты интерактивных зон (в процентах)
+// Координаты интерактивных зон
 const HOTSPOTS = [
-  { id: 'patient', x: 42, y: 25, w: 16, h: 30, label: 'Пациент' }, // Голова и тело
-  { id: 'crash_cart', x: 28, y: 25, w: 12, h: 20, label: 'Укладка' }, // Красная тележка
-  { id: 'monitor', x: 60, y: 15, w: 10, h: 18, label: 'Монитор' }, // Монитор
-  { id: 'phone', x: 75, y: 20, w: 8, h: 10, label: 'Телефон' }, // Телефон на столе
-  { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' }, // Красный ящик на стене
-  { id: 'iv_stand', x: 35, y: 10, w: 6, h: 20, label: 'Капельница' }, // Стойка с капельницей
+  { id: 'patient', x: 42, y: 25, w: 16, h: 30, label: 'Пациент' },
+  { id: 'crash_cart', x: 28, y: 25, w: 12, h: 20, label: 'Укладка' },
+  { id: 'monitor', x: 60, y: 15, w: 10, h: 18, label: 'Монитор' },
+  { id: 'phone', x: 75, y: 20, w: 8, h: 10, label: 'Телефон' },
+  { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
+  { id: 'iv_stand', x: 35, y: 10, w: 6, h: 20, label: 'Капельница' },
 ];
 
 export default function Home() {
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [gameStarted, setGameStarted] = useState(false);
   const [actions, setActions] = useState<Record<string, boolean>>({});
+  const [sequence, setSequence] = useState<string[]>([]);
   const [timeLeft, setTimeLeft] = useState(510);
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
@@ -249,6 +262,7 @@ export default function Home() {
   const toggleAction = (id: string) => {
     if (actions[id]) return;
     setActions((prev) => ({ ...prev, [id]: true }));
+    setSequence((prev) => [...prev, id]); // Запоминаем порядок
     const vitals = VITALS[scenario];
     if (vitals[id]) {
       setHelperMessage(vitals[id]);
@@ -257,9 +271,25 @@ export default function Home() {
 
   const finishScenario = async () => {
     setFinished(true);
-    const completedCount = Object.values(actions).filter(Boolean).length;
-    const calculatedScore = Math.round((completedCount / actionsList.length) * 100);
+    let calculatedScore = 0;
+    let isOrderCorrect = true;
+
+    // Проверяем последовательность
+    const correct = CORRECT_ORDER[scenario];
+    for (let i = 0; i < sequence.length; i++) {
+      if (sequence[i] !== correct[i]) {
+        isOrderCorrect = false;
+        break;
+      }
+    }
+
+    if (sequence.length === correct.length && isOrderCorrect) {
+      calculatedScore = 100;
+    } else {
+      calculatedScore = 0;
+    }
     setScore(calculatedScore);
+
     if (supabase) {
       try {
         await supabase.from('attempts').insert({
@@ -293,18 +323,37 @@ export default function Home() {
   }
 
   if (finished) {
+    const isPassed = score === 100;
     return (
-      <div className="min-h-screen bg-gray-100 p-8 flex flex-col items-center justify-center">
-        <h1 className="text-4xl font-bold mb-4">Станция пройдена</h1>
-        <p className="text-6xl font-bold text-blue-600 mb-8">{score}%</p>
+      <div className={`min-h-screen p-8 flex flex-col items-center justify-center ${isPassed ? 'bg-green-50' : 'bg-red-50'}`}>
+        <h1 className="text-4xl font-bold mb-4">{isPassed ? 'Экзамен сдан! 🎉' : 'Экзамен не сдан 😔'}</h1>
+        <p className={`text-6xl font-bold mb-8 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{score}%</p>
         <div className="bg-white p-6 rounded-lg shadow w-full max-w-md max-h-[60vh] overflow-y-auto">
-          <h2 className="text-xl font-semibold mb-2">Чек-лист ({SCENARIO_TITLES[scenario]}):</h2>
-          {actionsList.map((a) => (
-            <div key={a.id} className={`flex justify-between p-2 border-b last:border-0 ${actions[a.id] ? 'text-green-600' : 'text-red-500'}`}>
-              <span className="text-sm">{a.label}</span>
-              <span className="font-bold">{actions[a.id] ? '✓' : '✗'}</span>
+          <h2 className="text-xl font-semibold mb-2">Разбор действий:</h2>
+          {!isPassed && (
+            <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
+              <strong>Ошибка!</strong> Вы нарушили последовательность действий.
             </div>
-          ))}
+          )}
+          {CORRECT_ORDER[scenario].map((correctId, index) => {
+            const actionLabel = actionsList.find(a => a.id === correctId)?.label;
+            const userActionId = sequence[index];
+            const isCorrectStep = userActionId === correctId;
+            return (
+              <div key={index} className="flex flex-col p-2 border-b last:border-0">
+                <span className="text-sm text-gray-500 mb-1">Шаг {index + 1}:</span>
+                <div className={`flex justify-between font-medium ${isCorrectStep ? 'text-green-600' : 'text-red-500'}`}>
+                  <span>{actionLabel}</span>
+                  <span>{isCorrectStep ? '✓' : '✗'}</span>
+                </div>
+                {!isCorrectStep && userActionId && (
+                  <span className="text-xs text-red-400 mt-1">
+                    (Вы сделали: {actionsList.find(a => a.id === userActionId)?.label})
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
         <button onClick={() => window.location.reload()} className="mt-6 bg-blue-600 text-white px-6 py-2 rounded">
           Пройти заново
@@ -349,7 +398,6 @@ export default function Home() {
       <div className="relative w-full max-w-[1200px] mx-auto">
         <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
         
-        {/* Интерактивные зоны на картинке */}
         {HOTSPOTS.map((spot) => (
           <button
             key={spot.id}
@@ -363,7 +411,6 @@ export default function Home() {
           </button>
         ))}
 
-        {/* Всплывающее окно с действиями */}
         {activeHotspot && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
@@ -375,7 +422,6 @@ export default function Home() {
               </h3>
               <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                 {actionsList.map((action) => {
-                  // Фильтруем действия в зависимости от места
                   if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'glucose', 'trachea'].includes(action.id)) return null;
                   if (activeHotspot === 'crash_cart' && !['gloves', 'oxygen'].includes(action.id)) return null;
                   if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
