@@ -22,219 +22,75 @@ const SCENARIO_TITLES = {
   HYPERGLYCEMIA: 'Гипергликемия',
 };
 
-// --- ПРАВИЛЬНЫЙ ПОРЯДОК ДЛЯ КАЖДОГО СЦЕНАРИЯ (по чек-листу) ---
-const CORRECT_ORDER: Record<ScenarioType, string[]> = {
-  OKS1: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
-  OKS2: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
-  ANAPHYLAXIS: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
-  ZHKK: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
-  BOS: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
-  TELA: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
-  PNEUMOTHORAX: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
-  HYPOGLYCEMIA: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
-  HYPERGLYCEMIA: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call'],
+// --- ДЕЙСТВИЯ И ПОСЛЕДОВАТЕЛЬНОСТЬ ДЛЯ КАЖДОГО СЦЕНАРИЯ ---
+const SCENARIO_DATA: Record<ScenarioType, { actions: { id: string, label: string }[], order: string[] }> = {
+  OKS1: {
+    actions: [
+      { id: 'consciousness', label: 'Оценить сознание' },
+      { id: 'gloves', label: 'Надеть перчатки' },
+      { id: 'airway', label: 'Оценить проходимость дыхательных путей' },
+      { id: 'spo2', label: 'Пульсоксиметрия' },
+      { id: 'oxygen', label: 'Кислородотерапия' },
+      { id: 'ecg', label: 'Снять ЭКГ' },
+      { id: 'call', label: 'Вызвать СМП' },
+    ],
+    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'ecg', 'call']
+  },
+  ANAPHYLAXIS: {
+    actions: [
+      { id: 'consciousness', label: 'Оценить сознание' },
+      { id: 'gloves', label: 'Надеть перчатки' },
+      { id: 'airway', label: 'Оценить проходимость дыхательных путей' },
+      { id: 'adrenaline', label: 'Ввести адреналин' },
+      { id: 'oxygen', label: 'Кислородотерапия' },
+      { id: 'call', label: 'Вызвать СМП' },
+    ],
+    order: ['consciousness', 'gloves', 'airway', 'adrenaline', 'oxygen', 'call']
+  },
+  // Для остальных сценариев мы пока оставим заглушки (список действий как у ОКС, чтобы не ломать сайт)
+  OKS2: { actions: [], order: [] },
+  ZHKK: { actions: [], order: [] },
+  BOS: { actions: [], order: [] },
+  TELA: { actions: [], order: [] },
+  PNEUMOTHORAX: { actions: [], order: [] },
+  HYPOGLYCEMIA: { actions: [], order: [] },
+  HYPERGLYCEMIA: { actions: [], order: [] },
 };
 
-// --- ВВОДНЫЕ ТЕКСТЫ ---
-const VITALS: Record<ScenarioType, Record<string, string>> = {
+// Чтобы не было ошибки, если действия пустые (для тестовых сценариев)
+const getActions = (scenario: ScenarioType) => {
+  const data = SCENARIO_DATA[scenario];
+  return data.actions.length > 0 ? data.actions : SCENARIO_DATA.OKS1.actions;
+};
+
+const getOrder = (scenario: ScenarioType) => {
+  const data = SCENARIO_DATA[scenario];
+  return data.order.length > 0 ? data.order : SCENARIO_DATA.OKS1.order;
+};
+
+// Вводные тексты (оставим только для ОКС и АШ для примера)
+const VITALS: Record<string, Record<string, string>> = {
   OKS1: {
     consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
     airway: 'Дыхательные пути визуально проходимы',
     spo2: 'Сатурация 88-89%',
-    respiratory_rate: '4 движения за 10 секунд',
-    percussion: 'Слева и справа ясный легочный звук',
-    trachea: 'Трахея в норме, вены шеи набухшие',
-    pulse: '18 ударов за 10 секунд, слабого наполнения',
-    pulse_both: 'Пульс одинаковый с 2-х сторон, ослабленный',
-    bp: 'САД: 80-100, ДАД: 40-50',
-    heart_ausc: 'Частые, приглушенные',
-    cap_refill: 'Симптом белого пятна исчезает через 4 секунды',
-    skin: 'Кожа во всех местах холодная, влажная',
-    pupils: 'Зрачки одинаковые, фотореакция сохранна',
-    glucose: '6,3 ммоль/л',
-    muscle_tone: 'Мышечный тонус нормальный',
-    abdomen: 'Живот без особенностей',
-  },
-  OKS2: {
-    consciousness: 'Открывает глаза, отставание правой половины грудной клетки',
-    airway: 'Губы и язык отечные',
-    spo2: 'Сатурация 95-98%',
-    respiratory_rate: '3 движения за 10 секунд',
-    percussion: 'Слева и справа ясный легочный звук, выраженное притупление в нижне-базальных отделах',
-    trachea: 'Трахея в норме, вены шеи спавшиеся',
-    pulse: '18 ударов за 10 секунд',
-    pulse_both: 'Пульс одинаковый с 2-х сторон',
-    bp: 'САД: 120-135, ДАД: 70-80',
-    heart_ausc: 'Частые',
-    cap_refill: 'Симптом белого пятна исчезает через 2 секунды',
-    skin: 'Кожа во всех местах теплая, выраженный цианоз',
-    pupils: 'Зрачки одинаковые, фотореакция сохранна',
-    glucose: '6,3 ммоль/л',
-    muscle_tone: 'Мышечный тонус нормальный',
-    abdomen: 'Живот без особенностей',
+    oxygen: 'Кислород подключен',
+    ecg: 'На ЭКГ подъем ST',
   },
   ANAPHYLAXIS: {
-    consciousness: 'Отвечать на любые вопросы Стоном',
-    airway: 'Дыхательные пути визуально проходимы',
-    spo2: 'Сатурация 88-89%',
-    respiratory_rate: '4 движения за 10 секунд',
-    percussion: 'Слева и справа ясный легочный звук',
-    trachea: 'Трахея в норме, вены шеи набухшие',
-    pulse: '18 ударов за 10 секунд, слабого наполнения',
-    pulse_both: 'Пульс одинаковый с 2-х сторон, ослабленный',
-    bp: 'САД: 80-100, ДАД: 30-50',
-    heart_ausc: 'Тоны сердца частые, приглушенные, акцент 2-го тона на легочной артерии',
-    cap_refill: 'Симптом белого пятна исчезает через 4 секунды',
-    skin: 'Кожа гиперемирована, теплая на ощупь, эритематозная сыпь на передней поверхности грудной клетки',
-    pupils: 'Зрачки одинаковые, фотореакция сохранна',
-    glucose: '6,3 ммоль/л',
-    muscle_tone: 'Мышечный тонус нормальный',
-    abdomen: 'Живот без особенностей',
-  },
-  ZHKK: {
-    consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-    airway: 'Дыхательные пути визуально проходимы',
-    spo2: 'Сатурация 95-98%',
-    respiratory_rate: '3 движения за 10 секунд',
-    percussion: 'Слева и справа ясный легочный звук',
-    trachea: 'Трахея в норме, вены шеи спавшиеся',
-    pulse: '18 ударов за 10 секунд',
-    pulse_both: 'Пульс одинаковый с 2-х сторон',
-    bp: 'САД: 80-100, ДАД: 40-50',
-    heart_ausc: 'Частые',
-    cap_refill: 'Симптом белого пятна исчезает через 2 секунды',
-    skin: 'Кожа во всех местах бледная, холодная на ощупь',
-    pupils: 'Зрачки одинаковые, фотореакция сохранна',
-    glucose: '6,3 ммоль/л',
-    muscle_tone: 'Мышечный тонус нормальный',
-    abdomen: 'Стон при осмотре верхней части живота. Доскообразный живот',
-  },
-  BOS: {
-    consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-    airway: 'Дыхательные пути визуально проходимы',
-    spo2: 'Сатурация 88-89%',
-    respiratory_rate: '4 движения за 10 секунд',
-    percussion: 'Слева и справа ясный легочный звук',
-    trachea: 'Трахея в норме, вены шеи набухшие',
-    pulse: '18 ударов за 10 секунд, слабого наполнения',
-    pulse_both: 'Пульс одинаковый с 2-х сторон, ослабленный',
-    bp: 'САД: 80-100, ДАД: 40-50',
-    heart_ausc: 'Частые, приглушенные',
-    cap_refill: 'Симптом белого пятна исчезает через 4 секунды',
-    skin: 'Кожа во всех местах теплая, выраженный цианоз',
-    pupils: 'Зрачки одинаковые, фотореакция сохранна',
-    glucose: '6,3 ммоль/л',
-    muscle_tone: 'Мышечный тонус нормальный',
-    abdomen: 'Живот без особенностей',
-  },
-  TELA: {
-    consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-    airway: 'Дыхательные пути визуально проходимы',
-    spo2: 'Сатурация 95-98%',
-    respiratory_rate: '3 движения за 10 секунд',
-    percussion: 'Слева и справа ясный легочный звук',
-    trachea: 'Трахея в норме, вены шеи в норме',
-    pulse: '18 ударов за 10 секунд',
-    pulse_both: 'Пульс одинаковый с 2-х сторон',
-    bp: 'САД: 120-135, ДАД: 70-80',
-    heart_ausc: 'Частые',
-    cap_refill: 'Симптом белого пятна исчезает через 2 секунды',
-    skin: 'Кожа во всех местах холодная, влажная',
-    pupils: 'Зрачки одинаковые, фотореакция сохранна',
-    glucose: '6,3 ммоль/л',
-    muscle_tone: 'Мышечный тонус нормальный',
-    abdomen: 'Живот без особенностей',
-  },
-  PNEUMOTHORAX: {
-    consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-    airway: 'Дыхательные пути визуально проходимы',
-    spo2: 'Сатурация 88-89%',
-    respiratory_rate: '4 движения за 10 секунд',
-    percussion: 'Слева ясный легочный звук, тимпанит над всей поверхностью правого легкого',
-    trachea: 'Трахея в норме, вены шеи набухшие',
-    pulse: '18 ударов за 10 секунд, слабого наполнения',
-    pulse_both: 'Пульс одинаковый с 2-х сторон, ослабленный',
-    bp: 'САД: 80-90, ДАД: 40-50',
-    heart_ausc: 'Частые',
-    cap_refill: 'Симптом белого пятна исчезает через 4 секунды',
-    skin: 'Кожа во всех местах холодная, влажная. Кожные покровы верхней половины тела цианотичные',
-    pupils: 'Зрачки одинаковые, фотореакция сохранна',
-    glucose: '6,3 ммоль/л',
-    muscle_tone: 'Мышечный тонус нормальный',
-    abdomen: 'Живот без особенностей',
-  },
-  HYPOGLYCEMIA: {
-    consciousness: 'Отвечать на любые вопросы Стоном',
-    airway: 'Дыхательные пути визуально проходимы',
-    spo2: 'Сатурация 95-98%',
-    respiratory_rate: '3 движения за 10 секунд',
-    percussion: 'Слева и справа ясный легочный звук',
-    trachea: 'Трахея в норме, вены шеи набухшие',
-    pulse: '18 ударов за 10 секунд',
-    pulse_both: 'Пульс одинаковый с 2-х сторон',
-    bp: 'САД: 120-135, ДАД: 70-80',
-    heart_ausc: 'Частые',
-    cap_refill: 'Симптом белого пятна исчезает через 2 секунды',
-    skin: 'Кожа во всех местах влажная, липкая, ощущается дрожь',
-    pupils: 'Зрачки одинаковые, фотореакция сохранна',
-    glucose: '2,0 ммоль/л',
-    muscle_tone: 'Мышечный тонус нормальный',
-    abdomen: 'Живот без особенностей',
-  },
-  HYPERGLYCEMIA: {
-    consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-    airway: 'Дыхательные пути визуально проходимы',
-    spo2: 'Сатурация 95-98%',
-    respiratory_rate: '3 движения за 10 секунд',
-    percussion: 'Слева и справа ясный легочный звук',
-    trachea: 'Трахея в норме, вены шеи в норме',
-    pulse: '18 ударов за 10 секунд',
-    pulse_both: 'Пульс одинаковый с 2-х сторон',
-    bp: 'САД: 120-135, ДАД: 70-80',
-    heart_ausc: 'Частые',
-    cap_refill: 'Симптом белого пятна исчезает через 2 секунды',
-    skin: 'Кожа во всех местах бледная, сухая',
-    pupils: 'Зрачки одинаковые, фотореакция сохранна',
-    glucose: '24 ммоль/л',
-    muscle_tone: 'Мышечный тонус нормальный',
-    abdomen: 'Живот без особенностей',
-  },
+    consciousness: 'Отвечает стоном',
+    airway: 'Отек языка и губ',
+    adrenaline: 'Адреналин введен. Давление начинает расти',
+    oxygen: 'Кислород подключен',
+  }
 };
 
-const actionsList = [
-  { id: 'consciousness', label: 'Оценить сознание' },
-  { id: 'gloves', label: 'Надеть перчатки' },
-  { id: 'airway', label: 'Оценить проходимость дыхательных путей' },
-  { id: 'spo2', label: 'Пульсоксиметрия' },
-  { id: 'oxygen', label: 'Кислородотерапия по показаниям' },
-  { id: 'respiratory_rate', label: 'Подсчет ЧДД' },
-  { id: 'percussion', label: 'Перкуссия легких' },
-  { id: 'auscultation', label: 'Аускультация легких' },
-  { id: 'trachea', label: 'Обследование трахеи и вен шеи' },
-  { id: 'pulse', label: 'Пульс на периферических/центральных артериях' },
-  { id: 'pulse_both', label: 'Пульс с двух сторон' },
-  { id: 'bp', label: 'Измерить АД' },
-  { id: 'heart_ausc', label: 'Аускультация сердца' },
-  { id: 'cap_refill', label: 'Симптом белого пятна' },
-  { id: 'skin', label: 'Оценить кожные покровы' },
-  { id: 'ecg', label: 'Снять ЭКГ в 12 отведениях' },
-  { id: 'ecg_interpret', label: 'Интерпретировать ЭКГ' },
-  { id: 'venous', label: 'Венозный доступ и забор анализов' },
-  { id: 'pupils', label: 'Фотореакция зрачков' },
-  { id: 'muscle_tone', label: 'Тонус мышц' },
-  { id: 'glucose', label: 'Уровень глюкозы' },
-  { id: 'abdomen', label: 'Пальпация живота' },
-  { id: 'call', label: 'Вызвать СМП/ОРИТ' },
-];
-
-// Координаты интерактивных зон
 const HOTSPOTS = [
   { id: 'patient', x: 42, y: 25, w: 16, h: 30, label: 'Пациент' },
   { id: 'crash_cart', x: 28, y: 25, w: 12, h: 20, label: 'Укладка' },
   { id: 'monitor', x: 60, y: 15, w: 10, h: 18, label: 'Монитор' },
   { id: 'phone', x: 75, y: 20, w: 8, h: 10, label: 'Телефон' },
   { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
-  { id: 'iv_stand', x: 35, y: 10, w: 6, h: 20, label: 'Капельница' },
 ];
 
 export default function Home() {
@@ -249,11 +105,14 @@ export default function Home() {
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
 
+  const currentActions = getActions(scenario);
+  const currentOrder = getOrder(scenario);
+
   useEffect(() => {
     if (!gameStarted || finished) return;
     if (timeLeft <= 0) { finishScenario(); return; }
     if (timeLeft === 255) {
-      setAlertMessage('⚠️ ЭКСКУРСИИ ГРУДНОЙ КЛЕТКИ ПРЕКРАТИЛИСЬ! Срочно начните СЛР и подключите АНД!');
+      setAlertMessage('⚠️ ЭКСКУРСИИ ГРУДНОЙ КЛЕТКИ ПРЕКРАТИЛИСЬ!');
     }
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
@@ -262,9 +121,10 @@ export default function Home() {
   const toggleAction = (id: string) => {
     if (actions[id]) return;
     setActions((prev) => ({ ...prev, [id]: true }));
-    setSequence((prev) => [...prev, id]); // Запоминаем порядок
+    setSequence((prev) => [...prev, id]);
+
     const vitals = VITALS[scenario];
-    if (vitals[id]) {
+    if (vitals && vitals[id]) {
       setHelperMessage(vitals[id]);
     }
   };
@@ -274,16 +134,14 @@ export default function Home() {
     let calculatedScore = 0;
     let isOrderCorrect = true;
 
-    // Проверяем последовательность
-    const correct = CORRECT_ORDER[scenario];
     for (let i = 0; i < sequence.length; i++) {
-      if (sequence[i] !== correct[i]) {
+      if (sequence[i] !== currentOrder[i]) {
         isOrderCorrect = false;
         break;
       }
     }
 
-    if (sequence.length === correct.length && isOrderCorrect) {
+    if (sequence.length === currentOrder.length && isOrderCorrect) {
       calculatedScore = 100;
     } else {
       calculatedScore = 0;
@@ -335,8 +193,8 @@ export default function Home() {
               <strong>Ошибка!</strong> Вы нарушили последовательность действий.
             </div>
           )}
-          {CORRECT_ORDER[scenario].map((correctId, index) => {
-            const actionLabel = actionsList.find(a => a.id === correctId)?.label;
+          {currentOrder.map((correctId, index) => {
+            const actionLabel = currentActions.find(a => a.id === correctId)?.label;
             const userActionId = sequence[index];
             const isCorrectStep = userActionId === correctId;
             return (
@@ -348,7 +206,7 @@ export default function Home() {
                 </div>
                 {!isCorrectStep && userActionId && (
                   <span className="text-xs text-red-400 mt-1">
-                    (Вы сделали: {actionsList.find(a => a.id === userActionId)?.label})
+                    (Вы сделали: {currentActions.find(a => a.id === userActionId)?.label || 'Неизвестное действие'})
                   </span>
                 )}
               </div>
@@ -421,13 +279,13 @@ export default function Home() {
                 Действия для: {HOTSPOTS.find(h => h.id === activeHotspot)?.label}
               </h3>
               <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                {actionsList.map((action) => {
-                  if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'pulse', 'pulse_both', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'glucose', 'trachea'].includes(action.id)) return null;
+                {currentActions.map((action) => {
+                  // Фильтрация по зонам
+                  if (activeHotspot === 'patient' && !['consciousness', 'airway', 'adrenaline'].includes(action.id)) return null;
                   if (activeHotspot === 'crash_cart' && !['gloves', 'oxygen'].includes(action.id)) return null;
-                  if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
+                  if (activeHotspot === 'monitor' && !['ecg', 'spo2'].includes(action.id)) return null;
                   if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   if (activeHotspot === 'aed') return <p key="aed" className="text-gray-500 italic">АНД (В разработке)</p>;
-                  if (activeHotspot === 'iv_stand' && action.id !== 'venous') return null;
 
                   return (
                     <button
