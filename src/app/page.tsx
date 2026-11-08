@@ -72,12 +72,10 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
-
   const [challenge, setChallenge] = useState<string | null>(null);
   const [capRefillTimer, setCapRefillTimer] = useState(0);
   const [capRefillSuccess, setCapRefillSuccess] = useState(false);
   const capRefillInterval = useRef<NodeJS.Timeout | null>(null);
-
   const [aedOpen, setAedOpen] = useState(false);
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
@@ -101,7 +99,6 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
 
-  // ФУНКЦИЯ СЛУЧАЙНОГО ВЫБОРА
   const startExam = () => {
     const keys = Object.keys(SCENARIO_TITLES) as ScenarioType[];
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
@@ -162,7 +159,6 @@ export default function Home() {
     }
   };
 
-  // 1. ЭКРАН БРИФИНГА (Начальный экран, выбора нет)
   if (!gameStarted) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
@@ -174,10 +170,7 @@ export default function Home() {
             <p>На этаже есть укладка экстренной медицинской помощи и автоматический наружный дефибриллятор (АНД).</p>
             <p>Медицинский брат/сестра — Ваш помощник, недавно приступил/а к работе, информации о причинах резкого ухудшения состояния пациента не имеет. Он/а будет выполнять по Вашему назначению манипуляции, входящие в его/ее компетенцию.</p>
           </div>
-          <button 
-            onClick={startExam} 
-            className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg"
-          >
+          <button onClick={startExam} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
             Приступить к осмотру (Случайный сценарий)
           </button>
         </div>
@@ -185,7 +178,6 @@ export default function Home() {
     );
   }
 
-  // 2. ЭКРАН РЕЗУЛЬТАТА
   if (finished) {
     const isPassed = score === 100;
     return (
@@ -216,10 +208,8 @@ export default function Home() {
     );
   }
 
-  // 3. ИНТЕРФЕЙС ЭКЗАМЕНА
   return (
     <div className="min-h-screen bg-gray-900 text-white overflow-hidden relative">
-      {/* Таймер (на телефоне внизу, на ПК сверху) */}
       <div className="absolute bottom-4 sm:top-4 sm:bottom-auto left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
         <span className="text-2xl font-mono text-green-400 font-bold tracking-widest">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
