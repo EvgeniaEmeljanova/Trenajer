@@ -171,7 +171,7 @@ export default function Home() {
             <p>Медицинский брат/сестра — Ваш помощник, недавно приступил/а к работе, информации о причинах резкого ухудшения состояния пациента не имеет. Он/а будет выполнять по Вашему назначению манипуляции, входящие в его/ее компетенцию.</p>
           </div>
           <button onClick={startExam} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
-            Приступить к осмотру (Случайный сценарий)
+            Приступить к осмотру
           </button>
         </div>
       </div>
