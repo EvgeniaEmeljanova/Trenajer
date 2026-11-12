@@ -23,8 +23,8 @@ const SCENARIO_TITLES = {
 };
 
 const VOICE_INTROS: Record<ScenarioType, string> = {
-  BLS: 'Вы увидели, что человеку стало плохо. Необходимо оказать первую помощь. Время пошло!',
-  OKS1: 'Пациент 45 лет. Жалуется на сильные загрудинные боли. Время пошло!',
+  BLS: 'Вы увидели, что человеку стало плохо. Необходимо оказать ему первую помощь. На станции есть автоматический наружный дефибриллятор. Время пошло!',
+  OKS1: 'Пациент 45 лет. Жалуется на сильные загрудинные боли. Вы — врач бригады экстренной помощи. Время пошло!',
   ANAPHYLAXIS: 'Пациент 30 лет. После укуса пчелы появилась резкая слабость. Время пошло!',
   OKS2: 'Пациент 50 лет. Жалобы на одышку. Время пошло!',
   ZHKK: 'Пациент 55 лет. Рвота кофейной гущей. Время пошло!',
@@ -75,7 +75,8 @@ const HOTSPOTS = [
   { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
 ];
 
-type Stage = 'briefing' | 'login' | 'intro' | 'playing' | 'finished';
+// Этапы: Брифинг -> Вход в комнату (ID) -> Озвучка -> Игра -> Результат
+type Stage = 'briefing' | 'room_entry' | 'intro' | 'playing' | 'finished';
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>('briefing');
@@ -88,7 +89,6 @@ export default function Home() {
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
   
-  // Мини-игры
   const [challenge, setChallenge] = useState<string | null>(null);
   const [cprCount, setCprCount] = useState(0);
   const [cprFeedback, setCprFeedback] = useState('');
@@ -97,28 +97,53 @@ export default function Home() {
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
 
-  // НОВЫЕ ФИШКИ: Витальные показатели и диалог с СМП
   const [vitals, setVitals] = useState({ hr: 120, spo2: 88 });
   const [phoneModal, setPhoneModal] = useState(false);
+  
+  // Флаг, чтобы голос не срабатывал дважды
+  const hasSpokenMinuteWarning = useRef(false);
 
   const currentOrder = SCENARIO_DATA[scenario].order;
 
-  // Обновление витальных показателей в зависимости от действий
-  useEffect(() => {
-    if (actions['oxygen']) {
-      setVitals(prev => ({ ...prev, spo2: 98 }));
+  // Функция озвучки
+  const playAudio = (text: string, onEnd?: () => void) => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Останавливаем предыдущую речь
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ru-RU';
+      utterance.rate = 1.0;
+      if (onEnd) utterance.onend = onEnd;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      if (onEnd) onEnd();
     }
-    if (actions['compressions']) {
-      setVitals(prev => ({ ...prev, hr: 100 })); // Компрессии восстанавливают пульс
-    }
-  }, [actions]);
+  };
 
+  // Таймер и голосовые команды
   useEffect(() => {
     if (stage !== 'playing') return;
-    if (timeLeft <= 0) { finishScenario(); return; }
+    
+    if (timeLeft <= 0) { 
+      playAudio("Время вышло. Перейдите на следующую станцию.");
+      finishScenario(); 
+      return; 
+    }
+
+    // Голосовое предупреждение за 1 минуту
+    if (timeLeft === 60 && !hasSpokenMinuteWarning.current) {
+      playAudio("У вас осталась одна минута.");
+      hasSpokenMinuteWarning.current = true;
+    }
+
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft, stage]);
+
+  // Витальные показатели
+  useEffect(() => {
+    if (actions['oxygen']) setVitals(prev => ({ ...prev, spo2: 98 }));
+    if (actions['compressions']) setVitals(prev => ({ ...prev, hr: 100 }));
+  }, [actions]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -130,29 +155,34 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
 
-  const handleStartExam = () => {
+  // Переход от брифинга к входу в комнату
+  const handleEnterRoom = () => {
     const keys = Object.keys(SCENARIO_TITLES) as ScenarioType[];
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     setScenario(randomKey);
-    setStage('login');
+    setStage('room_entry');
+    
+    // Голосовая команда при входе в комнату
+    setTimeout(() => {
+      playAudio("Войдите на станцию и назовите свой логин.");
+    }, 500);
   };
 
+  // Подтверждение логина и переход к озвучке сценария
   const handleLogin = () => {
     const finalId = studentId.trim() || 'Аноним';
     setStudentId(finalId);
     setStage('intro');
     
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const textToSpeak = VOICE_INTROS[scenario];
-      const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      utterance.lang = 'ru-RU';
-      utterance.rate = 1.0;
-      utterance.onend = () => { setStage('playing'); };
-      setTimeout(() => { if (stage === 'intro') setStage('playing'); }, 10000);
-      window.speechSynthesis.speak(utterance);
-    } else {
-      setTimeout(() => setStage('playing'), 3000);
-    }
+    // Читаем сценарий. Когда голос закончит - запускаем игру
+    playAudio(VOICE_INTROS[scenario], () => {
+      setStage('playing');
+    });
+    
+    // Страховка на случай, если браузер не поддерживает озвучку (запуск через 15 сек)
+    setTimeout(() => {
+      if (stage === 'intro') setStage('playing');
+    }, 15000);
   };
 
   const toggleAction = (id: string) => {
@@ -164,30 +194,23 @@ export default function Home() {
 
   const handleActionClick = (id: string) => {
     if (id === 'compressions') {
-      setChallenge('cpr');
-      setCprCount(0);
-      setCprFeedback('');
-      lastCprTime.current = 0;
+      setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
     }
     if (id === 'recovery') {
       setHelperMessage('Вы перевернули пациента в устойчивое боковое положение!');
-      toggleAction(id);
-      return;
+      toggleAction(id); return;
     }
     if (id === 'choking') {
       setHelperMessage('Пациент не может говорить и хватается за горло. Полное нарушение проходимости!');
-      toggleAction(id);
-      return;
+      toggleAction(id); return;
     }
     if (id === 'call') {
-      setPhoneModal(true);
-      return;
+      setPhoneModal(true); return;
     }
     toggleAction(id);
   };
 
-  // Обработка правильного вызова СМП
   const handleCorrectCall = () => {
     setPhoneModal(false);
     setHelperMessage('Вызов принят! Бригада выехала.');
@@ -221,8 +244,7 @@ export default function Home() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (challenge === 'cpr' && e.code === 'Space') {
-        e.preventDefault();
-        handleCprClick();
+        e.preventDefault(); handleCprClick();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -251,7 +273,7 @@ export default function Home() {
     }
   };
 
-  // ЭКРАНЫ (Остались без изменений)
+  // 1. ЭКРАН БРИФИНГА
   if (stage === 'briefing') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
@@ -262,7 +284,7 @@ export default function Home() {
             <p>Перед Вами пациент <strong>45 лет</strong>.</p>
             <p>На этаже есть укладка экстренной медицинской помощи и автоматический наружный дефибриллятор (АНД).</p>
           </div>
-          <button onClick={handleStartExam} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
+          <button onClick={handleEnterRoom} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
             Войти на станцию
           </button>
         </div>
@@ -270,35 +292,46 @@ export default function Home() {
     );
   }
 
-  if (stage === 'login') {
+  // 2. ЭКРАН ВХОДА В КОМНАТУ (С визуализацией комнаты на фоне)
+  if (stage === 'room_entry') {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-        <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center">
-          <h1 className="text-3xl font-bold mb-6 text-blue-400">Вход на станцию</h1>
+      <div className="min-h-screen bg-gray-900 text-white relative flex items-center justify-center">
+        {/* Размытый фон комнаты */}
+        <div className="absolute inset-0 z-0">
+          <img src="/room.jpg" alt="Комната" className="w-full h-full object-cover blur-sm opacity-50" />
+        </div>
+        
+        <div className="relative z-10 bg-gray-800/90 border-2 border-blue-500 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center backdrop-blur-md">
+          <h1 className="text-3xl font-bold mb-4 text-blue-400">Вы вошли на станцию</h1>
+          <p className="mb-6 text-gray-300">Назовите свой логин (ID) для члена АПК</p>
           <input 
             type="text" 
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
-            placeholder="Логин (необязательно)"
+            placeholder="Ваш логин"
             className="w-full bg-gray-700 text-white text-center text-2xl font-mono p-4 rounded-xl mb-6 border-2 border-gray-600 focus:border-blue-500 outline-none"
+            autoFocus
           />
           <button onClick={handleLogin} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
-            Подтвердить
+            Подтвердить ID
           </button>
         </div>
       </div>
     );
   }
 
+  // 3. ЭКРАН ОЗВУЧКИ СЦЕНАРИЯ
   if (stage === 'intro') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
         <div className="w-24 h-24 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-8"></div>
-        <h1 className="text-3xl font-bold mb-4">Внимание! Слушайте вводную информацию...</h1>
+        <h1 className="text-3xl font-bold mb-4">Слушайте вводную информацию...</h1>
+        <p className="text-gray-400 text-center max-w-lg">Не начинайте действия, пока не услышите команду «Время пошло!»</p>
       </div>
     );
   }
 
+  // 4. ЭКРАН РЕЗУЛЬТАТА
   if (stage === 'finished') {
     const isPassed = score === 100;
     return (
@@ -326,7 +359,7 @@ export default function Home() {
     );
   }
 
-  // ИНТЕРФЕЙС
+  // 5. ИНТЕРФЕЙС ЭКЗАМЕНА
   return (
     <div className={`min-h-screen bg-gray-900 text-white overflow-hidden relative ${timeLeft < 60 ? 'animate-pulse ring-8 ring-red-600 ring-inset' : ''}`}>
       
