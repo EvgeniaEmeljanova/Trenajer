@@ -23,16 +23,16 @@ const SCENARIO_TITLES = {
 };
 
 const VOICE_INTROS: Record<ScenarioType, string> = {
-  BLS: 'Вы увидели, что человеку стало плохо. Необходимо оказать ему первую помощь в рамках своих умений. На станции есть автоматический наружный дефибриллятор. Время пошло!',
-  OKS1: 'Пациент 45 лет. Жалуется на сильные загрудинные боли. Вы — врач бригады экстренной помощи. Время пошло!',
-  ANAPHYLAXIS: 'Пациент 30 лет. После укуса пчелы появилась резкая слабость, затруднение дыхания. Вы — врач. Время пошло!',
+  BLS: 'Вы увидели, что человеку стало плохо. Необходимо оказать первую помощь. Время пошло!',
+  OKS1: 'Пациент 45 лет. Жалуется на сильные загрудинные боли. Время пошло!',
+  ANAPHYLAXIS: 'Пациент 30 лет. После укуса пчелы появилась резкая слабость. Время пошло!',
   OKS2: 'Пациент 50 лет. Жалобы на одышку. Время пошло!',
-  ZHKK: 'Пациент 55 лет. Жалобы на слабость, рвоту кофейной гущей. Время пошло!',
-  BOS: 'Пациент 25 лет. Жалобы на затрудненное дыхание. Время пошло!',
-  TELA: 'Пациент 60 лет. Внезапно появилась резкая боль в грудной клетке. Время пошло!',
-  PNEUMOTHORAX: 'Пациент 40 лет. После травмы грудной клетки появилась резкая боль. Время пошло!',
-  HYPOGLYCEMIA: 'Пациент 50 лет. Состояние спутанное, кожа влажная. Время пошло!',
-  HYPERGLYCEMIA: 'Пациент 35 лет. Жалобы на жажду, сухость во рту. Время пошло!',
+  ZHKK: 'Пациент 55 лет. Рвота кофейной гущей. Время пошло!',
+  BOS: 'Пациент 25 лет. Затрудненное дыхание. Время пошло!',
+  TELA: 'Пациент 60 лет. Резкая боль в грудной клетке. Время пошло!',
+  PNEUMOTHORAX: 'Пациент 40 лет. Травма грудной клетки. Время пошло!',
+  HYPOGLYCEMIA: 'Пациент 50 лет. Состояние спутанное. Время пошло!',
+  HYPERGLYCEMIA: 'Пациент 35 лет. Сухость во рту, слабость. Время пошло!',
 };
 
 const ALL_ACTIONS = [
@@ -87,6 +87,8 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
+  
+  // Мини-игры
   const [challenge, setChallenge] = useState<string | null>(null);
   const [cprCount, setCprCount] = useState(0);
   const [cprFeedback, setCprFeedback] = useState('');
@@ -95,7 +97,21 @@ export default function Home() {
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
 
+  // НОВЫЕ ФИШКИ: Витальные показатели и диалог с СМП
+  const [vitals, setVitals] = useState({ hr: 120, spo2: 88 });
+  const [phoneModal, setPhoneModal] = useState(false);
+
   const currentOrder = SCENARIO_DATA[scenario].order;
+
+  // Обновление витальных показателей в зависимости от действий
+  useEffect(() => {
+    if (actions['oxygen']) {
+      setVitals(prev => ({ ...prev, spo2: 98 }));
+    }
+    if (actions['compressions']) {
+      setVitals(prev => ({ ...prev, hr: 100 })); // Компрессии восстанавливают пульс
+    }
+  }, [actions]);
 
   useEffect(() => {
     if (stage !== 'playing') return;
@@ -121,9 +137,7 @@ export default function Home() {
     setStage('login');
   };
 
-  // УБРАНА ПРОВЕРКА: теперь можно вводить пустую строку
   const handleLogin = () => {
-    // Если пусто, ставим "Аноним"
     const finalId = studentId.trim() || 'Аноним';
     setStudentId(finalId);
     setStage('intro');
@@ -133,7 +147,6 @@ export default function Home() {
       const utterance = new SpeechSynthesisUtterance(textToSpeak);
       utterance.lang = 'ru-RU';
       utterance.rate = 1.0;
-      
       utterance.onend = () => { setStage('playing'); };
       setTimeout(() => { if (stage === 'intro') setStage('playing'); }, 10000);
       window.speechSynthesis.speak(utterance);
@@ -167,7 +180,18 @@ export default function Home() {
       toggleAction(id);
       return;
     }
+    if (id === 'call') {
+      setPhoneModal(true);
+      return;
+    }
     toggleAction(id);
+  };
+
+  // Обработка правильного вызова СМП
+  const handleCorrectCall = () => {
+    setPhoneModal(false);
+    setHelperMessage('Вызов принят! Бригада выехала.');
+    toggleAction('call');
   };
 
   const handleCprClick = () => {
@@ -216,22 +240,18 @@ export default function Home() {
     else calculatedScore = 0;
     setScore(calculatedScore);
 
-    // СОХРАНЯЕМ ВСЮ ИСТОРИЮ ДЕЙСТВИЙ (ПОРЯДОК)
     if (supabase && scenario) {
       try {
         await supabase.from('attempts').insert({ 
           scenario_id: scenario, 
           score: calculatedScore, 
-          actions: { 
-            studentId: studentId, 
-            fullSequence: sequence // <--- Сохраняем порядок кликов
-          } 
+          actions: { studentId: studentId, fullSequence: sequence } 
         });
       } catch (e) { console.error(e); }
     }
   };
 
-  // ЭКРАНЫ
+  // ЭКРАНЫ (Остались без изменений)
   if (stage === 'briefing') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
@@ -255,7 +275,6 @@ export default function Home() {
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
         <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center">
           <h1 className="text-3xl font-bold mb-6 text-blue-400">Вход на станцию</h1>
-          <p className="mb-6 text-gray-300">Введите любой номер (или пропустите, будет "Аноним")</p>
           <input 
             type="text" 
             value={studentId}
@@ -276,7 +295,6 @@ export default function Home() {
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
         <div className="w-24 h-24 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-8"></div>
         <h1 className="text-3xl font-bold mb-4">Внимание! Слушайте вводную информацию...</h1>
-        <p className="text-gray-400 text-center max-w-lg">Не начинайте действия, пока не услышите команду «Время пошло!»</p>
       </div>
     );
   }
@@ -290,11 +308,8 @@ export default function Home() {
         
         <div className="bg-white p-6 rounded-lg shadow w-full max-w-md max-h-[60vh] overflow-y-auto">
           <h2 className="text-xl font-semibold mb-2">Студент: {studentId}</h2>
-          
-          {/* ВЫВОД ПОРЯДКА ДЕЙСТВИЙ СТУДЕНТА */}
           <h3 className="text-lg font-semibold mt-4 mb-2">Порядок ваших действий:</h3>
           <div className="space-y-1 mb-6">
-            {sequence.length === 0 && <p className="text-gray-500 italic">Действий не было</p>}
             {sequence.map((id, index) => {
               const action = ALL_ACTIONS.find(a => a.id === id);
               return (
@@ -305,22 +320,6 @@ export default function Home() {
               );
             })}
           </div>
-
-          <h3 className="text-lg font-semibold mb-2">Разбор (правильный порядок):</h3>
-          {currentOrder.map((correctId, index) => {
-            const action = ALL_ACTIONS.find(a => a.id === correctId);
-            const userActionId = sequence[index];
-            const isCorrectStep = userActionId === correctId;
-            return (
-              <div key={index} className="flex flex-col p-2 border-b last:border-0">
-                <span className="text-sm text-gray-500 mb-1">Шаг {index + 1}:</span>
-                <div className={`flex justify-between font-medium ${isCorrectStep ? 'text-green-600' : 'text-red-500'}`}>
-                  <span>{action?.label}</span>
-                  <span>{isCorrectStep ? '✓' : '✗'}</span>
-                </div>
-              </div>
-            );
-          })}
         </div>
         <button onClick={() => window.location.reload()} className="mt-6 bg-blue-600 text-white px-6 py-2 rounded">Пройти заново</button>
       </div>
@@ -329,12 +328,51 @@ export default function Home() {
 
   // ИНТЕРФЕЙС
   return (
-    <div className="min-h-screen bg-gray-900 text-white overflow-hidden relative">
+    <div className={`min-h-screen bg-gray-900 text-white overflow-hidden relative ${timeLeft < 60 ? 'animate-pulse ring-8 ring-red-600 ring-inset' : ''}`}>
+      
+      {/* HUD (Витальные показатели) */}
+      <div className="absolute top-4 right-4 bg-black/80 border border-gray-600 p-3 rounded-xl z-40 font-mono text-sm shadow-xl">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-red-500 animate-pulse">❤️</span>
+          <span>ЧСС: {vitals.hr} уд/мин</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-blue-400">🫁</span>
+          <span>SpO2: {vitals.spo2}%</span>
+        </div>
+      </div>
+
+      {/* Таймер */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
-        <span className="text-2xl font-mono text-green-400 font-bold tracking-widest">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
+        <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 ? 'text-red-500' : 'text-green-400'}`}>
+          {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+        </span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
 
+      {/* Модалка вызова СМП */}
+      {phoneModal && (
+        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold mb-4 text-center">Звонок в СМП</h3>
+            <p className="mb-4 text-sm text-gray-600 text-center">Диспетчер: «Скорая помощь слушает, что случилось?»</p>
+            <div className="space-y-2">
+              <button onClick={handleCorrectCall} className="w-full p-3 border rounded-lg text-left hover:bg-green-50 hover:border-green-500">
+                «Здравствуйте! У нас мужчина 45 лет без сознания, не дышит. Начинаем СЛР. Адрес: улица Ленина, дом 5.»
+              </button>
+              <button onClick={() => setHelperMessage('Ошибка: диспетчеру нужен точный адрес и состояние пациента!')} className="w-full p-3 border rounded-lg text-left hover:bg-gray-50">
+                «Приезжайте быстрее, человеку плохо!»
+              </button>
+              <button onClick={() => setHelperMessage('Ошибка: диспетчеру нужен точный адрес и состояние пациента!')} className="w-full p-3 border rounded-lg text-left hover:bg-gray-50">
+                «Нам нужна скорая, мы на работе.»
+              </button>
+            </div>
+            <button onClick={() => setPhoneModal(false)} className="mt-4 w-full text-center text-gray-500 hover:text-red-500 text-sm">Отмена</button>
+          </div>
+        </div>
+      )}
+
+      {/* Ритм-игра */}
       {challenge === 'cpr' && (
         <div className="absolute inset-0 bg-gray-900/95 flex flex-col items-center justify-center z-50 p-4">
           <h2 className="text-3xl font-bold mb-2 text-white">Компрессии</h2>
@@ -349,6 +387,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* Окно АНД */}
       {aedOpen && (
         <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 border-4 border-gray-600 rounded-3xl p-8 w-full max-w-md flex flex-col items-center">
@@ -383,7 +422,7 @@ export default function Home() {
           <button key={spot.id} onClick={() => setActiveHotspot(spot.id)} className="absolute border-2 border-transparent hover:border-blue-400/70 hover:bg-blue-400/20 rounded-xl z-10" style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, height: `${spot.h}%` }} />
         ))}
 
-        {activeHotspot && !aedOpen && !challenge && (
+        {activeHotspot && !aedOpen && !challenge && !phoneModal && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30 p-4">
             <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm">
               <button onClick={() => setActiveHotspot(null)} className="float-right font-bold">✕</button>
