@@ -175,7 +175,7 @@ export default function Home() {
             Приступить к осмотру
           </button>
         </div>
-        <Helper message={helperMessage} onClose={() => setHelperMessage(null)} />
+        <Helper message={helperMessage} onClose={() => setHelperMessage(null)} welcome onStart={startExam} />
       </div>
     );
   }
