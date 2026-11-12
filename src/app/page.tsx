@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import Helper from './Helper';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -174,6 +175,7 @@ export default function Home() {
             Приступить к осмотру
           </button>
         </div>
+        <Helper message={helperMessage} onClose={() => setHelperMessage(null)} />
       </div>
     );
   }
@@ -204,6 +206,7 @@ export default function Home() {
           })}
         </div>
         <button onClick={() => window.location.reload()} className="mt-6 bg-blue-600 text-white px-6 py-2 rounded">Пройти заново</button>
+        <Helper message={helperMessage} onClose={() => setHelperMessage(null)} />
       </div>
     );
   }
@@ -310,6 +313,7 @@ export default function Home() {
           </div>
         )}
       </div>
+      <Helper message={helperMessage} onClose={() => setHelperMessage(null)} />
     </div>
   );
 }
