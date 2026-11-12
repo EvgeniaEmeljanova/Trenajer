@@ -253,15 +253,6 @@ export default function Home() {
         </div>
       )}
 
-      {helperMessage && (
-        <div className="absolute top-20 left-4 z-50 max-w-sm">
-          <div className="bg-white text-gray-800 p-4 rounded-xl shadow-2xl border-l-4 border-blue-500">
-            <p className="font-medium">{helperMessage}</p>
-            <button onClick={() => setHelperMessage(null)} className="mt-2 text-blue-600 text-sm">Закрыть</button>
-          </div>
-        </div>
-      )}
-
       <div className="relative w-full max-w-[1200px] mx-auto">
         <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
         
