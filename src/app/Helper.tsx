@@ -13,8 +13,8 @@ const QUICK_ANSWERS = [
   },
 ];
 
-export default function Helper({ message, onClose }: { message: string | null, onClose: () => void }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function Helper({ message, onClose, welcome = false, onStart }: { message: string | null, onClose: () => void, welcome?: boolean, onStart?: () => void }) {
+  const [isOpen, setIsOpen] = useState(welcome);
   const [reply, setReply] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,8 +45,13 @@ export default function Helper({ message, onClose }: { message: string | null, o
             </button>
           </div>
           <p className="text-sm leading-relaxed mb-3">
-            {reply || 'Привет! Я Аккредик. Выбери, чем помочь — я подскажу, как ориентироваться в тренажёре.'}
+            {reply || (welcome ? 'Привет! Я Аккредик. Рад тебя видеть! Готов потренироваться? Если что-то будет непонятно — нажми на меня. Я помогу разобраться. И не переживай из-за ошибок: для этого мы и тренируемся!' : 'Привет! Я Аккредик. Выбери, чем помочь — я подскажу, как ориентироваться в тренажёре.')}
           </p>
+          {welcome && onStart && (
+            <button type="button" onClick={() => { onStart(); closePanel(); }} className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-3 py-2 transition-colors">
+              Начать тренировку
+            </button>
+          )}
           <div className="flex flex-col gap-2">
             {QUICK_ANSWERS.map((item) => (
               <button
