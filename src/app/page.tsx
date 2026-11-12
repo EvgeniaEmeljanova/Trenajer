@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import Helper from './Helper';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -27,21 +26,21 @@ const ALL_ACTIONS = [
   { id: 'gloves', label: 'Надеть перчатки' },
   { id: 'airway', label: 'Оценить проходимость дыхательных путей' },
   { id: 'spo2', label: 'Пульсоксиметрия' },
-  { id: 'oxygen', label: 'Кислородотерапия по показаниям' },
-  { id: 'respiratory_rate', label: 'Подсчет ЧДД (10 сек)' },
-  { id: 'percussion', label: 'Сравнительная перкуссия легких' },
+  { id: 'oxygen', label: 'Кислородотерапия' },
+  { id: 'respiratory_rate', label: 'Подсчет ЧДД' },
+  { id: 'percussion', label: 'Перкуссия легких' },
   { id: 'auscultation', label: 'Аускультация легких' },
   { id: 'trachea', label: 'Осмотр трахеи и вен шеи' },
-  { id: 'pulse', label: 'Пульс на лучевой и сонной артериях (10 сек, с 2-х сторон)' },
+  { id: 'pulse', label: 'Пульс с двух сторон' },
   { id: 'bp', label: 'Измерить АД' },
   { id: 'heart_ausc', label: 'Аускультация сердца' },
-  { id: 'cap_refill', label: 'Симптом белого пятна (5 сек)' },
-  { id: 'skin', label: 'Оценить цвет и влажность кожи' },
-  { id: 'ecg', label: 'Снять ЭКГ в 12 отведениях' },
+  { id: 'cap_refill', label: 'Симптом белого пятна' },
+  { id: 'skin', label: 'Оценить кожные покровы' },
+  { id: 'ecg', label: 'Снять ЭКГ' },
   { id: 'ecg_interpret', label: 'Интерпретировать ЭКГ' },
-  { id: 'venous', label: 'Венозный доступ и забор анализов' },
-  { id: 'pupils', label: 'Оценить фотореакцию зрачков' },
-  { id: 'muscle_tone', label: 'Оценить тонус мышц' },
+  { id: 'venous', label: 'Венозный доступ' },
+  { id: 'pupils', label: 'Фотореакция зрачков' },
+  { id: 'muscle_tone', label: 'Тонус мышц' },
   { id: 'glucose', label: 'Уровень глюкозы' },
   { id: 'abdomen', label: 'Пальпация живота' },
   { id: 'call', label: 'Вызвать СМП/ОРИТ' },
@@ -49,10 +48,35 @@ const ALL_ACTIONS = [
   { id: 'aed', label: 'Работа с АНД' },
 ];
 
+// Уникальные последовательности для всех 9 сценариев
 const SCENARIO_DATA: Record<ScenarioType, { order: string[] }> = {
-  OKS1: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call', 'aed'] },
-  ANAPHYLAXIS: { order: ['consciousness', 'gloves', 'airway', 'adrenaline', 'oxygen', 'call'] },
-  OKS2: { order: [] }, ZHKK: { order: [] }, BOS: { order: [] }, TELA: { order: [] }, PNEUMOTHORAX: { order: [] }, HYPOGLYCEMIA: { order: [] }, HYPERGLYCEMIA: { order: [] },
+  OKS1: {
+    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call', 'aed']
+  },
+  OKS2: {
+    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call', 'aed']
+  },
+  ANAPHYLAXIS: {
+    order: ['consciousness', 'gloves', 'airway', 'adrenaline', 'oxygen', 'call']
+  },
+  ZHKK: {
+    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'pulse', 'bp', 'heart_ausc', 'skin', 'venous', 'abdomen', 'call']
+  },
+  BOS: {
+    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'auscultation', 'pulse', 'bp', 'call']
+  },
+  TELA: {
+    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'auscultation', 'pulse', 'bp', 'ecg', 'venous', 'call']
+  },
+  PNEUMOTHORAX: {
+    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'call']
+  },
+  HYPOGLYCEMIA: {
+    order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'call']
+  },
+  HYPERGLYCEMIA: {
+    order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'call']
+  },
 };
 
 const HOTSPOTS = [
@@ -81,7 +105,7 @@ export default function Home() {
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
 
-  const currentOrder = scenario ? (SCENARIO_DATA[scenario].order.length > 0 ? SCENARIO_DATA[scenario].order : SCENARIO_DATA.OKS1.order) : [];
+  const currentOrder = scenario ? (SCENARIO_DATA[scenario].order) : [];
 
   useEffect(() => {
     if (!gameStarted || finished) return;
@@ -172,10 +196,9 @@ export default function Home() {
             <p>Медицинский брат/сестра — Ваш помощник, недавно приступил/а к работе, информации о причинах резкого ухудшения состояния пациента не имеет. Он/а будет выполнять по Вашему назначению манипуляции, входящие в его/ее компетенцию.</p>
           </div>
           <button onClick={startExam} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
-            Приступить к осмотру
+            Приступить к осмотру (Случайный сценарий)
           </button>
         </div>
-        <Helper message={helperMessage} onClose={() => setHelperMessage(null)} welcome onStart={startExam} />
       </div>
     );
   }
@@ -206,14 +229,12 @@ export default function Home() {
           })}
         </div>
         <button onClick={() => window.location.reload()} className="mt-6 bg-blue-600 text-white px-6 py-2 rounded">Пройти заново</button>
-        <Helper message={helperMessage} onClose={() => setHelperMessage(null)} />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white overflow-hidden relative">
-      {/* Таймер (теперь ВСЕГДА внизу) */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
         <span className="text-2xl font-mono text-green-400 font-bold tracking-widest">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
@@ -225,7 +246,7 @@ export default function Home() {
             <h3 className="text-xl font-bold mb-4">Проверка пульса</h3>
             <div className="space-y-2">
               <button onClick={() => { setHelperMessage('Ошибка: нужно с 2-х сторон!'); setChallenge(null); }} className="w-full p-3 border rounded text-left">На одной руке</button>
-              <button onClick={() => { toggleAction('pulse'); setHelperMessage('Верно!'); }} className="w-full p-3 border rounded text-left bg-green-50">На двух руках (лучевая и сонная)</button>
+              <button onClick={() => { toggleAction('pulse'); setHelperMessage('Верно!'); }} className="w-full p-3 border rounded text-left bg-green-50">На двух руках</button>
             </div>
           </div>
         </div>
@@ -248,7 +269,16 @@ export default function Home() {
           <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm">
             <h3 className="text-xl font-bold mb-4">Оценка сознания</h3>
             <button onClick={() => { setHelperMessage('Ошибка: нужно встряхнуть и спросить!'); setChallenge(null); }} className="w-full p-3 border rounded text-left mb-2">Просто окрикнуть</button>
-            <button onClick={() => { toggleAction('consciousness'); setHelperMessage('Верно!'); }} className="w-full p-3 border rounded text-left bg-green-50">Встряхнуть за плечи + громко спросить</button>
+            <button onClick={() => { toggleAction('consciousness'); setHelperMessage('Верно!'); }} className="w-full p-3 border rounded text-left bg-green-50">Встряхнуть + спросить</button>
+          </div>
+        </div>
+      )}
+
+      {helperMessage && (
+        <div className="absolute top-20 left-4 z-50 max-w-sm">
+          <div className="bg-white text-gray-800 p-4 rounded-xl shadow-2xl border-l-4 border-blue-500">
+            <p className="font-medium">{helperMessage}</p>
+            <button onClick={() => setHelperMessage(null)} className="mt-2 text-blue-600 text-sm">Закрыть</button>
           </div>
         </div>
       )}
@@ -304,7 +334,6 @@ export default function Home() {
           </div>
         )}
       </div>
-      <Helper message={helperMessage} onClose={() => setHelperMessage(null)} />
     </div>
   );
 }
