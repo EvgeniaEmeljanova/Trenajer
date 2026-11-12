@@ -7,7 +7,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
-// Добавили BLS (Базисная СЛР) в список сценариев
 type ScenarioType = 'OKS1' | 'OKS2' | 'ANAPHYLAXIS' | 'ZHKK' | 'BOS' | 'TELA' | 'PNEUMOTHORAX' | 'HYPOGLYCEMIA' | 'HYPERGLYCEMIA' | 'BLS';
 
 const SCENARIO_TITLES = {
@@ -20,73 +19,39 @@ const SCENARIO_TITLES = {
   PNEUMOTHORAX: 'Пневмоторакс',
   HYPOGLYCEMIA: 'Гипогликемия',
   HYPERGLYCEMIA: 'Гипергликемия',
-  BLS: 'Базисная СЛР',
+  BLS: 'Базовая СЛР (BLS)',
 };
 
 const ALL_ACTIONS = [
-  { id: 'consciousness', label: 'Оценить сознание (встряхнуть, спросить)' },
-  { id: 'gloves', label: 'Надеть перчатки' },
-  { id: 'airway', label: 'Оценить проходимость дыхательных путей' },
-  { id: 'spo2', label: 'Пульсоксиметрия' },
-  { id: 'oxygen', label: 'Кислородотерапия' },
-  { id: 'respiratory_rate', label: 'Подсчет ЧДД' },
-  { id: 'percussion', label: 'Перкуссия легких' },
-  { id: 'auscultation', label: 'Аускультация легких' },
-  { id: 'trachea', label: 'Осмотр трахеи и вен шеи' },
-  { id: 'pulse', label: 'Пульс с двух сторон' },
-  { id: 'bp', label: 'Измерить АД' },
-  { id: 'heart_ausc', label: 'Аускультация сердца' },
-  { id: 'cap_refill', label: 'Симптом белого пятна' },
-  { id: 'skin', label: 'Оценить кожные покровы' },
-  { id: 'ecg', label: 'Снять ЭКГ' },
-  { id: 'ecg_interpret', label: 'Интерпретировать ЭКГ' },
-  { id: 'venous', label: 'Венозный доступ' },
-  { id: 'pupils', label: 'Фотореакция зрачков' },
-  { id: 'muscle_tone', label: 'Тонус мышц' },
-  { id: 'glucose', label: 'Уровень глюкозы' },
-  { id: 'abdomen', label: 'Пальпация живота' },
-  { id: 'call', label: 'Вызвать СМП/ОРИТ' },
-  { id: 'adrenaline', label: 'Ввести адреналин' },
-  { id: 'aed', label: 'Работа с АНД' },
-  // Новые действия для СЛР
   { id: 'danger', label: 'Убедиться в отсутствии опасности' },
+  { id: 'choking', label: 'Спросить: «Вы подавились?»' },
+  { id: 'back_blows', label: 'Нанести 5 ударов между лопатками' },
+  { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)' },
+  { id: 'consciousness', label: 'Оценить сознание' },
+  { id: 'airway', label: 'Открыть дыхательные пути' },
   { id: 'breathing', label: 'Оценить дыхание (7-10 сек)' },
+  { id: 'call', label: 'Вызвать СМП' },
   { id: 'compressions', label: 'Начать компрессии (30 раз)' },
   { id: 'breaths', label: 'Сделать 2 вдоха' },
+  { id: 'aed', label: 'Работа с АНД' },
+  { id: 'recovery', label: 'Устойчивое боковое положение' },
+  { id: 'gloves', label: 'Надеть перчатки' },
+  { id: 'spo2', label: 'Пульсоксиметрия' },
+  { id: 'oxygen', label: 'Кислородотерапия' },
+  { id: 'ecg', label: 'Снять ЭКГ' },
+  { id: 'adrenaline', label: 'Ввести адреналин' },
+];
+
+const BLS_ORDER = [
+  'danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 
+  'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions', 'recovery'
 ];
 
 const SCENARIO_DATA: Record<ScenarioType, { order: string[] }> = {
-  OKS1: {
-    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call', 'aed']
-  },
-  OKS2: {
-    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call', 'aed']
-  },
-  ANAPHYLAXIS: {
-    order: ['consciousness', 'gloves', 'airway', 'adrenaline', 'oxygen', 'call']
-  },
-  ZHKK: {
-    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'pulse', 'bp', 'heart_ausc', 'skin', 'venous', 'abdomen', 'call']
-  },
-  BOS: {
-    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'auscultation', 'pulse', 'bp', 'call']
-  },
-  TELA: {
-    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'auscultation', 'pulse', 'bp', 'ecg', 'venous', 'call']
-  },
-  PNEUMOTHORAX: {
-    order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'call']
-  },
-  HYPOGLYCEMIA: {
-    order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'call']
-  },
-  HYPERGLYCEMIA: {
-    order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'call']
-  },
-  // ПРАВИЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ ДЛЯ СЛР
-  BLS: {
-    order: ['danger', 'consciousness', 'call', 'breathing', 'compressions', 'breaths', 'aed']
-  },
+  BLS: { order: BLS_ORDER },
+  OKS1: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'ecg', 'call', 'aed'] },
+  ANAPHYLAXIS: { order: ['consciousness', 'gloves', 'airway', 'adrenaline', 'oxygen', 'call'] },
+  OKS2: { order: [] }, ZHKK: { order: [] }, BOS: { order: [] }, TELA: { order: [] }, PNEUMOTHORAX: { order: [] }, HYPOGLYCEMIA: { order: [] }, HYPERGLYCEMIA: { order: [] },
 };
 
 const HOTSPOTS = [
@@ -107,10 +72,14 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
+  
+  // Состояния для мини-игр
   const [challenge, setChallenge] = useState<string | null>(null);
-  const [capRefillTimer, setCapRefillTimer] = useState(0);
-  const [capRefillSuccess, setCapRefillSuccess] = useState(false);
-  const capRefillInterval = useRef<NodeJS.Timeout | null>(null);
+  const [cprCount, setCprCount] = useState(0);
+  const [cprFeedback, setCprFeedback] = useState('');
+  const lastCprTime = useRef<number>(0);
+
+  // АНД
   const [aedOpen, setAedOpen] = useState(false);
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
@@ -134,33 +103,9 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
 
-  // ИЗМЕНЕНО: Убрано слово "Случайный сценарий" из кнопки
   const startExam = () => {
-    const keys = Object.keys(SCENARIO_TITLES) as ScenarioType[];
-    const randomKey = keys[Math.floor(Math.random() * keys.length)];
-    setScenario(randomKey);
+    setScenario('BLS');
     setGameStarted(true);
-  };
-
-  const startCapRefill = () => {
-    setCapRefillSuccess(false);
-    setCapRefillTimer(5);
-    if (capRefillInterval.current) clearInterval(capRefillInterval.current);
-    capRefillInterval.current = setInterval(() => {
-      setCapRefillTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(capRefillInterval.current!);
-          setCapRefillSuccess(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const stopCapRefill = () => {
-    if (capRefillInterval.current) clearInterval(capRefillInterval.current);
-    if (!capRefillSuccess) setCapRefillTimer(0);
   };
 
   const toggleAction = (id: string) => {
@@ -171,11 +116,62 @@ export default function Home() {
   };
 
   const handleActionClick = (id: string) => {
-    if (id === 'pulse') { setChallenge('pulse'); return; }
-    if (id === 'cap_refill') { setChallenge('cap_refill'); return; }
-    if (id === 'consciousness') { setChallenge('consciousness'); return; }
+    if (id === 'compressions') {
+      setChallenge('cpr');
+      setCprCount(0);
+      setCprFeedback('');
+      lastCprTime.current = 0;
+      return;
+    }
+    if (id === 'recovery') {
+      setHelperMessage('Вы перевернули пациента в устойчивое боковое положение!');
+      toggleAction(id);
+      return;
+    }
+    if (id === 'choking') {
+      setHelperMessage('Пациент не может говорить и хватается за горло. Полное нарушение проходимости!');
+      toggleAction(id);
+      return;
+    }
     toggleAction(id);
   };
+
+  // --- ЛОГИКА РИТМ-ИГРЫ ДЛЯ КОМПРЕССИЙ ---
+  const handleCprClick = () => {
+    const now = Date.now();
+    let feedback = '';
+    
+    if (lastCprTime.current !== 0) {
+      const interval = now - lastCprTime.current;
+      if (interval < 400) feedback = 'Слишком быстро!';
+      else if (interval > 750) feedback = 'Слишком медленно!';
+      else feedback = 'Отличный ритм!';
+    } else {
+      feedback = 'Начали!';
+    }
+
+    lastCprTime.current = now;
+    setCprFeedback(feedback);
+    setCprCount(prev => {
+      const next = prev + 1;
+      if (next >= 30) {
+        setTimeout(() => { setChallenge(null); toggleAction('compressions'); }, 500);
+      }
+      return next;
+    });
+  };
+
+  // Обработка пробела для игры
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (challenge === 'cpr' && e.code === 'Space') {
+        e.preventDefault();
+        handleCprClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [challenge]);
 
   const finishScenario = async () => {
     setFinished(true);
@@ -199,12 +195,10 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
         <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-8 max-w-2xl w-full shadow-2xl">
-          <h1 className="text-3xl font-bold mb-6 text-blue-400">Брифинг аккредитуемого</h1>
+          <h1 className="text-3xl font-bold mb-6 text-blue-400">Брифинг: Базовая СЛР</h1>
           <div className="space-y-4 text-lg text-gray-200 leading-relaxed">
-            <p>Вы — врач своей специальности. Медицинский брат/сестра вызвал/а Вас на помощь.</p>
-            <p>Перед Вами пациент <strong>45 лет</strong> (приблизительный вес 60 кг, рост 165 см) с установленным периферическим венозным катетером.</p>
-            <p>На этаже есть укладка экстренной медицинской помощи и автоматический наружный дефибриллятор (АНД).</p>
-            <p>Медицинский брат/сестра — Ваш помощник, недавно приступил/а к работе, информации о причинах резкого ухудшения состояния пациента не имеет. Он/а будет выполнять по Вашему назначению манипуляции, входящие в его/ее компетенцию.</p>
+            <p>Вы увидели, что человеку стало плохо. Необходимо оказать ему первую помощь в рамках своих умений.</p>
+            <p>На станции есть автоматический наружный дефибриллятор (АНД), однако воспользоваться им Вы сможете только после соответствующей голосовой команды.</p>
           </div>
           <button onClick={startExam} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
             Приступить к осмотру
@@ -221,9 +215,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold mb-4">{isPassed ? 'Экзамен сдан! 🎉' : 'Экзамен не сдан 😔'}</h1>
         <p className={`text-6xl font-bold mb-8 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{score}%</p>
         <div className="bg-white p-6 rounded-lg shadow w-full max-w-md max-h-[60vh] overflow-y-auto">
-          <h2 className="text-xl font-semibold mb-2">Сценарий: {scenario ? SCENARIO_TITLES[scenario] : ''}</h2>
-          <h3 className="text-lg font-semibold mb-2 mt-4">Разбор действий:</h3>
-          {!isPassed && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm"><strong>Ошибка!</strong> Вы нарушили последовательность.</div>}
+          <h2 className="text-xl font-semibold mb-2">Ваши действия:</h2>
           {currentOrder.map((correctId, index) => {
             const action = ALL_ACTIONS.find(a => a.id === correctId);
             const userActionId = sequence[index];
@@ -251,36 +243,42 @@ export default function Home() {
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
 
-      {challenge === 'pulse' && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-xl font-bold mb-4">Проверка пульса</h3>
-            <div className="space-y-2">
-              <button onClick={() => { setHelperMessage('Ошибка: нужно с 2-х сторон!'); setChallenge(null); }} className="w-full p-3 border rounded text-left">На одной руке</button>
-              <button onClick={() => { toggleAction('pulse'); setHelperMessage('Верно!'); }} className="w-full p-3 border rounded text-left bg-green-50">На двух руках</button>
+      {/* --- РИТМ-ИГРА ДЛЯ КОМПРЕССИЙ --- */}
+      {challenge === 'cpr' && (
+        <div className="absolute inset-0 bg-gray-900/95 flex flex-col items-center justify-center z-50 p-4">
+          <h2 className="text-3xl font-bold mb-2 text-white">Компрессии грудной клетки</h2>
+          <p className="text-gray-400 mb-8">Нажимайте на круг или пробел в ритме 100-120 в минуту</p>
+          
+          <div className={`mb-6 text-2xl font-bold ${cprFeedback === 'Отличный ритм!' ? 'text-green-400' : cprFeedback.includes('Слишком') ? 'text-red-500' : 'text-white'}`}>
+            {cprFeedback}
+          </div>
+
+          <button 
+            onClick={handleCprClick} 
+            className="w-64 h-64 bg-red-600 rounded-full text-white text-7xl font-bold shadow-[0_0_80px_rgba(220,38,38,0.6)] active:scale-95 transition-transform flex items-center justify-center select-none"
+          >
+            {cprCount}
+          </button>
+          
+          <p className="mt-8 text-white text-xl">Осталось: {30 - cprCount} компрессий</p>
+        </div>
+      )}
+
+      {/* Окно АНД */}
+      {aedOpen && (
+        <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 border-4 border-gray-600 rounded-3xl p-8 w-full max-w-md flex flex-col items-center">
+            <div className="w-full bg-black text-green-400 text-center p-6 rounded-lg mb-6 min-h-[120px] flex flex-col justify-center">
+              {aedState === 'idle' && <span className="text-xl">АНД ГОТОВ</span>}
+              {aedState === 'analyzing' && <span className="text-2xl animate-pulse">АНАЛИЗ... {aedTimer}</span>}
+              {aedState === 'shock' && <span className="text-2xl text-red-500 font-bold animate-pulse">РАЗРЯД!</span>}
+              {aedState === 'success' && <span className="text-2xl text-green-500">ГОТОВО</span>}
             </div>
-          </div>
-        </div>
-      )}
-
-      {challenge === 'cap_refill' && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm text-center">
-            <h3 className="text-xl font-bold mb-4">Симптом белого пятна</h3>
-            <button onMouseDown={startCapRefill} onMouseUp={stopCapRefill} onMouseLeave={stopCapRefill} onTouchStart={startCapRefill} onTouchEnd={stopCapRefill} className={`w-full py-4 rounded-xl font-bold ${capRefillSuccess ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}`}>
-              {capRefillSuccess ? 'Выполнено!' : capRefillTimer > 0 ? `Удерживайте: ${capRefillTimer}...` : 'Удерживайте 5 секунд'}
-            </button>
-            {capRefillSuccess && <button onClick={() => { toggleAction('cap_refill'); }} className="mt-4 text-blue-600">Продолжить</button>}
-          </div>
-        </div>
-      )}
-
-      {challenge === 'consciousness' && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-xl font-bold mb-4">Оценка сознания</h3>
-            <button onClick={() => { setHelperMessage('Ошибка: нужно встряхнуть и спросить!'); setChallenge(null); }} className="w-full p-3 border rounded text-left mb-2">Просто окрикнуть</button>
-            <button onClick={() => { toggleAction('consciousness'); setHelperMessage('Верно!'); }} className="w-full p-3 border rounded text-left bg-green-50">Встряхнуть + спросить</button>
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <button onClick={() => { if (aedState === 'idle') { setAedState('analyzing'); setAedTimer(3); } }} disabled={aedState !== 'idle'} className="bg-blue-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Анализ</button>
+              <button onClick={() => { if (aedState === 'shock') { setAedState('success'); setActions({...actions, aed: true}); } }} disabled={aedState !== 'shock'} className="bg-red-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Разряд</button>
+            </div>
+            <button onClick={() => setAedOpen(false)} className="mt-6 text-gray-400 underline">Закрыть</button>
           </div>
         </div>
       )}
@@ -301,19 +299,19 @@ export default function Home() {
           <button key={spot.id} onClick={() => setActiveHotspot(spot.id)} className="absolute border-2 border-transparent hover:border-blue-400/70 hover:bg-blue-400/20 rounded-xl z-10" style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, height: `${spot.h}%` }} />
         ))}
 
-        {activeHotspot && !aedOpen && (
+        {activeHotspot && !aedOpen && !challenge && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30 p-4">
             <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm">
               <button onClick={() => setActiveHotspot(null)} className="float-right font-bold">✕</button>
               <h3 className="text-xl font-bold mb-4">Действия</h3>
               <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                 {ALL_ACTIONS.map((action) => {
-                  if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'breathing', 'compressions', 'breaths'].includes(action.id)) return null;
-                  if (activeHotspot === 'crash_cart' && !['gloves', 'oxygen', 'adrenaline'].includes(action.id)) return null;
-                  if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
-                  if (activeHotspot === 'phone' && action.id !== 'call') return null;
-                  if (activeHotspot === 'aed') {
-                    return <button key="aed-btn" onClick={() => { setAedOpen(true); setActiveHotspot(null); }} className="w-full text-left p-3 rounded border-2 border-gray-200 hover:border-blue-300 mb-2">Открыть АНД</button>;
+                  if (scenario === 'BLS') {
+                    if (activeHotspot === 'patient' && !['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'compressions', 'breaths', 'recovery'].includes(action.id)) return null;
+                    if (activeHotspot === 'phone' && action.id !== 'call') return null;
+                    if (activeHotspot === 'aed') {
+                      return <button key="aed-btn" onClick={() => { setAedOpen(true); setActiveHotspot(null); }} className="w-full text-left p-3 rounded border-2 border-gray-200 hover:border-blue-300 mb-2">Открыть АНД</button>;
+                    }
                   }
 
                   return (
@@ -323,24 +321,6 @@ export default function Home() {
                   );
                 })}
               </div>
-            </div>
-          </div>
-        )}
-
-        {aedOpen && (
-          <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 border-4 border-gray-600 rounded-3xl p-8 w-full max-w-md flex flex-col items-center">
-              <div className="w-full bg-black text-green-400 text-center p-6 rounded-lg mb-6 min-h-[120px] flex flex-col justify-center">
-                {aedState === 'idle' && <span className="text-xl">АНД ГОТОВ</span>}
-                {aedState === 'analyzing' && <span className="text-2xl animate-pulse">АНАЛИЗ... {aedTimer}</span>}
-                {aedState === 'shock' && <span className="text-2xl text-red-500 font-bold animate-pulse">РАЗРЯД!</span>}
-                {aedState === 'success' && <span className="text-2xl text-green-500">ГОТОВО</span>}
-              </div>
-              <div className="grid grid-cols-2 gap-4 w-full">
-                <button onClick={() => { if (aedState === 'idle') { setAedState('analyzing'); setAedTimer(3); } }} disabled={aedState !== 'idle'} className="bg-blue-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Анализ</button>
-                <button onClick={() => { if (aedState === 'shock') { setAedState('success'); setActions({...actions, aed: true}); } }} disabled={aedState !== 'shock'} className="bg-red-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Разряд</button>
-              </div>
-              <button onClick={() => setAedOpen(false)} className="mt-6 text-gray-400 underline">Закрыть</button>
             </div>
           </div>
         )}
