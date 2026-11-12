@@ -7,7 +7,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
-type ScenarioType = 'OKS1' | 'OKS2' | 'ANAPHYLAXIS' | 'ZHKK' | 'BOS' | 'TELA' | 'PNEUMOTHORAX' | 'HYPOGLYCEMIA' | 'HYPERGLYCEMIA';
+// Добавили BLS (Базисная СЛР) в список сценариев
+type ScenarioType = 'OKS1' | 'OKS2' | 'ANAPHYLAXIS' | 'ZHKK' | 'BOS' | 'TELA' | 'PNEUMOTHORAX' | 'HYPOGLYCEMIA' | 'HYPERGLYCEMIA' | 'BLS';
 
 const SCENARIO_TITLES = {
   OKS1: 'ОКС 1 (Инфаркт миокарда)',
@@ -19,6 +20,7 @@ const SCENARIO_TITLES = {
   PNEUMOTHORAX: 'Пневмоторакс',
   HYPOGLYCEMIA: 'Гипогликемия',
   HYPERGLYCEMIA: 'Гипергликемия',
+  BLS: 'Базисная СЛР',
 };
 
 const ALL_ACTIONS = [
@@ -46,9 +48,13 @@ const ALL_ACTIONS = [
   { id: 'call', label: 'Вызвать СМП/ОРИТ' },
   { id: 'adrenaline', label: 'Ввести адреналин' },
   { id: 'aed', label: 'Работа с АНД' },
+  // Новые действия для СЛР
+  { id: 'danger', label: 'Убедиться в отсутствии опасности' },
+  { id: 'breathing', label: 'Оценить дыхание (7-10 сек)' },
+  { id: 'compressions', label: 'Начать компрессии (30 раз)' },
+  { id: 'breaths', label: 'Сделать 2 вдоха' },
 ];
 
-// Уникальные последовательности для всех 9 сценариев
 const SCENARIO_DATA: Record<ScenarioType, { order: string[] }> = {
   OKS1: {
     order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call', 'aed']
@@ -76,6 +82,10 @@ const SCENARIO_DATA: Record<ScenarioType, { order: string[] }> = {
   },
   HYPERGLYCEMIA: {
     order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'call']
+  },
+  // ПРАВИЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ ДЛЯ СЛР
+  BLS: {
+    order: ['danger', 'consciousness', 'call', 'breathing', 'compressions', 'breaths', 'aed']
   },
 };
 
@@ -124,6 +134,7 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
 
+  // ИЗМЕНЕНО: Убрано слово "Случайный сценарий" из кнопки
   const startExam = () => {
     const keys = Object.keys(SCENARIO_TITLES) as ScenarioType[];
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
@@ -196,7 +207,7 @@ export default function Home() {
             <p>Медицинский брат/сестра — Ваш помощник, недавно приступил/а к работе, информации о причинах резкого ухудшения состояния пациента не имеет. Он/а будет выполнять по Вашему назначению манипуляции, входящие в его/ее компетенцию.</p>
           </div>
           <button onClick={startExam} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
-            Приступить к осмотру (Случайный сценарий)
+            Приступить к осмотру
           </button>
         </div>
       </div>
@@ -297,7 +308,7 @@ export default function Home() {
               <h3 className="text-xl font-bold mb-4">Действия</h3>
               <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                 {ALL_ACTIONS.map((action) => {
-                  if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen'].includes(action.id)) return null;
+                  if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'breathing', 'compressions', 'breaths'].includes(action.id)) return null;
                   if (activeHotspot === 'crash_cart' && !['gloves', 'oxygen', 'adrenaline'].includes(action.id)) return null;
                   if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
                   if (activeHotspot === 'phone' && action.id !== 'call') return null;
