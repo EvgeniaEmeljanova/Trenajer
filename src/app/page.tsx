@@ -22,6 +22,19 @@ const SCENARIO_TITLES = {
   BLS: 'Базовая СЛР (BLS)',
 };
 
+const VOICE_INTROS: Record<ScenarioType, string> = {
+  BLS: 'Вы увидели, что человеку стало плохо. Необходимо оказать ему первую помощь в рамках своих умений. На станции есть автоматический наружный дефибриллятор. Время пошло!',
+  OKS1: 'Пациент 45 лет. Жалуется на сильные загрудинные боли. Вы — врач бригады экстренной помощи. Время пошло!',
+  ANAPHYLAXIS: 'Пациент 30 лет. После укуса пчелы появилась резкая слабость, затруднение дыхания. Вы — врач. Время пошло!',
+  OKS2: 'Пациент 50 лет. Жалобы на одышку. Время пошло!',
+  ZHKK: 'Пациент 55 лет. Жалобы на слабость, рвоту кофейной гущей. Время пошло!',
+  BOS: 'Пациент 25 лет. Жалобы на затрудненное дыхание. Время пошло!',
+  TELA: 'Пациент 60 лет. Внезапно появилась резкая боль в грудной клетке. Время пошло!',
+  PNEUMOTHORAX: 'Пациент 40 лет. После травмы грудной клетки появилась резкая боль. Время пошло!',
+  HYPOGLYCEMIA: 'Пациент 50 лет. Состояние спутанное, кожа влажная. Время пошло!',
+  HYPERGLYCEMIA: 'Пациент 35 лет. Жалобы на жажду, сухость во рту. Время пошло!',
+};
+
 const ALL_ACTIONS = [
   { id: 'danger', label: 'Убедиться в отсутствии опасности' },
   { id: 'choking', label: 'Спросить: «Вы подавились?»' },
@@ -62,36 +75,34 @@ const HOTSPOTS = [
   { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
 ];
 
+type Stage = 'briefing' | 'login' | 'intro' | 'playing' | 'finished';
+
 export default function Home() {
-  const [scenario, setScenario] = useState<ScenarioType | null>(null);
-  const [gameStarted, setGameStarted] = useState(false);
+  const [stage, setStage] = useState<Stage>('briefing');
+  const [studentId, setStudentId] = useState('');
+  const [scenario, setScenario] = useState<ScenarioType>('BLS');
   const [actions, setActions] = useState<Record<string, boolean>>({});
   const [sequence, setSequence] = useState<string[]>([]);
   const [timeLeft, setTimeLeft] = useState(510);
-  const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
-  
-  // Состояния для мини-игр
   const [challenge, setChallenge] = useState<string | null>(null);
   const [cprCount, setCprCount] = useState(0);
   const [cprFeedback, setCprFeedback] = useState('');
   const lastCprTime = useRef<number>(0);
-
-  // АНД
   const [aedOpen, setAedOpen] = useState(false);
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
 
-  const currentOrder = scenario ? (SCENARIO_DATA[scenario].order) : [];
+  const currentOrder = SCENARIO_DATA[scenario].order;
 
   useEffect(() => {
-    if (!gameStarted || finished) return;
+    if (stage !== 'playing') return;
     if (timeLeft <= 0) { finishScenario(); return; }
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, finished, gameStarted]);
+  }, [timeLeft, stage]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -103,9 +114,32 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
 
-  const startExam = () => {
-    setScenario('BLS');
-    setGameStarted(true);
+  const handleStartExam = () => {
+    const keys = Object.keys(SCENARIO_TITLES) as ScenarioType[];
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    setScenario(randomKey);
+    setStage('login');
+  };
+
+  // УБРАНА ПРОВЕРКА: теперь можно вводить пустую строку
+  const handleLogin = () => {
+    // Если пусто, ставим "Аноним"
+    const finalId = studentId.trim() || 'Аноним';
+    setStudentId(finalId);
+    setStage('intro');
+    
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const textToSpeak = VOICE_INTROS[scenario];
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.lang = 'ru-RU';
+      utterance.rate = 1.0;
+      
+      utterance.onend = () => { setStage('playing'); };
+      setTimeout(() => { if (stage === 'intro') setStage('playing'); }, 10000);
+      window.speechSynthesis.speak(utterance);
+    } else {
+      setTimeout(() => setStage('playing'), 3000);
+    }
   };
 
   const toggleAction = (id: string) => {
@@ -136,7 +170,6 @@ export default function Home() {
     toggleAction(id);
   };
 
-  // --- ЛОГИКА РИТМ-ИГРЫ ДЛЯ КОМПРЕССИЙ ---
   const handleCprClick = () => {
     const now = Date.now();
     let feedback = '';
@@ -161,7 +194,6 @@ export default function Home() {
     });
   };
 
-  // Обработка пробела для игры
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (challenge === 'cpr' && e.code === 'Space') {
@@ -174,7 +206,7 @@ export default function Home() {
   }, [challenge]);
 
   const finishScenario = async () => {
-    setFinished(true);
+    setStage('finished');
     let calculatedScore = 0;
     let isOrderCorrect = true;
     for (let i = 0; i < sequence.length; i++) {
@@ -184,38 +216,97 @@ export default function Home() {
     else calculatedScore = 0;
     setScore(calculatedScore);
 
+    // СОХРАНЯЕМ ВСЮ ИСТОРИЮ ДЕЙСТВИЙ (ПОРЯДОК)
     if (supabase && scenario) {
       try {
-        await supabase.from('attempts').insert({ scenario_id: scenario, score: calculatedScore, actions: actions });
+        await supabase.from('attempts').insert({ 
+          scenario_id: scenario, 
+          score: calculatedScore, 
+          actions: { 
+            studentId: studentId, 
+            fullSequence: sequence // <--- Сохраняем порядок кликов
+          } 
+        });
       } catch (e) { console.error(e); }
     }
   };
 
-  if (!gameStarted) {
+  // ЭКРАНЫ
+  if (stage === 'briefing') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
         <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-8 max-w-2xl w-full shadow-2xl">
-          <h1 className="text-3xl font-bold mb-6 text-blue-400">Брифинг: Базовая СЛР</h1>
+          <h1 className="text-3xl font-bold mb-6 text-blue-400">Брифинг аккредитуемого</h1>
           <div className="space-y-4 text-lg text-gray-200 leading-relaxed">
-            <p>Вы увидели, что человеку стало плохо. Необходимо оказать ему первую помощь в рамках своих умений.</p>
-            <p>На станции есть автоматический наружный дефибриллятор (АНД), однако воспользоваться им Вы сможете только после соответствующей голосовой команды.</p>
+            <p>Вы — врач своей специальности. Медицинский брат/сестра вызвал/а Вас на помощь.</p>
+            <p>Перед Вами пациент <strong>45 лет</strong>.</p>
+            <p>На этаже есть укладка экстренной медицинской помощи и автоматический наружный дефибриллятор (АНД).</p>
           </div>
-          <button onClick={startExam} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
-            Приступить к осмотру
+          <button onClick={handleStartExam} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
+            Войти на станцию
           </button>
         </div>
       </div>
     );
   }
 
-  if (finished) {
+  if (stage === 'login') {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+        <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center">
+          <h1 className="text-3xl font-bold mb-6 text-blue-400">Вход на станцию</h1>
+          <p className="mb-6 text-gray-300">Введите любой номер (или пропустите, будет "Аноним")</p>
+          <input 
+            type="text" 
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+            placeholder="Логин (необязательно)"
+            className="w-full bg-gray-700 text-white text-center text-2xl font-mono p-4 rounded-xl mb-6 border-2 border-gray-600 focus:border-blue-500 outline-none"
+          />
+          <button onClick={handleLogin} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
+            Подтвердить
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === 'intro') {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
+        <div className="w-24 h-24 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-8"></div>
+        <h1 className="text-3xl font-bold mb-4">Внимание! Слушайте вводную информацию...</h1>
+        <p className="text-gray-400 text-center max-w-lg">Не начинайте действия, пока не услышите команду «Время пошло!»</p>
+      </div>
+    );
+  }
+
+  if (stage === 'finished') {
     const isPassed = score === 100;
     return (
       <div className={`min-h-screen p-8 flex flex-col items-center justify-center ${isPassed ? 'bg-green-50' : 'bg-red-50'}`}>
         <h1 className="text-4xl font-bold mb-4">{isPassed ? 'Экзамен сдан! 🎉' : 'Экзамен не сдан 😔'}</h1>
         <p className={`text-6xl font-bold mb-8 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{score}%</p>
+        
         <div className="bg-white p-6 rounded-lg shadow w-full max-w-md max-h-[60vh] overflow-y-auto">
-          <h2 className="text-xl font-semibold mb-2">Ваши действия:</h2>
+          <h2 className="text-xl font-semibold mb-2">Студент: {studentId}</h2>
+          
+          {/* ВЫВОД ПОРЯДКА ДЕЙСТВИЙ СТУДЕНТА */}
+          <h3 className="text-lg font-semibold mt-4 mb-2">Порядок ваших действий:</h3>
+          <div className="space-y-1 mb-6">
+            {sequence.length === 0 && <p className="text-gray-500 italic">Действий не было</p>}
+            {sequence.map((id, index) => {
+              const action = ALL_ACTIONS.find(a => a.id === id);
+              return (
+                <div key={index} className="flex gap-2 text-sm p-1 border-b border-gray-100">
+                  <span className="text-gray-400 w-6">{index + 1}.</span>
+                  <span className="text-gray-800">{action?.label || id}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <h3 className="text-lg font-semibold mb-2">Разбор (правильный порядок):</h3>
           {currentOrder.map((correctId, index) => {
             const action = ALL_ACTIONS.find(a => a.id === correctId);
             const userActionId = sequence[index];
@@ -236,6 +327,7 @@ export default function Home() {
     );
   }
 
+  // ИНТЕРФЕЙС
   return (
     <div className="min-h-screen bg-gray-900 text-white overflow-hidden relative">
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
@@ -243,28 +335,20 @@ export default function Home() {
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
 
-      {/* --- РИТМ-ИГРА ДЛЯ КОМПРЕССИЙ --- */}
       {challenge === 'cpr' && (
         <div className="absolute inset-0 bg-gray-900/95 flex flex-col items-center justify-center z-50 p-4">
-          <h2 className="text-3xl font-bold mb-2 text-white">Компрессии грудной клетки</h2>
-          <p className="text-gray-400 mb-8">Нажимайте на круг или пробел в ритме 100-120 в минуту</p>
-          
+          <h2 className="text-3xl font-bold mb-2 text-white">Компрессии</h2>
+          <p className="text-gray-400 mb-8">Нажимайте в ритме 100-120 в минуту</p>
           <div className={`mb-6 text-2xl font-bold ${cprFeedback === 'Отличный ритм!' ? 'text-green-400' : cprFeedback.includes('Слишком') ? 'text-red-500' : 'text-white'}`}>
             {cprFeedback}
           </div>
-
-          <button 
-            onClick={handleCprClick} 
-            className="w-64 h-64 bg-red-600 rounded-full text-white text-7xl font-bold shadow-[0_0_80px_rgba(220,38,38,0.6)] active:scale-95 transition-transform flex items-center justify-center select-none"
-          >
+          <button onClick={handleCprClick} className="w-64 h-64 bg-red-600 rounded-full text-white text-7xl font-bold shadow-[0_0_80px_rgba(220,38,38,0.6)] active:scale-95 transition-transform flex items-center justify-center select-none">
             {cprCount}
           </button>
-          
-          <p className="mt-8 text-white text-xl">Осталось: {30 - cprCount} компрессий</p>
+          <p className="mt-8 text-white text-xl">Осталось: {30 - cprCount}</p>
         </div>
       )}
 
-      {/* Окно АНД */}
       {aedOpen && (
         <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 border-4 border-gray-600 rounded-3xl p-8 w-full max-w-md flex flex-col items-center">
