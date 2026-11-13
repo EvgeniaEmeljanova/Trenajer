@@ -98,7 +98,6 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   
-  // ФИШКА: Аккредик (подсказки)
   const [accredicMessage, setAccredicMessage] = useState<string | null>(null);
 
   const [challenge, setChallenge] = useState<string | null>(null);
@@ -193,34 +192,37 @@ export default function Home() {
     setChallenge(null);
   };
 
-  // --- ЛОГИКА ПРОВЕРКИ ДЕЙСТВИЙ АККРЕДИКОМ ---
+  // --- УМНЫЙ АККРЕДИК (Строгая проверка последовательности) ---
   const handleActionClick = (id: string) => {
+    // Если действие уже выполнено
+    if (actions[id]) {
+      setAccredicMessage('Вы уже выполнили это действие!');
+      setTimeout(() => setAccredicMessage(null), 2000);
+      return;
+    }
+
     const expectedId = currentOrder[sequence.length];
     const expectedAction = ALL_ACTIONS.find(a => a.id === expectedId);
     
-    // Если действие не то, что ожидалось - Аккредик подсказывает
+    // Если действие не то, что ожидалось — БЛОКИРУЕМ его
     if (expectedId && id !== expectedId) {
-      // Специальные подсказки для частых ошибок
       if (id === 'aed' && expectedId !== 'aed') {
-        setAccredicMessage('Стой! Рано включать АНД. Сначала убедись, что пациент без сознания и не дышит!');
+        setAccredicMessage('Стой! Рано включать АНД. Сначала выполните предыдущие шаги!');
       } else if (id === 'compressions' && expectedId !== 'compressions') {
         setAccredicMessage('Подожди с компрессиями! Сначала проверь сознание и дыхание.');
       } else if (id === 'call' && expectedId !== 'call') {
         setAccredicMessage('Сначала оцени состояние пациента, потом вызывай скорую.');
       } else {
-        setAccredicMessage(`Это неверный шаг! Сейчас нужно: ${expectedAction?.label.toLowerCase()}`);
+        setAccredicMessage(`Неверный шаг! Сейчас нужно: ${expectedAction?.label.toLowerCase()}`);
       }
       
-      // Автоматически убираем сообщение через 4 секунды
       setTimeout(() => setAccredicMessage(null), 4000);
-      
-      // (Опционально) Можно не давать выполнить действие, но для тренировки 
-      // лучше дать ему сделать ошибку и увидеть её в конце.
-    } else {
-      // Правильное действие
-      setAccredicMessage('Верно! Молодец!');
-      setTimeout(() => setAccredicMessage(null), 2000);
+      return; // ВАЖНО: действие не выполняется!
     }
+
+    // Если действие верное
+    setAccredicMessage('Верно! Молодец!');
+    setTimeout(() => setAccredicMessage(null), 2000);
 
     if (id === 'compressions') {
       setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
@@ -237,6 +239,21 @@ export default function Home() {
       return;
     }
     toggleAction(id);
+  };
+
+  // Проверка нажатия кнопки АНД в интерфейсе дефибриллятора
+  const handleAedShock = () => {
+    if (aedState === 'shock') {
+      const expectedId = currentOrder[sequence.length];
+      if (expectedId === 'aed') {
+        setAedState('success'); 
+        toggleAction('aed');
+        setTimeout(() => setAedOpen(false), 1500); // Закрываем АНД после успеха
+      } else {
+        setAccredicMessage('Вы применили АНД не вовремя!');
+        setTimeout(() => setAccredicMessage(null), 3000);
+      }
+    }
   };
 
   const togglePhrase = (phraseId: string) => {
@@ -312,7 +329,7 @@ export default function Home() {
     }
   };
 
-  // ЭКРАНЫ (Briefing, Login, Intro, Finished)
+  // ЭКРАНЫ
   if (stage === 'briefing') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
@@ -380,19 +397,17 @@ export default function Home() {
   return (
     <div className={`min-h-screen bg-gray-900 text-white overflow-hidden relative ${timeLeft < 60 ? 'animate-pulse ring-8 ring-red-600 ring-inset' : ''}`}>
       
-      {/* HUD */}
       <div className="absolute top-4 right-4 bg-black/80 border border-gray-600 p-3 rounded-xl z-40 font-mono text-sm shadow-xl">
         <div className="flex items-center gap-2 mb-1"><span className="text-red-500 animate-pulse">❤️</span><span>ЧСС: {vitals.hr} уд/мин</span></div>
         <div className="flex items-center gap-2"><span className="text-blue-400">🫁</span><span>SpO2: {vitals.spo2}%</span></div>
       </div>
 
-      {/* Таймер */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
         <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 ? 'text-red-500' : 'text-green-400'}`}>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
 
-      {/* АККРЕДИК (Наш осьминог-помощник) */}
+      {/* АККРЕДИК */}
       <div className="absolute bottom-20 left-4 z-40 flex items-end pointer-events-none">
         <img src="/helper.png" alt="Аккредик" className="w-24 h-24 drop-shadow-2xl" />
         {accredicMessage && (
@@ -458,7 +473,7 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-2 gap-4 w-full">
               <button onClick={() => { if (aedState === 'idle') { setAedState('analyzing'); setAedTimer(3); } }} disabled={aedState !== 'idle'} className="bg-blue-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Анализ</button>
-              <button onClick={() => { if (aedState === 'shock') { setAedState('success'); setActions({...actions, aed: true}); } }} disabled={aedState !== 'shock'} className="bg-red-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Разряд</button>
+              <button onClick={handleAedShock} disabled={aedState !== 'shock'} className="bg-red-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Разряд</button>
             </div>
             <button onClick={() => setAedOpen(false)} className="mt-6 text-gray-400 underline">Закрыть</button>
           </div>
