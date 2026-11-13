@@ -75,8 +75,19 @@ const HOTSPOTS = [
   { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
 ];
 
-// Этапы: Брифинг -> Вход в комнату (ID) -> Озвучка -> Игра -> Результат
 type Stage = 'briefing' | 'room_entry' | 'intro' | 'playing' | 'finished';
+
+// Фразы для вызова СМП
+const SMP_PHRASES = [
+  { id: 'intro', text: '«Здравствуйте, я врач. У нас пострадавший»', correct: true },
+  { id: 'address', text: '«Адрес: улица Ленина, дом 5»', correct: true },
+  { id: 'who', text: '«Мужчина, 45 лет»', correct: true },
+  { id: 'state', text: '«Без сознания, не дышит»', correct: true },
+  { id: 'action', text: '«Начинаю сердечно-легочную реанимацию»', correct: true },
+  { id: 'joke', text: '«А можно побыстрее, у меня обед»', correct: false },
+  { id: 'unknown', text: '«Не знаю, что с ним, просто лежит»', correct: false },
+  { id: 'noaddress', text: '«Приезжайте, сами найдете»', correct: false },
+];
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>('briefing');
@@ -98,20 +109,29 @@ export default function Home() {
   const [aedTimer, setAedTimer] = useState(0);
 
   const [vitals, setVitals] = useState({ hr: 120, spo2: 88 });
-  const [phoneModal, setPhoneModal] = useState(false);
   
-  // Флаг, чтобы голос не срабатывал дважды
+  // Вызов СМП
+  const [phoneModal, setPhoneModal] = useState(false);
+  const [selectedPhrases, setSelectedPhrases] = useState<string[]>([]);
+  const [callFeedback, setCallFeedback] = useState('');
+  const [callSuccess, setCallSuccess] = useState(false);
+
   const hasSpokenMinuteWarning = useRef(false);
 
   const currentOrder = SCENARIO_DATA[scenario].order;
 
-  // Функция озвучки
   const playAudio = (text: string, onEnd?: () => void) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel(); // Останавливаем предыдущую речь
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ru-RU';
-      utterance.rate = 1.0;
+      utterance.rate = 0.95;
+      utterance.pitch = 0.9;
+      const voices = window.speechSynthesis.getVoices();
+      const bestVoice = voices.find(v => v.lang.includes('ru') && v.name.includes('Google')) 
+                     || voices.find(v => v.lang.includes('ru') && v.name.includes('Microsoft'))
+                     || voices.find(v => v.lang.includes('ru'));
+      if (bestVoice) utterance.voice = bestVoice;
       if (onEnd) utterance.onend = onEnd;
       window.speechSynthesis.speak(utterance);
     } else {
@@ -119,27 +139,21 @@ export default function Home() {
     }
   };
 
-  // Таймер и голосовые команды
   useEffect(() => {
     if (stage !== 'playing') return;
-    
     if (timeLeft <= 0) { 
       playAudio("Время вышло. Перейдите на следующую станцию.");
       finishScenario(); 
       return; 
     }
-
-    // Голосовое предупреждение за 1 минуту
     if (timeLeft === 60 && !hasSpokenMinuteWarning.current) {
       playAudio("У вас осталась одна минута.");
       hasSpokenMinuteWarning.current = true;
     }
-
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft, stage]);
 
-  // Витальные показатели
   useEffect(() => {
     if (actions['oxygen']) setVitals(prev => ({ ...prev, spo2: 98 }));
     if (actions['compressions']) setVitals(prev => ({ ...prev, hr: 100 }));
@@ -155,31 +169,23 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
 
-  // Переход от брифинга к входу в комнату
   const handleEnterRoom = () => {
     const keys = Object.keys(SCENARIO_TITLES) as ScenarioType[];
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     setScenario(randomKey);
     setStage('room_entry');
-    
-    // Голосовая команда при входе в комнату
     setTimeout(() => {
       playAudio("Войдите на станцию и назовите свой логин.");
     }, 500);
   };
 
-  // Подтверждение логина и переход к озвучке сценария
   const handleLogin = () => {
     const finalId = studentId.trim() || 'Аноним';
     setStudentId(finalId);
     setStage('intro');
-    
-    // Читаем сценарий. Когда голос закончит - запускаем игру
     playAudio(VOICE_INTROS[scenario], () => {
       setStage('playing');
     });
-    
-    // Страховка на случай, если браузер не поддерживает озвучку (запуск через 15 сек)
     setTimeout(() => {
       if (stage === 'intro') setStage('playing');
     }, 15000);
@@ -206,21 +212,52 @@ export default function Home() {
       toggleAction(id); return;
     }
     if (id === 'call') {
-      setPhoneModal(true); return;
+      setPhoneModal(true);
+      setSelectedPhrases([]);
+      setCallFeedback('');
+      setCallSuccess(false);
+      return;
     }
     toggleAction(id);
   };
 
-  const handleCorrectCall = () => {
-    setPhoneModal(false);
-    setHelperMessage('Вызов принят! Бригада выехала.');
-    toggleAction('call');
+  // Логика сборки вызова СМП
+  const togglePhrase = (phraseId: string) => {
+    setSelectedPhrases(prev => 
+      prev.includes(phraseId) ? prev.filter(id => id !== phraseId) : [...prev, phraseId]
+    );
+    setCallFeedback('');
+  };
+
+  const handleSendCall = () => {
+    const correctIds = SMP_PHRASES.filter(p => p.correct).map(p => p.id);
+    const incorrectIds = SMP_PHRASES.filter(p => !p.correct).map(p => p.id);
+    
+    const selectedIncorrect = selectedPhrases.filter(id => incorrectIds.includes(id));
+    const selectedCorrect = selectedPhrases.filter(id => correctIds.includes(id));
+    
+    if (selectedIncorrect.length > 0) {
+      setCallFeedback('Ошибка! Диспетчер не понял. Вы сказали лишнее.');
+      return;
+    }
+    
+    if (selectedCorrect.length < correctIds.length) {
+      setCallFeedback('Неполный вызов! Диспетчер переспрашивает. Вы не назвали всю информацию.');
+      return;
+    }
+    
+    // Все правильно
+    setCallSuccess(true);
+    setCallFeedback('Вызов принят! Бригада выехала.');
+    setTimeout(() => {
+      setPhoneModal(false);
+      toggleAction('call');
+    }, 2000);
   };
 
   const handleCprClick = () => {
     const now = Date.now();
     let feedback = '';
-    
     if (lastCprTime.current !== 0) {
       const interval = now - lastCprTime.current;
       if (interval < 400) feedback = 'Слишком быстро!';
@@ -229,7 +266,6 @@ export default function Home() {
     } else {
       feedback = 'Начали!';
     }
-
     lastCprTime.current = now;
     setCprFeedback(feedback);
     setCprCount(prev => {
@@ -273,7 +309,7 @@ export default function Home() {
     }
   };
 
-  // 1. ЭКРАН БРИФИНГА
+  // ЭКРАНЫ
   if (stage === 'briefing') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
@@ -292,15 +328,12 @@ export default function Home() {
     );
   }
 
-  // 2. ЭКРАН ВХОДА В КОМНАТУ (С визуализацией комнаты на фоне)
   if (stage === 'room_entry') {
     return (
       <div className="min-h-screen bg-gray-900 text-white relative flex items-center justify-center">
-        {/* Размытый фон комнаты */}
         <div className="absolute inset-0 z-0">
           <img src="/room.jpg" alt="Комната" className="w-full h-full object-cover blur-sm opacity-50" />
         </div>
-        
         <div className="relative z-10 bg-gray-800/90 border-2 border-blue-500 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center backdrop-blur-md">
           <h1 className="text-3xl font-bold mb-4 text-blue-400">Вы вошли на станцию</h1>
           <p className="mb-6 text-gray-300">Назовите свой логин (ID) для члена АПК</p>
@@ -320,7 +353,6 @@ export default function Home() {
     );
   }
 
-  // 3. ЭКРАН ОЗВУЧКИ СЦЕНАРИЯ
   if (stage === 'intro') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
@@ -331,14 +363,12 @@ export default function Home() {
     );
   }
 
-  // 4. ЭКРАН РЕЗУЛЬТАТА
   if (stage === 'finished') {
     const isPassed = score === 100;
     return (
       <div className={`min-h-screen p-8 flex flex-col items-center justify-center ${isPassed ? 'bg-green-50' : 'bg-red-50'}`}>
         <h1 className="text-4xl font-bold mb-4">{isPassed ? 'Экзамен сдан! 🎉' : 'Экзамен не сдан 😔'}</h1>
         <p className={`text-6xl font-bold mb-8 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{score}%</p>
-        
         <div className="bg-white p-6 rounded-lg shadow w-full max-w-md max-h-[60vh] overflow-y-auto">
           <h2 className="text-xl font-semibold mb-2">Студент: {studentId}</h2>
           <h3 className="text-lg font-semibold mt-4 mb-2">Порядок ваших действий:</h3>
@@ -359,11 +389,10 @@ export default function Home() {
     );
   }
 
-  // 5. ИНТЕРФЕЙС ЭКЗАМЕНА
+  // ИНТЕРФЕЙС
   return (
     <div className={`min-h-screen bg-gray-900 text-white overflow-hidden relative ${timeLeft < 60 ? 'animate-pulse ring-8 ring-red-600 ring-inset' : ''}`}>
       
-      {/* HUD (Витальные показатели) */}
       <div className="absolute top-4 right-4 bg-black/80 border border-gray-600 p-3 rounded-xl z-40 font-mono text-sm shadow-xl">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-red-500 animate-pulse">❤️</span>
@@ -375,7 +404,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Таймер */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
         <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 ? 'text-red-500' : 'text-green-400'}`}>
           {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
@@ -383,24 +411,68 @@ export default function Home() {
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
 
-      {/* Модалка вызова СМП */}
+      {/* ОКНО СБОРКИ ВЫЗОВА СМП */}
       {phoneModal && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold mb-4 text-center">Звонок в СМП</h3>
-            <p className="mb-4 text-sm text-gray-600 text-center">Диспетчер: «Скорая помощь слушает, что случилось?»</p>
-            <div className="space-y-2">
-              <button onClick={handleCorrectCall} className="w-full p-3 border rounded-lg text-left hover:bg-green-50 hover:border-green-500">
-                «Здравствуйте! У нас мужчина 45 лет без сознания, не дышит. Начинаем СЛР. Адрес: улица Ленина, дом 5.»
-              </button>
-              <button onClick={() => setHelperMessage('Ошибка: диспетчеру нужен точный адрес и состояние пациента!')} className="w-full p-3 border rounded-lg text-left hover:bg-gray-50">
-                «Приезжайте быстрее, человеку плохо!»
-              </button>
-              <button onClick={() => setHelperMessage('Ошибка: диспетчеру нужен точный адрес и состояние пациента!')} className="w-full p-3 border rounded-lg text-left hover:bg-gray-50">
-                «Нам нужна скорая, мы на работе.»
-              </button>
-            </div>
-            <button onClick={() => setPhoneModal(false)} className="mt-4 w-full text-center text-gray-500 hover:text-red-500 text-sm">Отмена</button>
+          <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+            <h3 className="text-xl font-bold mb-2 text-center text-blue-400">📞 Вызов СМП</h3>
+            <p className="text-sm text-gray-400 text-center mb-4">Соберите правильный доклад, нажимая на нужные фразы</p>
+            
+            {callSuccess ? (
+              <div className="text-center py-8">
+                <p className="text-2xl font-bold text-green-400 mb-4">✅ Вызов принят!</p>
+                <p className="text-gray-300">Бригада выехала. Продолжайте оказывать помощь.</p>
+              </div>
+            ) : (
+              <>
+                {/* Собранный доклад */}
+                <div className="bg-gray-900 p-3 rounded-lg mb-4 min-h-[80px]">
+                  <p className="text-xs text-gray-500 mb-1">Ваш доклад диспетчеру:</p>
+                  {selectedPhrases.length === 0 ? (
+                    <p className="text-gray-500 italic">Нажимайте на фразы ниже...</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {selectedPhrases.map(id => {
+                        const p = SMP_PHRASES.find(x => x.id === id);
+                        return <li key={id} className={`text-sm ${p?.correct ? 'text-green-400' : 'text-red-400'}`}>• {p?.text}</li>;
+                      })}
+                    </ul>
+                  )}
+                </div>
+
+                {callFeedback && (
+                  <div className={`p-2 rounded mb-4 text-center font-bold text-sm ${callFeedback.includes('принят') ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+                    {callFeedback}
+                  </div>
+                )}
+
+                {/* Фразы для выбора */}
+                <div className="grid grid-cols-1 gap-2 max-h-[40vh] overflow-y-auto mb-4">
+                  {SMP_PHRASES.map(phrase => (
+                    <button 
+                      key={phrase.id}
+                      onClick={() => togglePhrase(phrase.id)}
+                      className={`p-2 rounded text-left text-sm border transition ${
+                        selectedPhrases.includes(phrase.id) 
+                          ? 'bg-blue-900 border-blue-500' 
+                          : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+                      }`}
+                    >
+                      {phrase.text}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-2">
+                  <button onClick={() => setPhoneModal(false)} className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition">
+                    Отмена
+                  </button>
+                  <button onClick={handleSendCall} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-bold transition">
+                    Отправить вызов
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
