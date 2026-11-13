@@ -75,9 +75,6 @@ const HOTSPOTS = [
   { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
 ];
 
-type Stage = 'briefing' | 'room_entry' | 'intro' | 'playing' | 'finished';
-
-// Фразы для вызова СМП
 const SMP_PHRASES = [
   { id: 'intro', text: '«Здравствуйте, я врач. У нас пострадавший»', correct: true },
   { id: 'address', text: '«Адрес: улица Ленина, дом 5»', correct: true },
@@ -89,6 +86,8 @@ const SMP_PHRASES = [
   { id: 'noaddress', text: '«Приезжайте, сами найдете»', correct: false },
 ];
 
+type Stage = 'briefing' | 'room_entry' | 'intro' | 'playing' | 'finished';
+
 export default function Home() {
   const [stage, setStage] = useState<Stage>('briefing');
   const [studentId, setStudentId] = useState('');
@@ -98,19 +97,21 @@ export default function Home() {
   const [timeLeft, setTimeLeft] = useState(510);
   const [score, setScore] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
-  const [helperMessage, setHelperMessage] = useState<string | null>(null);
   
+  // ФИШКА: Аккредик (подсказки)
+  const [accredicMessage, setAccredicMessage] = useState<string | null>(null);
+
   const [challenge, setChallenge] = useState<string | null>(null);
   const [cprCount, setCprCount] = useState(0);
   const [cprFeedback, setCprFeedback] = useState('');
   const lastCprTime = useRef<number>(0);
+  
   const [aedOpen, setAedOpen] = useState(false);
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
 
   const [vitals, setVitals] = useState({ hr: 120, spo2: 88 });
   
-  // Вызов СМП
   const [phoneModal, setPhoneModal] = useState(false);
   const [selectedPhrases, setSelectedPhrases] = useState<string[]>([]);
   const [callFeedback, setCallFeedback] = useState('');
@@ -174,21 +175,15 @@ export default function Home() {
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     setScenario(randomKey);
     setStage('room_entry');
-    setTimeout(() => {
-      playAudio("Войдите на станцию и назовите свой логин.");
-    }, 500);
+    setTimeout(() => playAudio("Войдите на станцию и назовите свой логин."), 500);
   };
 
   const handleLogin = () => {
     const finalId = studentId.trim() || 'Аноним';
     setStudentId(finalId);
     setStage('intro');
-    playAudio(VOICE_INTROS[scenario], () => {
-      setStage('playing');
-    });
-    setTimeout(() => {
-      if (stage === 'intro') setStage('playing');
-    }, 15000);
+    playAudio(VOICE_INTROS[scenario], () => setStage('playing'));
+    setTimeout(() => { if (stage === 'intro') setStage('playing'); }, 15000);
   };
 
   const toggleAction = (id: string) => {
@@ -198,34 +193,54 @@ export default function Home() {
     setChallenge(null);
   };
 
+  // --- ЛОГИКА ПРОВЕРКИ ДЕЙСТВИЙ АККРЕДИКОМ ---
   const handleActionClick = (id: string) => {
+    const expectedId = currentOrder[sequence.length];
+    const expectedAction = ALL_ACTIONS.find(a => a.id === expectedId);
+    
+    // Если действие не то, что ожидалось - Аккредик подсказывает
+    if (expectedId && id !== expectedId) {
+      // Специальные подсказки для частых ошибок
+      if (id === 'aed' && expectedId !== 'aed') {
+        setAccredicMessage('Стой! Рано включать АНД. Сначала убедись, что пациент без сознания и не дышит!');
+      } else if (id === 'compressions' && expectedId !== 'compressions') {
+        setAccredicMessage('Подожди с компрессиями! Сначала проверь сознание и дыхание.');
+      } else if (id === 'call' && expectedId !== 'call') {
+        setAccredicMessage('Сначала оцени состояние пациента, потом вызывай скорую.');
+      } else {
+        setAccredicMessage(`Это неверный шаг! Сейчас нужно: ${expectedAction?.label.toLowerCase()}`);
+      }
+      
+      // Автоматически убираем сообщение через 4 секунды
+      setTimeout(() => setAccredicMessage(null), 4000);
+      
+      // (Опционально) Можно не давать выполнить действие, но для тренировки 
+      // лучше дать ему сделать ошибку и увидеть её в конце.
+    } else {
+      // Правильное действие
+      setAccredicMessage('Верно! Молодец!');
+      setTimeout(() => setAccredicMessage(null), 2000);
+    }
+
     if (id === 'compressions') {
       setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
     }
     if (id === 'recovery') {
-      setHelperMessage('Вы перевернули пациента в устойчивое боковое положение!');
       toggleAction(id); return;
     }
     if (id === 'choking') {
-      setHelperMessage('Пациент не может говорить и хватается за горло. Полное нарушение проходимости!');
       toggleAction(id); return;
     }
     if (id === 'call') {
-      setPhoneModal(true);
-      setSelectedPhrases([]);
-      setCallFeedback('');
-      setCallSuccess(false);
+      setPhoneModal(true); setSelectedPhrases([]); setCallFeedback(''); setCallSuccess(false);
       return;
     }
     toggleAction(id);
   };
 
-  // Логика сборки вызова СМП
   const togglePhrase = (phraseId: string) => {
-    setSelectedPhrases(prev => 
-      prev.includes(phraseId) ? prev.filter(id => id !== phraseId) : [...prev, phraseId]
-    );
+    setSelectedPhrases(prev => prev.includes(phraseId) ? prev.filter(id => id !== phraseId) : [...prev, phraseId]);
     setCallFeedback('');
   };
 
@@ -240,19 +255,13 @@ export default function Home() {
       setCallFeedback('Ошибка! Диспетчер не понял. Вы сказали лишнее.');
       return;
     }
-    
     if (selectedCorrect.length < correctIds.length) {
       setCallFeedback('Неполный вызов! Диспетчер переспрашивает. Вы не назвали всю информацию.');
       return;
     }
-    
-    // Все правильно
     setCallSuccess(true);
     setCallFeedback('Вызов принят! Бригада выехала.');
-    setTimeout(() => {
-      setPhoneModal(false);
-      toggleAction('call');
-    }, 2000);
+    setTimeout(() => { setPhoneModal(false); toggleAction('call'); }, 2000);
   };
 
   const handleCprClick = () => {
@@ -270,18 +279,14 @@ export default function Home() {
     setCprFeedback(feedback);
     setCprCount(prev => {
       const next = prev + 1;
-      if (next >= 30) {
-        setTimeout(() => { setChallenge(null); toggleAction('compressions'); }, 500);
-      }
+      if (next >= 30) setTimeout(() => { setChallenge(null); toggleAction('compressions'); }, 500);
       return next;
     });
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (challenge === 'cpr' && e.code === 'Space') {
-        e.preventDefault(); handleCprClick();
-      }
+      if (challenge === 'cpr' && e.code === 'Space') { e.preventDefault(); handleCprClick(); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -301,15 +306,13 @@ export default function Home() {
     if (supabase && scenario) {
       try {
         await supabase.from('attempts').insert({ 
-          scenario_id: scenario, 
-          score: calculatedScore, 
-          actions: { studentId: studentId, fullSequence: sequence } 
+          scenario_id: scenario, score: calculatedScore, actions: { studentId: studentId, fullSequence: sequence } 
         });
       } catch (e) { console.error(e); }
     }
   };
 
-  // ЭКРАНЫ
+  // ЭКРАНЫ (Briefing, Login, Intro, Finished)
   if (stage === 'briefing') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
@@ -318,11 +321,8 @@ export default function Home() {
           <div className="space-y-4 text-lg text-gray-200 leading-relaxed">
             <p>Вы — врач своей специальности. Медицинский брат/сестра вызвал/а Вас на помощь.</p>
             <p>Перед Вами пациент <strong>45 лет</strong>.</p>
-            <p>На этаже есть укладка экстренной медицинской помощи и автоматический наружный дефибриллятор (АНД).</p>
           </div>
-          <button onClick={handleEnterRoom} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
-            Войти на станцию
-          </button>
+          <button onClick={handleEnterRoom} className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl shadow-lg">Войти на станцию</button>
         </div>
       </div>
     );
@@ -331,23 +331,11 @@ export default function Home() {
   if (stage === 'room_entry') {
     return (
       <div className="min-h-screen bg-gray-900 text-white relative flex items-center justify-center">
-        <div className="absolute inset-0 z-0">
-          <img src="/room.jpg" alt="Комната" className="w-full h-full object-cover blur-sm opacity-50" />
-        </div>
+        <div className="absolute inset-0 z-0"><img src="/room.jpg" alt="Комната" className="w-full h-full object-cover blur-sm opacity-50" /></div>
         <div className="relative z-10 bg-gray-800/90 border-2 border-blue-500 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center backdrop-blur-md">
           <h1 className="text-3xl font-bold mb-4 text-blue-400">Вы вошли на станцию</h1>
-          <p className="mb-6 text-gray-300">Назовите свой логин (ID) для члена АПК</p>
-          <input 
-            type="text" 
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
-            placeholder="Ваш логин"
-            className="w-full bg-gray-700 text-white text-center text-2xl font-mono p-4 rounded-xl mb-6 border-2 border-gray-600 focus:border-blue-500 outline-none"
-            autoFocus
-          />
-          <button onClick={handleLogin} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
-            Подтвердить ID
-          </button>
+          <input type="text" value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="Ваш логин" className="w-full bg-gray-700 text-white text-center text-2xl font-mono p-4 rounded-xl mb-6 border-2 border-gray-600 focus:border-blue-500 outline-none" autoFocus />
+          <button onClick={handleLogin} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-xl shadow-lg">Подтвердить ID</button>
         </div>
       </div>
     );
@@ -358,7 +346,6 @@ export default function Home() {
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
         <div className="w-24 h-24 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-8"></div>
         <h1 className="text-3xl font-bold mb-4">Слушайте вводную информацию...</h1>
-        <p className="text-gray-400 text-center max-w-lg">Не начинайте действия, пока не услышите команду «Время пошло!»</p>
       </div>
     );
   }
@@ -393,83 +380,54 @@ export default function Home() {
   return (
     <div className={`min-h-screen bg-gray-900 text-white overflow-hidden relative ${timeLeft < 60 ? 'animate-pulse ring-8 ring-red-600 ring-inset' : ''}`}>
       
+      {/* HUD */}
       <div className="absolute top-4 right-4 bg-black/80 border border-gray-600 p-3 rounded-xl z-40 font-mono text-sm shadow-xl">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-red-500 animate-pulse">❤️</span>
-          <span>ЧСС: {vitals.hr} уд/мин</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-blue-400">🫁</span>
-          <span>SpO2: {vitals.spo2}%</span>
-        </div>
+        <div className="flex items-center gap-2 mb-1"><span className="text-red-500 animate-pulse">❤️</span><span>ЧСС: {vitals.hr} уд/мин</span></div>
+        <div className="flex items-center gap-2"><span className="text-blue-400">🫁</span><span>SpO2: {vitals.spo2}%</span></div>
       </div>
 
+      {/* Таймер */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
-        <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 ? 'text-red-500' : 'text-green-400'}`}>
-          {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-        </span>
+        <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 ? 'text-red-500' : 'text-green-400'}`}>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
 
-      {/* ОКНО СБОРКИ ВЫЗОВА СМП */}
+      {/* АККРЕДИК (Наш осьминог-помощник) */}
+      <div className="absolute bottom-20 left-4 z-40 flex items-end pointer-events-none">
+        <img src="/helper.png" alt="Аккредик" className="w-24 h-24 drop-shadow-2xl" />
+        {accredicMessage && (
+          <div className="ml-2 mb-4 bg-white text-gray-800 p-4 rounded-2xl rounded-bl-none shadow-2xl border-2 border-blue-500 max-w-xs animate-fade-in relative">
+            <div className="absolute -left-2 bottom-2 w-4 h-4 bg-white border-b-2 border-l-2 border-blue-500 transform rotate-45"></div>
+            <p className="font-medium text-sm">{accredicMessage}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Окно вызова СМП */}
       {phoneModal && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
             <h3 className="text-xl font-bold mb-2 text-center text-blue-400">📞 Вызов СМП</h3>
             <p className="text-sm text-gray-400 text-center mb-4">Соберите правильный доклад, нажимая на нужные фразы</p>
-            
             {callSuccess ? (
-              <div className="text-center py-8">
-                <p className="text-2xl font-bold text-green-400 mb-4">✅ Вызов принят!</p>
-                <p className="text-gray-300">Бригада выехала. Продолжайте оказывать помощь.</p>
-              </div>
+              <div className="text-center py-8"><p className="text-2xl font-bold text-green-400 mb-4">✅ Вызов принят!</p><p className="text-gray-300">Бригада выехала.</p></div>
             ) : (
               <>
-                {/* Собранный доклад */}
                 <div className="bg-gray-900 p-3 rounded-lg mb-4 min-h-[80px]">
-                  <p className="text-xs text-gray-500 mb-1">Ваш доклад диспетчеру:</p>
-                  {selectedPhrases.length === 0 ? (
-                    <p className="text-gray-500 italic">Нажимайте на фразы ниже...</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {selectedPhrases.map(id => {
-                        const p = SMP_PHRASES.find(x => x.id === id);
-                        return <li key={id} className={`text-sm ${p?.correct ? 'text-green-400' : 'text-red-400'}`}>• {p?.text}</li>;
-                      })}
-                    </ul>
+                  <p className="text-xs text-gray-500 mb-1">Ваш доклад:</p>
+                  {selectedPhrases.length === 0 ? <p className="text-gray-500 italic">Нажимайте на фразы ниже...</p> : (
+                    <ul className="space-y-1">{selectedPhrases.map(id => { const p = SMP_PHRASES.find(x => x.id === id); return <li key={id} className={`text-sm ${p?.correct ? 'text-green-400' : 'text-red-400'}`}>• {p?.text}</li>; })}</ul>
                   )}
                 </div>
-
-                {callFeedback && (
-                  <div className={`p-2 rounded mb-4 text-center font-bold text-sm ${callFeedback.includes('принят') ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                    {callFeedback}
-                  </div>
-                )}
-
-                {/* Фразы для выбора */}
+                {callFeedback && <div className={`p-2 rounded mb-4 text-center font-bold text-sm ${callFeedback.includes('принят') ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>{callFeedback}</div>}
                 <div className="grid grid-cols-1 gap-2 max-h-[40vh] overflow-y-auto mb-4">
                   {SMP_PHRASES.map(phrase => (
-                    <button 
-                      key={phrase.id}
-                      onClick={() => togglePhrase(phrase.id)}
-                      className={`p-2 rounded text-left text-sm border transition ${
-                        selectedPhrases.includes(phrase.id) 
-                          ? 'bg-blue-900 border-blue-500' 
-                          : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
-                      }`}
-                    >
-                      {phrase.text}
-                    </button>
+                    <button key={phrase.id} onClick={() => togglePhrase(phrase.id)} className={`p-2 rounded text-left text-sm border transition ${selectedPhrases.includes(phrase.id) ? 'bg-blue-900 border-blue-500' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'}`}>{phrase.text}</button>
                   ))}
                 </div>
-
                 <div className="flex gap-2">
-                  <button onClick={() => setPhoneModal(false)} className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition">
-                    Отмена
-                  </button>
-                  <button onClick={handleSendCall} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-bold transition">
-                    Отправить вызов
-                  </button>
+                  <button onClick={() => setPhoneModal(false)} className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg">Отмена</button>
+                  <button onClick={handleSendCall} className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg font-bold">Отправить</button>
                 </div>
               </>
             )}
@@ -482,12 +440,8 @@ export default function Home() {
         <div className="absolute inset-0 bg-gray-900/95 flex flex-col items-center justify-center z-50 p-4">
           <h2 className="text-3xl font-bold mb-2 text-white">Компрессии</h2>
           <p className="text-gray-400 mb-8">Нажимайте в ритме 100-120 в минуту</p>
-          <div className={`mb-6 text-2xl font-bold ${cprFeedback === 'Отличный ритм!' ? 'text-green-400' : cprFeedback.includes('Слишком') ? 'text-red-500' : 'text-white'}`}>
-            {cprFeedback}
-          </div>
-          <button onClick={handleCprClick} className="w-64 h-64 bg-red-600 rounded-full text-white text-7xl font-bold shadow-[0_0_80px_rgba(220,38,38,0.6)] active:scale-95 transition-transform flex items-center justify-center select-none">
-            {cprCount}
-          </button>
+          <div className={`mb-6 text-2xl font-bold ${cprFeedback === 'Отличный ритм!' ? 'text-green-400' : cprFeedback.includes('Слишком') ? 'text-red-500' : 'text-white'}`}>{cprFeedback}</div>
+          <button onClick={handleCprClick} className="w-64 h-64 bg-red-600 rounded-full text-white text-7xl font-bold shadow-[0_0_80px_rgba(220,38,38,0.6)] active:scale-95 transition-transform flex items-center justify-center select-none">{cprCount}</button>
           <p className="mt-8 text-white text-xl">Осталось: {30 - cprCount}</p>
         </div>
       )}
@@ -511,18 +465,9 @@ export default function Home() {
         </div>
       )}
 
-      {helperMessage && (
-        <div className="absolute top-20 left-4 z-50 max-w-sm">
-          <div className="bg-white text-gray-800 p-4 rounded-xl shadow-2xl border-l-4 border-blue-500">
-            <p className="font-medium">{helperMessage}</p>
-            <button onClick={() => setHelperMessage(null)} className="mt-2 text-blue-600 text-sm">Закрыть</button>
-          </div>
-        </div>
-      )}
-
+      {/* Комната */}
       <div className="relative w-full max-w-[1200px] mx-auto">
         <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
-        
         {HOTSPOTS.map((spot) => (
           <button key={spot.id} onClick={() => setActiveHotspot(spot.id)} className="absolute border-2 border-transparent hover:border-blue-400/70 hover:bg-blue-400/20 rounded-xl z-10" style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, height: `${spot.h}%` }} />
         ))}
@@ -541,7 +486,6 @@ export default function Home() {
                       return <button key="aed-btn" onClick={() => { setAedOpen(true); setActiveHotspot(null); }} className="w-full text-left p-3 rounded border-2 border-gray-200 hover:border-blue-300 mb-2">Открыть АНД</button>;
                     }
                   }
-
                   return (
                     <button key={action.id} onClick={() => handleActionClick(action.id)} className={`w-full text-left p-3 rounded-lg border-2 transition ${actions[action.id] ? 'bg-green-50 border-green-500 text-green-700 font-medium' : 'border-gray-200 hover:border-blue-300'}`}>
                       {action.label} {actions[action.id] && '✓'}
