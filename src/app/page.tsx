@@ -117,7 +117,6 @@ export default function Home() {
   const [mistakes, setMistakes] = useState<string[]>([]);
   const [accredicMessage, setAccredicMessage] = useState<string | null>(null);
 
-  // Состояния для мини-игр
   const [challenge, setChallenge] = useState<string | null>(null);
   const [timerChallenge, setTimerChallenge] = useState(0);
   const [holdSuccess, setHoldSuccess] = useState(false);
@@ -244,7 +243,6 @@ export default function Home() {
     setChallenge(null);
   };
 
-  // --- ЛОГИКА МИНИ-ИГР ---
   const startHoldChallenge = (id: string, seconds: number) => {
     setChallenge(id);
     setHoldSuccess(false);
@@ -287,21 +285,19 @@ export default function Home() {
       setTimeout(() => setAccredicMessage(null), 2000);
     }
 
-    // Запуск мини-игр
     if (id === 'compressions') {
       setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
     }
     if (id === 'cap_refill') {
-      startHoldChallenge('cap_refill', 5); // 5 секунд
+      startHoldChallenge('cap_refill', 5);
       return;
     }
     if (id === 'pulse' || id === 'respiratory_rate' || id === 'breathing') {
-      startHoldChallenge(id, 10); // 10 секунд
+      startHoldChallenge(id, 10);
       return;
     }
     
-    // Обычные модалки
     if (id === 'aed') {
       setAedOpen(true);
       setActiveHotspot(null);
@@ -426,6 +422,7 @@ export default function Home() {
     );
   }
 
+  // --- ЭКРАН РЕЗУЛЬТАТА (С ИСПРАВЛЕННОЙ ЛОГИКОЙ) ---
   if (stage === 'finished') {
     const isPassed = score >= 90;
     const missingSteps = currentOrder.filter(stepId => !actions[stepId]);
@@ -440,8 +437,16 @@ export default function Home() {
             <div className="space-y-4">
               <div className="bg-white p-6 rounded-xl shadow">
                 <h2 className="text-xl font-bold mb-4 text-red-600 border-b pb-2">Ошибки и штрафы:</h2>
-                {mistakes.length === 0 ? (
-                  <p className="text-green-600 font-medium">Ошибок нет! Отличная работа.</p>
+                
+                {/* ИСПРАВЛЕНИЕ ЛОГИКИ ОШИБОК */}
+                {sequence.length === 0 ? (
+                  <p className="text-red-600 font-bold bg-red-50 p-3 rounded">Вы не выполнили ни одного действия! Пациент погиб.</p>
+                ) : mistakes.length === 0 ? (
+                   score >= 90 ? (
+                     <p className="text-green-600 font-medium">Ошибок нет! Отличная работа.</p>
+                   ) : (
+                     <p className="text-orange-600 font-medium">Вы не допустили ошибок в порядке, но не выполнили весь алгоритм до конца.</p>
+                   )
                 ) : (
                   <ul className="space-y-2">
                     {Array.from(new Set(mistakes)).map((m, i) => (
