@@ -102,11 +102,11 @@ const SMP_PHRASES = [
   { id: 'noaddress', text: '«Приезжайте, сами найдете»', correct: false },
 ];
 
-type Stage = 'briefing' | 'room_entry' | 'intro' | 'playing' | 'finished';
+// Убран этап 'room_entry'
+type Stage = 'briefing' | 'intro' | 'playing' | 'finished';
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>('briefing');
-  const [studentId, setStudentId] = useState('');
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [actions, setActions] = useState<Record<string, boolean>>({});
   const [sequence, setSequence] = useState<string[]>([]);
@@ -191,19 +191,14 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [aedState, aedTimer]);
 
+  // ИЗМЕНЕНО: Сразу переход к озвучке сценария
   const handleEnterRoom = () => {
     const keys = Object.keys(SCENARIO_TITLES) as ScenarioType[];
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     setScenario(randomKey);
-    setStage('room_entry');
-    setTimeout(() => playAudio("Войдите на станцию и назовите свой логин."), 500);
-  };
-
-  const handleLogin = () => {
-    const finalId = studentId.trim() || 'Аноним';
-    setStudentId(finalId);
     setStage('intro');
-    playAudio(VOICE_INTROS[scenario], () => setStage('playing'));
+    
+    playAudio(VOICE_INTROS[randomKey], () => setStage('playing'));
     setTimeout(() => { if (stage === 'intro') setStage('playing'); }, 15000);
   };
 
@@ -224,12 +219,13 @@ export default function Home() {
       setScore(calculatedScore);
     }
 
+    // Сохраняем результат без ID
     if (supabase && scenario) {
       try {
         await supabase.from('attempts').insert({ 
           scenario_id: scenario, 
           score: calculatedScore, 
-          actions: { studentId: studentId, fullSequence: sequence, mistakes } 
+          actions: { fullSequence: sequence, mistakes } 
         });
       } catch (e) { console.error(e); }
     }
@@ -400,19 +396,6 @@ export default function Home() {
     );
   }
 
-  if (stage === 'room_entry') {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white relative flex items-center justify-center">
-        <div className="absolute inset-0 z-0"><img src="/room.jpg" alt="Комната" className="w-full h-full object-cover blur-sm opacity-50" /></div>
-        <div className="relative z-10 bg-gray-800/90 border-2 border-blue-500 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center backdrop-blur-md">
-          <h1 className="text-3xl font-bold mb-4 text-blue-400">Вы вошли на станцию</h1>
-          <input type="text" value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="Ваш логин" className="w-full bg-gray-700 text-white text-center text-2xl font-mono p-4 rounded-xl mb-6 border-2 border-gray-600 focus:border-blue-500 outline-none" autoFocus />
-          <button onClick={handleLogin} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-xl shadow-lg">Подтвердить ID</button>
-        </div>
-      </div>
-    );
-  }
-
   if (stage === 'intro') {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
@@ -422,7 +405,7 @@ export default function Home() {
     );
   }
 
-  // --- ЭКРАН РЕЗУЛЬТАТА (С ИСПРАВЛЕННОЙ ЛОГИКОЙ) ---
+  // --- ЭКРАН РЕЗУЛЬТАТА ---
   if (stage === 'finished') {
     const isPassed = score >= 90;
     const missingSteps = currentOrder.filter(stepId => !actions[stepId]);
@@ -438,7 +421,6 @@ export default function Home() {
               <div className="bg-white p-6 rounded-xl shadow">
                 <h2 className="text-xl font-bold mb-4 text-red-600 border-b pb-2">Ошибки и штрафы:</h2>
                 
-                {/* ИСПРАВЛЕНИЕ ЛОГИКИ ОШИБОК */}
                 {sequence.length === 0 ? (
                   <p className="text-red-600 font-bold bg-red-50 p-3 rounded">Вы не выполнили ни одного действия! Пациент погиб.</p>
                 ) : mistakes.length === 0 ? (
@@ -527,7 +509,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* УДЕРЖАНИЕ КНОПКИ (5 сек / 10 сек) */}
+      {/* УДЕРЖАНИЕ КНОПКИ */}
       {challenge && challenge !== 'cpr' && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm text-center">
