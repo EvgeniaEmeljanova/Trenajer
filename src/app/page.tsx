@@ -7,19 +7,34 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
-type ScenarioType = 'OKS1' | 'BLS';
+type ScenarioType = 'OKS1' | 'OKS2' | 'ANAPHYLAXIS' | 'ZHKK' | 'BOS' | 'TELA' | 'PNEUMOTHORAX' | 'HYPOGLYCEMIA' | 'HYPERGLYCEMIA' | 'BLS';
 
 const SCENARIO_TITLES = {
   OKS1: 'ОКС 1 (Инфаркт миокарда)',
+  OKS2: 'ОКС 2 (Инфаркт миокарда с осложнениями)',
+  ANAPHYLAXIS: 'Анафилактический шок (АШ)',
+  ZHKK: 'Желудочно-кишечное кровотечение (ЖКК)',
+  BOS: 'Бронхообструктивный синдром (БОС)',
+  TELA: 'Тромбоэмболия легочной артерии (ТЭЛА)',
+  PNEUMOTHORAX: 'Пневмоторакс',
+  HYPOGLYCEMIA: 'Гипогликемия',
+  HYPERGLYCEMIA: 'Гипергликемия',
   BLS: 'Базовая СЛР (BLS)',
 };
 
 const VOICE_INTROS: Record<ScenarioType, string> = {
-  OKS1: 'Пациент 45 лет. Жалуется на сильные загрудинные боли. Вы — врач бригады экстренной помощи. Время пошло!',
+  OKS1: 'Пациент 45 лет. Жалуется на сильные загрудинные боли. Время пошло!',
+  OKS2: 'Пациент 50 лет. Одышка, цианоз. Время пошло!',
+  ANAPHYLAXIS: 'Пациент 30 лет. После укуса пчелы появилась резкая слабость. Время пошло!',
+  ZHKK: 'Пациент 55 лет. Рвота кофейной гущей. Время пошло!',
+  BOS: 'Пациент 25 лет. Затрудненное дыхание. Время пошло!',
+  TELA: 'Пациент 60 лет. Резкая боль в грудной клетке. Время пошло!',
+  PNEUMOTHORAX: 'Пациент 40 лет. Травма грудной клетки. Время пошло!',
+  HYPOGLYCEMIA: 'Пациент 50 лет. Состояние спутанное. Время пошло!',
+  HYPERGLYCEMIA: 'Пациент 35 лет. Сухость во рту, слабость. Время пошло!',
   BLS: 'Вы увидели, что человеку стало плохо. Необходимо оказать ему первую помощь. Время пошло!',
 };
 
-// ПОЛНЫЙ СПИСОК ДЕЙСТВИЙ
 const ALL_ACTIONS = [
   { id: 'danger', label: 'Убедиться в отсутствии опасности' },
   { id: 'choking', label: 'Спросить: «Вы подавились?»' },
@@ -27,7 +42,7 @@ const ALL_ACTIONS = [
   { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)' },
   { id: 'breathing', label: 'Оценить дыхание (7-10 сек)' },
   { id: 'recovery', label: 'Устойчивое боковое положение' },
-  { id: 'consciousness', label: 'Оценить сознание (встряхнуть, спросить)' },
+  { id: 'consciousness', label: 'Оценить сознание' },
   { id: 'gloves', label: 'Надеть перчатки' },
   { id: 'airway', label: 'Осмотреть полость рта' },
   { id: 'spo2', label: 'Пульсоксиметрия' },
@@ -54,21 +69,17 @@ const ALL_ACTIONS = [
   { id: 'breaths', label: 'ИВЛ (2 вдоха)' },
 ];
 
-const OKS_ORDER = [
-  'consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 
-  'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 
-  'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 
-  'muscle_tone', 'glucose', 'abdomen', 'call', 'compressions', 'aed', 'breaths', 'compressions'
-];
-
-const BLS_ORDER = [
-  'danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 
-  'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions', 'recovery'
-];
-
 const SCENARIO_DATA: Record<ScenarioType, { order: string[] }> = {
-  OKS1: { order: OKS_ORDER },
-  BLS: { order: BLS_ORDER },
+  OKS1: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call', 'compressions', 'aed', 'breaths', 'compressions'] },
+  OKS2: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'call', 'compressions', 'aed', 'breaths', 'compressions'] },
+  ANAPHYLAXIS: { order: ['consciousness', 'gloves', 'airway', 'adrenaline', 'oxygen', 'call', 'compressions', 'aed'] },
+  ZHKK: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'pulse', 'bp', 'heart_ausc', 'skin', 'venous', 'abdomen', 'call', 'compressions'] },
+  BOS: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'auscultation', 'pulse', 'bp', 'call'] },
+  TELA: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'auscultation', 'pulse', 'bp', 'ecg', 'venous', 'call'] },
+  PNEUMOTHORAX: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'call'] },
+  HYPOGLYCEMIA: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'call'] },
+  HYPERGLYCEMIA: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'call'] },
+  BLS: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions', 'recovery'] },
 };
 
 const HOTSPOTS = [
@@ -89,16 +100,6 @@ const SMP_PHRASES = [
   { id: 'unknown', text: '«Не знаю, что с ним, просто лежит»', correct: false },
   { id: 'noaddress', text: '«Приезжайте, сами найдете»', correct: false },
 ];
-
-const MISTAKE_REASONS: Record<string, string> = {
-  consciousness: 'Сначала оцените сознание пациента! Подойдите к нему, встряхните за плечи и спросите: «Вам нужна помощь?».',
-  gloves: 'Наденьте перчатки! Вы не можете трогать пациента без средств защиты.',
-  aed: 'Рано включать АНД! Сначала убедитесь, что у пациента нет дыхания и начните компрессии.',
-  compressions: 'Сначала проверьте дыхание и сознание! Нельзя начинать компрессии, если пациент дышит.',
-  call: 'Вы еще не оценили пациента! Сначала соберите данные (АД, пульс, ЭКГ), чтобы передать точную информацию диспетчеру.',
-  ecg: 'Сначала нужно оценить витальные функции (пульс, АД, дыхание). ЭКГ снимается после этого.',
-  default: 'Неверный шаг! Сейчас нужно выполнить другое действие.',
-};
 
 type Stage = 'briefing' | 'room_entry' | 'intro' | 'playing' | 'finished';
 
@@ -132,14 +133,9 @@ export default function Home() {
   const [callSuccess, setCallSuccess] = useState(false);
 
   const hasSpokenMinuteWarning = useRef(false);
-  const isFinishing = useRef(false); // Защита от двойного вызова finish
+  const isFinishing = useRef(false);
 
   const currentOrder = SCENARIO_DATA[scenario].order;
-  
-  // Если sequence.length >= currentOrder.length, то шагов больше нет
-  const isCompleted = sequence.length >= currentOrder.length;
-  const expectedId = !isCompleted ? currentOrder[sequence.length] : null; 
-  const expectedAction = expectedId ? ALL_ACTIONS.find(a => a.id === expectedId) : null;
 
   const playAudio = (text: string, onEnd?: () => void) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -206,7 +202,6 @@ export default function Home() {
     setTimeout(() => { if (stage === 'intro') setStage('playing'); }, 15000);
   };
 
-  // ФУНКЦИЯ ЗАВЕРШЕНИЯ (с защитой)
   const finishScenario = async () => {
     if (isFinishing.current) return;
     isFinishing.current = true;
@@ -236,17 +231,10 @@ export default function Home() {
   };
 
   const toggleAction = (id: string) => {
+    if (actions[id]) return;
+    
     setActions((prev) => ({ ...prev, [id]: true }));
-    
-    setSequence((prev) => {
-      const newSeq = [...prev, id];
-      // Если это был последний шаг - автоматически завершаем экзамен
-      if (newSeq.length >= currentOrder.length) {
-        setTimeout(() => finishScenario(), 1000);
-      }
-      return newSeq;
-    });
-    
+    setSequence((prev) => [...prev, id]);
     setChallenge(null);
   };
 
@@ -257,26 +245,25 @@ export default function Home() {
       return;
     }
 
-    if (isCompleted) {
-      setAccredicMessage('Вы уже завершили все шаги! Нажмите "Завершить".');
-      setTimeout(() => setAccredicMessage(null), 3000);
-      return;
-    }
+    // Проверка для подсказок Аккредика
+    const expectedId = currentOrder[sequence.length];
+    const expectedAction = ALL_ACTIONS.find(a => a.id === expectedId);
 
     if (expectedId && id !== expectedId) {
-      let msg = MISTAKE_REASONS[id];
-      if (!msg) {
-        msg = `Ошибка! Сейчас нужно: ${expectedAction?.label.toLowerCase()}`;
-      }
-      setAccredicMessage(msg);
-      setTimeout(() => setAccredicMessage(null), 5000);
-      setMistakes(prev => [...prev, `Попытка нажать «${ALL_ACTIONS.find(a => a.id === id)?.label}» вместо «${expectedAction?.label}»`]);
-      return; 
+      setAccredicMessage(`Подсказка: обычно следующим шагом идет «${expectedAction?.label}».`);
+      setTimeout(() => setAccredicMessage(null), 3000);
+      setMistakes(prev => [...prev, `Нарушен порядок: «${ALL_ACTIONS.find(a => a.id === id)?.label}» вместо «${expectedAction?.label}»`]);
+    } else if (expectedId && id === expectedId) {
+      setAccredicMessage('Верно!');
+      setTimeout(() => setAccredicMessage(null), 2000);
     }
 
-    setAccredicMessage('Верно! Молодец!');
-    setTimeout(() => setAccredicMessage(null), 2000);
-
+    // Обработка специальных кнопок
+    if (id === 'aed') {
+      setAedOpen(true);
+      setActiveHotspot(null);
+      return;
+    }
     if (id === 'compressions') {
       setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
@@ -291,15 +278,9 @@ export default function Home() {
 
   const handleAedShock = () => {
     if (aedState === 'shock') {
-      if (expectedId === 'aed') {
-        setAedState('success'); 
-        toggleAction('aed');
-        setTimeout(() => setAedOpen(false), 1500);
-      } else {
-        setAccredicMessage('Рано! АНД применяется после начала компрессий.');
-        setTimeout(() => setAccredicMessage(null), 4000);
-        setMistakes(prev => [...prev, 'Преждевременный разряд АНД']);
-      }
+      setAedState('success'); 
+      toggleAction('aed');
+      setTimeout(() => setAedOpen(false), 1500);
     }
   };
 
@@ -406,7 +387,6 @@ export default function Home() {
     );
   }
 
-  // --- ЭКРАН РЕЗУЛЬТАТА ---
   if (stage === 'finished') {
     const isPassed = score >= 90;
     const missingSteps = currentOrder.filter(stepId => !actions[stepId]);
@@ -479,7 +459,6 @@ export default function Home() {
     );
   }
 
-  // ИНТЕРФЕЙС
   return (
     <div className={`min-h-screen bg-gray-900 text-white overflow-hidden relative ${timeLeft < 60 ? 'animate-pulse ring-8 ring-red-600 ring-inset' : ''}`}>
       
@@ -569,8 +548,21 @@ export default function Home() {
       {/* Комната */}
       <div className="relative w-full max-w-[1200px] mx-auto">
         <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
+        
+        {/* Кликабельные зоны. Если кликнуть на АНД - сразу открывается интерфейс */}
         {HOTSPOTS.map((spot) => (
-          <button key={spot.id} onClick={() => setActiveHotspot(spot.id)} className="absolute border-2 border-transparent hover:border-blue-400/70 hover:bg-blue-400/20 rounded-xl z-10" style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, height: `${spot.h}%` }} />
+          <button 
+            key={spot.id} 
+            onClick={() => {
+              if (spot.id === 'aed') {
+                setAedOpen(true);
+              } else {
+                setActiveHotspot(spot.id);
+              }
+            }} 
+            className="absolute border-2 border-transparent hover:border-blue-400/70 hover:bg-blue-400/20 rounded-xl z-10" 
+            style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, height: `${spot.h}%` }} 
+          />
         ))}
 
         {activeHotspot && !aedOpen && !challenge && !phoneModal && (
@@ -579,21 +571,21 @@ export default function Home() {
               <button onClick={() => setActiveHotspot(null)} className="float-right font-bold">✕</button>
               <h3 className="text-xl font-bold mb-2">Действия</h3>
               
-              {/* ПОДСКАЗКА */}
               <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm font-medium">
-                💡 {isCompleted ? 'Все шаги выполнены! Нажмите «Завершить»' : `Следующий шаг: ${expectedAction?.label}`}
+                💡 Подсказка: {currentOrder[sequence.length] ? ALL_ACTIONS.find(a => a.id === currentOrder[sequence.length])?.label : 'Все шаги выполнены!'}
               </div>
 
               <div className="space-y-3 max-h-[50vh] overflow-y-auto">
                 {ALL_ACTIONS.map((action) => {
-                  if (scenario === 'OKS1') {
-                    if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'compressions', 'breaths', 'venous'].includes(action.id)) return null;
+                  if (scenario !== 'BLS') {
+                    if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'compressions', 'breaths', 'venous', 'danger', 'choking', 'back_blows', 'heimlich', 'breathing', 'recovery'].includes(action.id)) return null;
                     if (activeHotspot === 'crash_cart' && !['gloves', 'oxygen', 'adrenaline'].includes(action.id)) return null;
                     if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
-                    if (activeHotspot === 'aed') {
-                      return <button key="aed-btn" onClick={() => { setAedOpen(true); setActiveHotspot(null); }} className="w-full text-left p-3 rounded border-2 border-gray-200 hover:border-blue-300 mb-2">Открыть АНД</button>;
-                    }
+                  } else {
+                    // Для BLS
+                    if (activeHotspot === 'patient' && !['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'compressions', 'breaths', 'recovery'].includes(action.id)) return null;
+                    if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   }
 
                   return (
