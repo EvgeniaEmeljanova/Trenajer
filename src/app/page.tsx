@@ -35,24 +35,25 @@ const VOICE_INTROS: Record<ScenarioType, string> = {
   HYPERGLYCEMIA: 'Пациент 35 лет. Сухость во рту, слабость. Время пошло!',
 };
 
+// Действия с иконками (эмодзи)
 const ALL_ACTIONS = [
-  { id: 'danger', label: 'Убедиться в отсутствии опасности' },
-  { id: 'choking', label: 'Спросить: «Вы подавились?»' },
-  { id: 'back_blows', label: 'Нанести 5 ударов между лопатками' },
-  { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)' },
-  { id: 'consciousness', label: 'Оценить сознание' },
-  { id: 'airway', label: 'Открыть дыхательные пути' },
-  { id: 'breathing', label: 'Оценить дыхание (7-10 сек)' },
-  { id: 'call', label: 'Вызвать СМП' },
-  { id: 'compressions', label: 'Начать компрессии (30 раз)' },
-  { id: 'breaths', label: 'Сделать 2 вдоха' },
-  { id: 'aed', label: 'Работа с АНД' },
-  { id: 'recovery', label: 'Устойчивое боковое положение' },
-  { id: 'gloves', label: 'Надеть перчатки' },
-  { id: 'spo2', label: 'Пульсоксиметрия' },
-  { id: 'oxygen', label: 'Кислородотерапия' },
-  { id: 'ecg', label: 'Снять ЭКГ' },
-  { id: 'adrenaline', label: 'Ввести адреналин' },
+  { id: 'danger', label: 'Убедиться в отсутствии опасности', icon: '⚠️' },
+  { id: 'choking', label: 'Спросить: «Вы подавились?»', icon: '🗣️' },
+  { id: 'back_blows', label: 'Нанести 5 ударов между лопатками', icon: '👋' },
+  { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)', icon: '🤜' },
+  { id: 'consciousness', label: 'Оценить сознание', icon: '🧠' },
+  { id: 'airway', label: 'Открыть дыхательные пути', icon: '🫁' },
+  { id: 'breathing', label: 'Оценить дыхание (7-10 сек)', icon: '💨' },
+  { id: 'call', label: 'Вызвать СМП', icon: '📞' },
+  { id: 'compressions', label: 'Начать компрессии (30 раз)', icon: '❤️' },
+  { id: 'breaths', label: 'Сделать 2 вдоха', icon: '😮‍💨' },
+  { id: 'aed', label: 'Работа с АНД', icon: '⚡' },
+  { id: 'recovery', label: 'Устойчивое боковое положение', icon: '🛌' },
+  { id: 'gloves', label: 'Надеть перчатки', icon: '🧤' },
+  { id: 'spo2', label: 'Пульсоксиметрия', icon: '🩸' },
+  { id: 'oxygen', label: 'Кислородотерапия', icon: '💨' },
+  { id: 'ecg', label: 'Снять ЭКГ', icon: '📈' },
+  { id: 'adrenaline', label: 'Ввести адреналин', icon: '💉' },
 ];
 
 const BLS_ORDER = [
@@ -86,25 +87,17 @@ const SMP_PHRASES = [
   { id: 'noaddress', text: '«Приезжайте, сами найдете»', correct: false },
 ];
 
-// Новые данные для мини-игры "Собери рабочее место"
-const WORKSPACE_ITEMS = [
-  { id: 'aed', label: 'АНД', icon: '⚡', correct: true },
-  { id: 'gloves', label: 'Перчатки', icon: '🧤', correct: true },
-  { id: 'phone', label: 'Телефон', icon: '📞', correct: true },
-  { id: 'coffee', label: 'Кофе', icon: '☕', correct: false },
-  { id: 'magazine', label: 'Журнал', icon: '📖', correct: false },
-  { id: 'sandwich', label: 'Бутерброд', icon: '🥪', correct: false },
-];
-
-// Объяснения для ошибок (Почему это ошибка?)
 const MISTAKE_REASONS: Record<string, string> = {
-  aed: 'Ошибка! Вы включаете АНД, когда пациент дышит. Разряд может убить его. Сначала оцените сознание и дыхание!',
-  compressions: 'Ошибка! Вы начали компрессии без оценки дыхания. Это может привести к травме.',
+  aed: 'Ошибка! Вы применяете АНД к пациенту, который ещё дышит. Это может вызвать остановку сердца. Сначала оцените сознание и дыхание.',
+  compressions: 'Ошибка! Компрессии без оценки дыхания могут травмировать пациента. Сначала убедитесь, что он не дышит.',
   call: 'Ошибка! Сначала оцените состояние пациента, чтобы передать точную информацию диспетчеру.',
+  oxygen: 'Ошибка! Кислород дают только после пульсоксиметрии (по показаниям). Сначала измерьте сатурацию.',
+  ecg: 'Ошибка! ЭКГ снимают после оценки основных витальных функций (сознание, дыхание, пульс).',
+  recovery: 'Ошибка! Боковое положение применяют, когда пациент дышит, но без сознания. Сначала убедитесь в этом.',
   default: 'Неверный шаг! Подумайте о текущем состоянии пациента.',
 };
 
-type Stage = 'briefing' | 'room_entry' | 'intro' | 'setup' | 'playing' | 'finished';
+type Stage = 'briefing' | 'room_entry' | 'intro' | 'playing' | 'finished';
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>('briefing');
@@ -134,9 +127,6 @@ export default function Home() {
   const [selectedPhrases, setSelectedPhrases] = useState<string[]>([]);
   const [callFeedback, setCallFeedback] = useState('');
   const [callSuccess, setCallSuccess] = useState(false);
-
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [setupError, setSetupError] = useState<string | null>(null);
 
   const hasSpokenMinuteWarning = useRef(false);
 
@@ -203,34 +193,8 @@ export default function Home() {
     const finalId = studentId.trim() || 'Аноним';
     setStudentId(finalId);
     setStage('intro');
-    playAudio(VOICE_INTROS[scenario], () => setStage('setup'));
-    setTimeout(() => { if (stage === 'intro') setStage('setup'); }, 15000);
-  };
-
-  const toggleSetupItem = (id: string) => {
-    setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-    setSetupError(null);
-  };
-
-  const handleConfirmSetup = () => {
-    const correctIds = WORKSPACE_ITEMS.filter(i => i.correct).map(i => i.id);
-    const hasIncorrect = selectedItems.some(id => !correctIds.includes(id));
-    const hasAllCorrect = correctIds.every(id => selectedItems.includes(id));
-
-    if (hasIncorrect) {
-      setSetupError('Вы взяли лишние предметы. Подумайте, что действительно нужно для спасения жизни!');
-      setMistakes(prev => [...prev, 'Взяты лишние предметы на рабочее место']);
-      return;
-    }
-    if (!hasAllCorrect) {
-      setSetupError('Вы забыли важные инструменты! Без них вы не сможете оказать помощь.');
-      setMistakes(prev => [...prev, 'Забыты необходимые инструменты на рабочем месте']);
-      return;
-    }
-
-    // Успех
-    setStage('playing');
-    playAudio("Рабочее место готово. Приступайте к осмотру.");
+    playAudio(VOICE_INTROS[scenario], () => setStage('playing'));
+    setTimeout(() => { if (stage === 'intro') setStage('playing'); }, 15000);
   };
 
   const toggleAction = (id: string) => {
@@ -251,17 +215,15 @@ export default function Home() {
     const expectedAction = ALL_ACTIONS.find(a => a.id === expectedId);
     
     if (expectedId && id !== expectedId) {
-      // Используем MISTAKE_REASONS для объяснения
-      let msg = MISTAKE_REASONS[id] || MISTAKE_REASONS.default;
-      if (id === 'aed' && expectedId !== 'aed') msg = MISTAKE_REASONS.aed;
-      else if (id === 'compressions' && expectedId !== 'compressions') msg = MISTAKE_REASONS.compressions;
-      else if (id === 'call' && expectedId !== 'call') msg = MISTAKE_REASONS.call;
-      else msg = `Неверный шаг! Сейчас нужно: ${expectedAction?.label.toLowerCase()}`;
+      let msg = MISTAKE_REASONS[id];
+      if (!msg || (id !== 'aed' && id !== 'compressions' && id !== 'call' && id !== 'oxygen' && id !== 'ecg' && id !== 'recovery')) {
+        msg = `Неверный шаг! Сейчас нужно: ${expectedAction?.label.toLowerCase()}`;
+      }
 
       setAccredicMessage(msg);
       setTimeout(() => setAccredicMessage(null), 5000);
       
-      setMistakes(prev => [...prev, `Попытка сделать «${ALL_ACTIONS.find(a => a.id === id)?.label}» вместо «${expectedAction?.label}»`]);
+      setMistakes(prev => [...prev, `«${ALL_ACTIONS.find(a => a.id === id)?.label}» вместо «${expectedAction?.label}»`]);
       return; 
     }
 
@@ -272,10 +234,7 @@ export default function Home() {
       setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
     }
-    if (id === 'recovery') {
-      toggleAction(id); return;
-    }
-    if (id === 'choking') {
+    if (id === 'recovery' || id === 'choking') {
       toggleAction(id); return;
     }
     if (id === 'call') {
@@ -314,7 +273,7 @@ export default function Home() {
     
     if (selectedIncorrect.length > 0) {
       setCallFeedback('Ошибка! Диспетчер не понял. Вы сказали лишнее.');
-      setMistakes(prev => [...prev, 'Ошибка при вызове СМП: названа неверная информация']);
+      setMistakes(prev => [...prev, 'Ошибка при вызове СМП: неверная информация']);
       return;
     }
     if (selectedCorrect.length < correctIds.length) {
@@ -428,49 +387,7 @@ export default function Home() {
     );
   }
 
-  // --- НОВЫЙ ЭКРАН: СБОР РАБОЧЕГО МЕСТА ---
-  if (stage === 'setup') {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-        <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-8 max-w-2xl w-full shadow-2xl text-center">
-          <h1 className="text-3xl font-bold mb-4 text-blue-400">Соберите рабочее место</h1>
-          <p className="mb-6 text-gray-300">Выберите инструменты, которые понадобятся вам для спасения пациента.</p>
-          
-          {setupError && (
-            <div className="bg-red-900 text-red-300 p-3 rounded-lg mb-6 font-medium border border-red-500">
-              {setupError}
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-            {WORKSPACE_ITEMS.map(item => (
-              <button
-                key={item.id}
-                onClick={() => toggleSetupItem(item.id)}
-                className={`p-6 rounded-xl border-2 transition flex flex-col items-center justify-center gap-2 ${
-                  selectedItems.includes(item.id) 
-                    ? 'bg-blue-900 border-blue-500' 
-                    : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
-                }`}
-              >
-                <span className="text-4xl">{item.icon}</span>
-                <span className="font-medium text-sm">{item.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <button 
-            onClick={handleConfirmSetup} 
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl shadow-lg"
-          >
-            Подтвердить и начать
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // --- ЭКРАН РЕЗУЛЬТАТА С ОЦЕНКОЙ ОШИБОК ---
+  // --- ЭКРАН РЕЗУЛЬТАТА ---
   if (stage === 'finished') {
     const isPassed = score >= 90;
     const missingSteps = currentOrder.filter(stepId => !actions[stepId]);
@@ -653,6 +570,7 @@ export default function Home() {
                   }
                   return (
                     <button key={action.id} onClick={() => handleActionClick(action.id)} className={`w-full text-left p-3 rounded-lg border-2 transition ${actions[action.id] ? 'bg-green-50 border-green-500 text-green-700 font-medium' : 'border-gray-200 hover:border-blue-300'}`}>
+                      <span className="text-2xl mr-2">{action.icon}</span>
                       {action.label} {actions[action.id] && '✓'}
                     </button>
                   );
