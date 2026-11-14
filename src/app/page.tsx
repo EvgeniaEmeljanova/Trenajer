@@ -40,7 +40,7 @@ const ALL_ACTIONS = [
   { id: 'choking', label: 'Спросить: «Вы подавились?»' },
   { id: 'back_blows', label: '5 ударов между лопатками' },
   { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)' },
-  { id: 'breathing', label: 'Оценить дыхание (7-10 сек)' },
+  { id: 'breathing', label: 'Оценить дыхание (10 сек)' },
   { id: 'recovery', label: 'Устойчивое боковое положение' },
   { id: 'consciousness', label: 'Оценить сознание' },
   { id: 'gloves', label: 'Надеть перчатки' },
@@ -51,7 +51,7 @@ const ALL_ACTIONS = [
   { id: 'percussion', label: 'Перкуссия легких' },
   { id: 'auscultation', label: 'Аускультация легких' },
   { id: 'trachea', label: 'Осмотр трахеи и вен шеи' },
-  { id: 'pulse', label: 'Пульс на лучевой и сонной артериях' },
+  { id: 'pulse', label: 'Пульс на лучевой и сонной артериях (10 сек)' },
   { id: 'bp', label: 'Измерить АД' },
   { id: 'heart_ausc', label: 'Аускультация сердца' },
   { id: 'cap_refill', label: 'Симптом белого пятна (5 сек)' },
@@ -64,6 +64,7 @@ const ALL_ACTIONS = [
   { id: 'glucose', label: 'Уровень глюкозы' },
   { id: 'abdomen', label: 'Пальпация живота' },
   { id: 'call', label: 'Вызвать СМП' },
+  { id: 'adrenaline', label: 'Ввести адреналин' },
   { id: 'compressions', label: 'Компрессии (30 раз)' },
   { id: 'aed', label: 'Работа с АНД' },
   { id: 'breaths', label: 'ИВЛ (2 вдоха)' },
@@ -116,7 +117,12 @@ export default function Home() {
   const [mistakes, setMistakes] = useState<string[]>([]);
   const [accredicMessage, setAccredicMessage] = useState<string | null>(null);
 
+  // Состояния для мини-игр
   const [challenge, setChallenge] = useState<string | null>(null);
+  const [timerChallenge, setTimerChallenge] = useState(0);
+  const [holdSuccess, setHoldSuccess] = useState(false);
+  const holdInterval = useRef<NodeJS.Timeout | null>(null);
+  
   const [cprCount, setCprCount] = useState(0);
   const [cprFeedback, setCprFeedback] = useState('');
   const lastCprTime = useRef<number>(0);
@@ -238,6 +244,30 @@ export default function Home() {
     setChallenge(null);
   };
 
+  // --- ЛОГИКА МИНИ-ИГР ---
+  const startHoldChallenge = (id: string, seconds: number) => {
+    setChallenge(id);
+    setHoldSuccess(false);
+    setTimerChallenge(seconds);
+    
+    if (holdInterval.current) clearInterval(holdInterval.current);
+    holdInterval.current = setInterval(() => {
+      setTimerChallenge((prev) => {
+        if (prev <= 1) {
+          clearInterval(holdInterval.current!);
+          setHoldSuccess(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const stopHoldChallenge = () => {
+    if (holdInterval.current) clearInterval(holdInterval.current);
+    if (!holdSuccess) setTimerChallenge(0);
+  };
+
   const handleActionClick = (id: string) => {
     if (actions[id]) {
       setAccredicMessage('Вы уже выполнили это действие!');
@@ -245,7 +275,6 @@ export default function Home() {
       return;
     }
 
-    // Проверка для подсказок Аккредика
     const expectedId = currentOrder[sequence.length];
     const expectedAction = ALL_ACTIONS.find(a => a.id === expectedId);
 
@@ -258,14 +287,24 @@ export default function Home() {
       setTimeout(() => setAccredicMessage(null), 2000);
     }
 
-    // Обработка специальных кнопок
+    // Запуск мини-игр
+    if (id === 'compressions') {
+      setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
+      return;
+    }
+    if (id === 'cap_refill') {
+      startHoldChallenge('cap_refill', 5); // 5 секунд
+      return;
+    }
+    if (id === 'pulse' || id === 'respiratory_rate' || id === 'breathing') {
+      startHoldChallenge(id, 10); // 10 секунд
+      return;
+    }
+    
+    // Обычные модалки
     if (id === 'aed') {
       setAedOpen(true);
       setActiveHotspot(null);
-      return;
-    }
-    if (id === 'compressions') {
-      setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
     }
     if (id === 'call') {
@@ -483,6 +522,33 @@ export default function Home() {
         )}
       </div>
 
+      {/* УДЕРЖАНИЕ КНОПКИ (5 сек / 10 сек) */}
+      {challenge && challenge !== 'cpr' && (
+        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm text-center">
+            <h3 className="text-xl font-bold mb-4">
+              {challenge === 'cap_refill' ? 'Симптом белого пятна' : 
+               challenge === 'pulse' ? 'Оценка пульса' :
+               challenge === 'respiratory_rate' ? 'Подсчет ЧДД' : 'Оценка дыхания'}
+            </h3>
+            <p className="mb-4 text-sm text-gray-600">
+              {challenge === 'cap_refill' ? 'Нажмите и удерживайте 5 секунд.' : 'Нажмите и удерживайте 10 секунд.'}
+            </p>
+            <button 
+              onMouseDown={() => !holdSuccess && startHoldChallenge(challenge, timerChallenge || 10)}
+              onMouseUp={stopHoldChallenge}
+              onMouseLeave={stopHoldChallenge}
+              onTouchStart={() => !holdSuccess && startHoldChallenge(challenge, timerChallenge || 10)}
+              onTouchEnd={stopHoldChallenge}
+              className={`w-full py-4 rounded-xl font-bold text-lg transition ${holdSuccess ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}`}
+            >
+              {holdSuccess ? 'Выполнено!' : timerChallenge > 0 ? `Удерживайте: ${timerChallenge}...` : 'Удерживайте'}
+            </button>
+            {holdSuccess && <button onClick={() => { toggleAction(challenge); setChallenge(null); }} className="mt-4 text-blue-600 font-bold">Продолжить</button>}
+          </div>
+        </div>
+      )}
+
       {/* Окно вызова СМП */}
       {phoneModal && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
@@ -515,7 +581,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Ритм-игра */}
+      {/* Ритм-игра (Компрессии) */}
       {challenge === 'cpr' && (
         <div className="absolute inset-0 bg-gray-900/95 flex flex-col items-center justify-center z-50 p-4">
           <h2 className="text-3xl font-bold mb-2 text-white">Компрессии</h2>
@@ -549,16 +615,12 @@ export default function Home() {
       <div className="relative w-full max-w-[1200px] mx-auto">
         <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
         
-        {/* Кликабельные зоны. Если кликнуть на АНД - сразу открывается интерфейс */}
         {HOTSPOTS.map((spot) => (
           <button 
             key={spot.id} 
             onClick={() => {
-              if (spot.id === 'aed') {
-                setAedOpen(true);
-              } else {
-                setActiveHotspot(spot.id);
-              }
+              if (spot.id === 'aed') setAedOpen(true);
+              else setActiveHotspot(spot.id);
             }} 
             className="absolute border-2 border-transparent hover:border-blue-400/70 hover:bg-blue-400/20 rounded-xl z-10" 
             style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, height: `${spot.h}%` }} 
@@ -583,7 +645,6 @@ export default function Home() {
                     if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   } else {
-                    // Для BLS
                     if (activeHotspot === 'patient' && !['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'compressions', 'breaths', 'recovery'].includes(action.id)) return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   }
