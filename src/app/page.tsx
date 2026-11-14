@@ -19,16 +19,14 @@ const VOICE_INTROS: Record<ScenarioType, string> = {
   BLS: 'Вы увидели, что человеку стало плохо. Необходимо оказать ему первую помощь. Время пошло!',
 };
 
-// ПОЛНЫЙ СПИСОК ДЕЙСТВИЙ (БЕЗ ИКОНОК)
+// ПОЛНЫЙ СПИСОК ДЕЙСТВИЙ
 const ALL_ACTIONS = [
-  // Для BLS
   { id: 'danger', label: 'Убедиться в отсутствии опасности' },
   { id: 'choking', label: 'Спросить: «Вы подавились?»' },
   { id: 'back_blows', label: '5 ударов между лопатками' },
   { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)' },
   { id: 'breathing', label: 'Оценить дыхание (7-10 сек)' },
   { id: 'recovery', label: 'Устойчивое боковое положение' },
-  // Для ОКС (и общие)
   { id: 'consciousness', label: 'Оценить сознание (встряхнуть, спросить)' },
   { id: 'gloves', label: 'Надеть перчатки' },
   { id: 'airway', label: 'Осмотреть полость рта' },
@@ -56,7 +54,6 @@ const ALL_ACTIONS = [
   { id: 'breaths', label: 'ИВЛ (2 вдоха)' },
 ];
 
-// ПРАВИЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ ИЗ ПАСПОРТА
 const OKS_ORDER = [
   'consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 
   'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 
@@ -135,10 +132,14 @@ export default function Home() {
   const [callSuccess, setCallSuccess] = useState(false);
 
   const hasSpokenMinuteWarning = useRef(false);
+  const isFinishing = useRef(false); // Защита от двойного вызова finish
 
   const currentOrder = SCENARIO_DATA[scenario].order;
-  const expectedId = currentOrder[sequence.length]; 
-  const expectedAction = ALL_ACTIONS.find(a => a.id === expectedId);
+  
+  // Если sequence.length >= currentOrder.length, то шагов больше нет
+  const isCompleted = sequence.length >= currentOrder.length;
+  const expectedId = !isCompleted ? currentOrder[sequence.length] : null; 
+  const expectedAction = expectedId ? ALL_ACTIONS.find(a => a.id === expectedId) : null;
 
   const playAudio = (text: string, onEnd?: () => void) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -205,9 +206,47 @@ export default function Home() {
     setTimeout(() => { if (stage === 'intro') setStage('playing'); }, 15000);
   };
 
+  // ФУНКЦИЯ ЗАВЕРШЕНИЯ (с защитой)
+  const finishScenario = async () => {
+    if (isFinishing.current) return;
+    isFinishing.current = true;
+    
+    setStage('finished');
+    
+    const completedSteps = sequence.length;
+    const totalSteps = currentOrder.length;
+    const calculatedScore = Math.round((completedSteps / totalSteps) * 100);
+    
+    if (mistakes.length > 0) {
+      const penalty = mistakes.length * 10;
+      setScore(Math.max(0, calculatedScore - penalty));
+    } else {
+      setScore(calculatedScore);
+    }
+
+    if (supabase && scenario) {
+      try {
+        await supabase.from('attempts').insert({ 
+          scenario_id: scenario, 
+          score: calculatedScore, 
+          actions: { studentId: studentId, fullSequence: sequence, mistakes } 
+        });
+      } catch (e) { console.error(e); }
+    }
+  };
+
   const toggleAction = (id: string) => {
     setActions((prev) => ({ ...prev, [id]: true }));
-    setSequence((prev) => [...prev, id]);
+    
+    setSequence((prev) => {
+      const newSeq = [...prev, id];
+      // Если это был последний шаг - автоматически завершаем экзамен
+      if (newSeq.length >= currentOrder.length) {
+        setTimeout(() => finishScenario(), 1000);
+      }
+      return newSeq;
+    });
+    
     setChallenge(null);
   };
 
@@ -215,6 +254,12 @@ export default function Home() {
     if (actions[id]) {
       setAccredicMessage('Вы уже выполнили это действие!');
       setTimeout(() => setAccredicMessage(null), 2000);
+      return;
+    }
+
+    if (isCompleted) {
+      setAccredicMessage('Вы уже завершили все шаги! Нажмите "Завершить".');
+      setTimeout(() => setAccredicMessage(null), 3000);
       return;
     }
 
@@ -322,31 +367,6 @@ export default function Home() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [challenge]);
-
-  const finishScenario = async () => {
-    setStage('finished');
-    
-    const completedSteps = sequence.length;
-    const totalSteps = currentOrder.length;
-    const calculatedScore = Math.round((completedSteps / totalSteps) * 100);
-    
-    if (mistakes.length > 0) {
-      const penalty = mistakes.length * 10;
-      setScore(Math.max(0, calculatedScore - penalty));
-    } else {
-      setScore(calculatedScore);
-    }
-
-    if (supabase && scenario) {
-      try {
-        await supabase.from('attempts').insert({ 
-          scenario_id: scenario, 
-          score: calculatedScore, 
-          actions: { studentId: studentId, fullSequence: sequence, mistakes } 
-        });
-      } catch (e) { console.error(e); }
-    }
-  };
 
   // ЭКРАНЫ
   if (stage === 'briefing') {
@@ -559,9 +579,9 @@ export default function Home() {
               <button onClick={() => setActiveHotspot(null)} className="float-right font-bold">✕</button>
               <h3 className="text-xl font-bold mb-2">Действия</h3>
               
-              {/* ПОДСКАЗКА: Следующий шаг */}
+              {/* ПОДСКАЗКА */}
               <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm font-medium">
-                💡 Следующий шаг: {expectedAction?.label || 'Осмотр завершен'}
+                💡 {isCompleted ? 'Все шаги выполнены! Нажмите «Завершить»' : `Следующий шаг: ${expectedAction?.label}`}
               </div>
 
               <div className="space-y-3 max-h-[50vh] overflow-y-auto">
@@ -576,7 +596,6 @@ export default function Home() {
                     }
                   }
 
-                  // Убрали иконки, оставили только текст
                   return (
                     <button key={action.id} onClick={() => handleActionClick(action.id)} className={`w-full text-left p-3 rounded-lg border-2 transition ${actions[action.id] ? 'bg-green-50 border-green-500 text-green-700 font-medium' : 'border-gray-200 hover:border-blue-300'}`}>
                       {action.label} {actions[action.id] && '✓'}
