@@ -86,7 +86,25 @@ const SMP_PHRASES = [
   { id: 'noaddress', text: '«Приезжайте, сами найдете»', correct: false },
 ];
 
-type Stage = 'briefing' | 'room_entry' | 'intro' | 'playing' | 'finished';
+// Новые данные для мини-игры "Собери рабочее место"
+const WORKSPACE_ITEMS = [
+  { id: 'aed', label: 'АНД', icon: '⚡', correct: true },
+  { id: 'gloves', label: 'Перчатки', icon: '🧤', correct: true },
+  { id: 'phone', label: 'Телефон', icon: '📞', correct: true },
+  { id: 'coffee', label: 'Кофе', icon: '☕', correct: false },
+  { id: 'magazine', label: 'Журнал', icon: '📖', correct: false },
+  { id: 'sandwich', label: 'Бутерброд', icon: '🥪', correct: false },
+];
+
+// Объяснения для ошибок (Почему это ошибка?)
+const MISTAKE_REASONS: Record<string, string> = {
+  aed: 'Ошибка! Вы включаете АНД, когда пациент дышит. Разряд может убить его. Сначала оцените сознание и дыхание!',
+  compressions: 'Ошибка! Вы начали компрессии без оценки дыхания. Это может привести к травме.',
+  call: 'Ошибка! Сначала оцените состояние пациента, чтобы передать точную информацию диспетчеру.',
+  default: 'Неверный шаг! Подумайте о текущем состоянии пациента.',
+};
+
+type Stage = 'briefing' | 'room_entry' | 'intro' | 'setup' | 'playing' | 'finished';
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>('briefing');
@@ -98,6 +116,7 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   
+  const [mistakes, setMistakes] = useState<string[]>([]);
   const [accredicMessage, setAccredicMessage] = useState<string | null>(null);
 
   const [challenge, setChallenge] = useState<string | null>(null);
@@ -115,6 +134,9 @@ export default function Home() {
   const [selectedPhrases, setSelectedPhrases] = useState<string[]>([]);
   const [callFeedback, setCallFeedback] = useState('');
   const [callSuccess, setCallSuccess] = useState(false);
+
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [setupError, setSetupError] = useState<string | null>(null);
 
   const hasSpokenMinuteWarning = useRef(false);
 
@@ -181,8 +203,34 @@ export default function Home() {
     const finalId = studentId.trim() || 'Аноним';
     setStudentId(finalId);
     setStage('intro');
-    playAudio(VOICE_INTROS[scenario], () => setStage('playing'));
-    setTimeout(() => { if (stage === 'intro') setStage('playing'); }, 15000);
+    playAudio(VOICE_INTROS[scenario], () => setStage('setup'));
+    setTimeout(() => { if (stage === 'intro') setStage('setup'); }, 15000);
+  };
+
+  const toggleSetupItem = (id: string) => {
+    setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    setSetupError(null);
+  };
+
+  const handleConfirmSetup = () => {
+    const correctIds = WORKSPACE_ITEMS.filter(i => i.correct).map(i => i.id);
+    const hasIncorrect = selectedItems.some(id => !correctIds.includes(id));
+    const hasAllCorrect = correctIds.every(id => selectedItems.includes(id));
+
+    if (hasIncorrect) {
+      setSetupError('Вы взяли лишние предметы. Подумайте, что действительно нужно для спасения жизни!');
+      setMistakes(prev => [...prev, 'Взяты лишние предметы на рабочее место']);
+      return;
+    }
+    if (!hasAllCorrect) {
+      setSetupError('Вы забыли важные инструменты! Без них вы не сможете оказать помощь.');
+      setMistakes(prev => [...prev, 'Забыты необходимые инструменты на рабочем месте']);
+      return;
+    }
+
+    // Успех
+    setStage('playing');
+    playAudio("Рабочее место готово. Приступайте к осмотру.");
   };
 
   const toggleAction = (id: string) => {
@@ -192,9 +240,7 @@ export default function Home() {
     setChallenge(null);
   };
 
-  // --- УМНЫЙ АККРЕДИК (Строгая проверка последовательности) ---
   const handleActionClick = (id: string) => {
-    // Если действие уже выполнено
     if (actions[id]) {
       setAccredicMessage('Вы уже выполнили это действие!');
       setTimeout(() => setAccredicMessage(null), 2000);
@@ -204,23 +250,21 @@ export default function Home() {
     const expectedId = currentOrder[sequence.length];
     const expectedAction = ALL_ACTIONS.find(a => a.id === expectedId);
     
-    // Если действие не то, что ожидалось — БЛОКИРУЕМ его
     if (expectedId && id !== expectedId) {
-      if (id === 'aed' && expectedId !== 'aed') {
-        setAccredicMessage('Стой! Рано включать АНД. Сначала выполните предыдущие шаги!');
-      } else if (id === 'compressions' && expectedId !== 'compressions') {
-        setAccredicMessage('Подожди с компрессиями! Сначала проверь сознание и дыхание.');
-      } else if (id === 'call' && expectedId !== 'call') {
-        setAccredicMessage('Сначала оцени состояние пациента, потом вызывай скорую.');
-      } else {
-        setAccredicMessage(`Неверный шаг! Сейчас нужно: ${expectedAction?.label.toLowerCase()}`);
-      }
+      // Используем MISTAKE_REASONS для объяснения
+      let msg = MISTAKE_REASONS[id] || MISTAKE_REASONS.default;
+      if (id === 'aed' && expectedId !== 'aed') msg = MISTAKE_REASONS.aed;
+      else if (id === 'compressions' && expectedId !== 'compressions') msg = MISTAKE_REASONS.compressions;
+      else if (id === 'call' && expectedId !== 'call') msg = MISTAKE_REASONS.call;
+      else msg = `Неверный шаг! Сейчас нужно: ${expectedAction?.label.toLowerCase()}`;
+
+      setAccredicMessage(msg);
+      setTimeout(() => setAccredicMessage(null), 5000);
       
-      setTimeout(() => setAccredicMessage(null), 4000);
-      return; // ВАЖНО: действие не выполняется!
+      setMistakes(prev => [...prev, `Попытка сделать «${ALL_ACTIONS.find(a => a.id === id)?.label}» вместо «${expectedAction?.label}»`]);
+      return; 
     }
 
-    // Если действие верное
     setAccredicMessage('Верно! Молодец!');
     setTimeout(() => setAccredicMessage(null), 2000);
 
@@ -241,17 +285,17 @@ export default function Home() {
     toggleAction(id);
   };
 
-  // Проверка нажатия кнопки АНД в интерфейсе дефибриллятора
   const handleAedShock = () => {
     if (aedState === 'shock') {
       const expectedId = currentOrder[sequence.length];
       if (expectedId === 'aed') {
         setAedState('success'); 
         toggleAction('aed');
-        setTimeout(() => setAedOpen(false), 1500); // Закрываем АНД после успеха
+        setTimeout(() => setAedOpen(false), 1500);
       } else {
-        setAccredicMessage('Вы применили АНД не вовремя!');
-        setTimeout(() => setAccredicMessage(null), 3000);
+        setAccredicMessage(MISTAKE_REASONS.aed);
+        setTimeout(() => setAccredicMessage(null), 4000);
+        setMistakes(prev => [...prev, 'Преждевременный разряд АНД']);
       }
     }
   };
@@ -270,10 +314,12 @@ export default function Home() {
     
     if (selectedIncorrect.length > 0) {
       setCallFeedback('Ошибка! Диспетчер не понял. Вы сказали лишнее.');
+      setMistakes(prev => [...prev, 'Ошибка при вызове СМП: названа неверная информация']);
       return;
     }
     if (selectedCorrect.length < correctIds.length) {
-      setCallFeedback('Неполный вызов! Диспетчер переспрашивает. Вы не назвали всю информацию.');
+      setCallFeedback('Неполный вызов! Диспетчер переспрашивает.');
+      setMistakes(prev => [...prev, 'Ошибка при вызове СМП: неполная информация']);
       return;
     }
     setCallSuccess(true);
@@ -286,9 +332,19 @@ export default function Home() {
     let feedback = '';
     if (lastCprTime.current !== 0) {
       const interval = now - lastCprTime.current;
-      if (interval < 400) feedback = 'Слишком быстро!';
-      else if (interval > 750) feedback = 'Слишком медленно!';
-      else feedback = 'Отличный ритм!';
+      if (interval < 400) {
+        feedback = 'Слишком быстро!';
+        if (!mistakes.includes('Неправильный ритм компрессий (слишком быстро)')) {
+          setMistakes(prev => [...prev, 'Неправильный ритм компрессий (слишком быстро)']);
+        }
+      } else if (interval > 750) {
+        feedback = 'Слишком медленно!';
+        if (!mistakes.includes('Неправильный ритм компрессий (слишком медленно)')) {
+          setMistakes(prev => [...prev, 'Неправильный ритм компрессий (слишком медленно)']);
+        }
+      } else {
+        feedback = 'Отличный ритм!';
+      }
     } else {
       feedback = 'Начали!';
     }
@@ -311,19 +367,24 @@ export default function Home() {
 
   const finishScenario = async () => {
     setStage('finished');
-    let calculatedScore = 0;
-    let isOrderCorrect = true;
-    for (let i = 0; i < sequence.length; i++) {
-      if (sequence[i] !== currentOrder[i]) { isOrderCorrect = false; break; }
+    
+    const completedSteps = sequence.length;
+    const totalSteps = currentOrder.length;
+    const calculatedScore = Math.round((completedSteps / totalSteps) * 100);
+    
+    if (mistakes.length > 0) {
+      const penalty = mistakes.length * 10;
+      setScore(Math.max(0, calculatedScore - penalty));
+    } else {
+      setScore(calculatedScore);
     }
-    if (sequence.length === currentOrder.length && isOrderCorrect) calculatedScore = 100;
-    else calculatedScore = 0;
-    setScore(calculatedScore);
 
     if (supabase && scenario) {
       try {
         await supabase.from('attempts').insert({ 
-          scenario_id: scenario, score: calculatedScore, actions: { studentId: studentId, fullSequence: sequence } 
+          scenario_id: scenario, 
+          score: calculatedScore, 
+          actions: { studentId: studentId, fullSequence: sequence, mistakes } 
         });
       } catch (e) { console.error(e); }
     }
@@ -367,28 +428,117 @@ export default function Home() {
     );
   }
 
-  if (stage === 'finished') {
-    const isPassed = score === 100;
+  // --- НОВЫЙ ЭКРАН: СБОР РАБОЧЕГО МЕСТА ---
+  if (stage === 'setup') {
     return (
-      <div className={`min-h-screen p-8 flex flex-col items-center justify-center ${isPassed ? 'bg-green-50' : 'bg-red-50'}`}>
-        <h1 className="text-4xl font-bold mb-4">{isPassed ? 'Экзамен сдан! 🎉' : 'Экзамен не сдан 😔'}</h1>
-        <p className={`text-6xl font-bold mb-8 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{score}%</p>
-        <div className="bg-white p-6 rounded-lg shadow w-full max-w-md max-h-[60vh] overflow-y-auto">
-          <h2 className="text-xl font-semibold mb-2">Студент: {studentId}</h2>
-          <h3 className="text-lg font-semibold mt-4 mb-2">Порядок ваших действий:</h3>
-          <div className="space-y-1 mb-6">
-            {sequence.map((id, index) => {
-              const action = ALL_ACTIONS.find(a => a.id === id);
-              return (
-                <div key={index} className="flex gap-2 text-sm p-1 border-b border-gray-100">
-                  <span className="text-gray-400 w-6">{index + 1}.</span>
-                  <span className="text-gray-800">{action?.label || id}</span>
+      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
+        <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-8 max-w-2xl w-full shadow-2xl text-center">
+          <h1 className="text-3xl font-bold mb-4 text-blue-400">Соберите рабочее место</h1>
+          <p className="mb-6 text-gray-300">Выберите инструменты, которые понадобятся вам для спасения пациента.</p>
+          
+          {setupError && (
+            <div className="bg-red-900 text-red-300 p-3 rounded-lg mb-6 font-medium border border-red-500">
+              {setupError}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            {WORKSPACE_ITEMS.map(item => (
+              <button
+                key={item.id}
+                onClick={() => toggleSetupItem(item.id)}
+                className={`p-6 rounded-xl border-2 transition flex flex-col items-center justify-center gap-2 ${
+                  selectedItems.includes(item.id) 
+                    ? 'bg-blue-900 border-blue-500' 
+                    : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+                }`}
+              >
+                <span className="text-4xl">{item.icon}</span>
+                <span className="font-medium text-sm">{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <button 
+            onClick={handleConfirmSetup} 
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl shadow-lg"
+          >
+            Подтвердить и начать
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- ЭКРАН РЕЗУЛЬТАТА С ОЦЕНКОЙ ОШИБОК ---
+  if (stage === 'finished') {
+    const isPassed = score >= 90;
+    const missingSteps = currentOrder.filter(stepId => !actions[stepId]);
+    
+    return (
+      <div className={`min-h-screen p-4 md:p-8 flex flex-col items-center justify-start overflow-y-auto ${isPassed ? 'bg-green-50' : 'bg-red-50'}`}>
+        <div className="w-full max-w-3xl">
+          <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 mt-4">{isPassed ? 'Экзамен сдан! 🎉' : 'Экзамен не сдан 😔'}</h1>
+          <p className={`text-6xl font-bold text-center mb-8 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{score}%</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div className="bg-white p-6 rounded-xl shadow">
+                <h2 className="text-xl font-bold mb-4 text-red-600 border-b pb-2">Ошибки и штрафы:</h2>
+                {mistakes.length === 0 ? (
+                  <p className="text-green-600 font-medium">Ошибок нет! Отличная работа.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {Array.from(new Set(mistakes)).map((m, i) => (
+                      <li key={i} className="text-sm bg-red-50 text-red-700 p-2 rounded">{m}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {missingSteps.length > 0 && (
+                <div className="bg-white p-6 rounded-xl shadow">
+                  <h2 className="text-xl font-bold mb-4 text-orange-600 border-b pb-2">Пропущенные шаги:</h2>
+                  <ul className="space-y-2">
+                    {missingSteps.map((id, i) => {
+                       const action = ALL_ACTIONS.find(a => a.id === id);
+                       return <li key={i} className="text-sm bg-orange-50 text-orange-700 p-2 rounded">Не выполнено: {action?.label}</li>;
+                    })}
+                  </ul>
                 </div>
-              );
-            })}
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-white p-6 rounded-xl shadow max-h-[40vh] overflow-y-auto">
+                <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Ваш порядок действий:</h2>
+                {sequence.length === 0 ? <p className="text-gray-500 italic">Действий не было</p> : (
+                  <ol className="list-decimal list-inside space-y-1">
+                    {sequence.map((id, index) => {
+                      const action = ALL_ACTIONS.find(a => a.id === id);
+                      return <li key={index} className="text-sm text-gray-700">{action?.label || id}</li>;
+                    })}
+                  </ol>
+                )}
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow max-h-[40vh] overflow-y-auto">
+                <h2 className="text-xl font-bold mb-4 text-green-700 border-b pb-2">Эталонный порядок:</h2>
+                <ol className="list-decimal list-inside space-y-1">
+                  {currentOrder.map((id, index) => {
+                    const action = ALL_ACTIONS.find(a => a.id === id);
+                    const isDone = actions[id];
+                    return <li key={index} className={`text-sm ${isDone ? 'text-green-600' : 'text-gray-500'}`}>{action?.label}</li>;
+                  })}
+                </ol>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center mt-8 mb-8">
+            <button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition">Пройти заново</button>
           </div>
         </div>
-        <button onClick={() => window.location.reload()} className="mt-6 bg-blue-600 text-white px-6 py-2 rounded">Пройти заново</button>
       </div>
     );
   }
