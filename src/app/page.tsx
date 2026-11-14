@@ -19,44 +19,49 @@ const VOICE_INTROS: Record<ScenarioType, string> = {
   BLS: 'Вы увидели, что человеку стало плохо. Необходимо оказать ему первую помощь. Время пошло!',
 };
 
-// ПОЛНЫЙ СПИСОК ДЕЙСТВИЙ (с иконками)
+// ПОЛНЫЙ СПИСОК ДЕЙСТВИЙ (БЕЗ ИКОНОК)
 const ALL_ACTIONS = [
-  { id: 'consciousness', label: 'Оценить сознание (встряхнуть, спросить)', icon: '🧠' },
-  { id: 'gloves', label: 'Надеть перчатки', icon: '🧤' },
-  { id: 'airway', label: 'Осмотреть полость рта', icon: '👄' },
-  { id: 'spo2', label: 'Пульсоксиметрия', icon: '🩸' },
-  { id: 'oxygen', label: 'Кислородотерапия', icon: '💨' },
-  { id: 'respiratory_rate', label: 'Подсчет ЧДД (10 сек)', icon: '⏱️' },
-  { id: 'percussion', label: 'Перкуссия легких', icon: '🫁' },
-  { id: 'auscultation', label: 'Аускультация легких', icon: '🩺' },
-  { id: 'trachea', label: 'Осмотр трахеи и вен шеи', icon: '👁️' },
-  { id: 'pulse', label: 'Пульс на лучевой и сонной артериях', icon: '💓' },
-  { id: 'bp', label: 'Измерить АД', icon: '🩺' },
-  { id: 'heart_ausc', label: 'Аускультация сердца', icon: '❤️' },
-  { id: 'cap_refill', label: 'Симптом белого пятна (5 сек)', icon: '🤏' },
-  { id: 'skin', label: 'Оценить кожные покровы', icon: '🖐️' },
-  { id: 'ecg', label: 'Снять ЭКГ', icon: '📈' },
-  { id: 'ecg_interpret', label: 'Интерпретировать ЭКГ', icon: '📊' },
-  { id: 'venous', label: 'Венозный доступ', icon: '💉' },
-  { id: 'pupils', label: 'Фотореакция зрачков', icon: '🔦' },
-  { id: 'muscle_tone', label: 'Тонус мышц', icon: '💪' },
-  { id: 'glucose', label: 'Уровень глюкозы', icon: '🍬' },
-  { id: 'abdomen', label: 'Пальпация живота', icon: '🤰' },
-  { id: 'call', label: 'Вызвать СМП', icon: '📞' },
-  // Действия для СЛР (если остановка)
-  { id: 'compressions', label: 'Компрессии (30 раз)', icon: '❤️‍🔥' },
-  { id: 'aed', label: 'Работа с АНД', icon: '⚡' },
-  { id: 'breaths', label: 'ИВЛ (2 вдоха)', icon: '😮‍💨' },
+  // Для BLS
+  { id: 'danger', label: 'Убедиться в отсутствии опасности' },
+  { id: 'choking', label: 'Спросить: «Вы подавились?»' },
+  { id: 'back_blows', label: '5 ударов между лопатками' },
+  { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)' },
+  { id: 'breathing', label: 'Оценить дыхание (7-10 сек)' },
+  { id: 'recovery', label: 'Устойчивое боковое положение' },
+  // Для ОКС (и общие)
+  { id: 'consciousness', label: 'Оценить сознание (встряхнуть, спросить)' },
+  { id: 'gloves', label: 'Надеть перчатки' },
+  { id: 'airway', label: 'Осмотреть полость рта' },
+  { id: 'spo2', label: 'Пульсоксиметрия' },
+  { id: 'oxygen', label: 'Кислородотерапия' },
+  { id: 'respiratory_rate', label: 'Подсчет ЧДД (10 сек)' },
+  { id: 'percussion', label: 'Перкуссия легких' },
+  { id: 'auscultation', label: 'Аускультация легких' },
+  { id: 'trachea', label: 'Осмотр трахеи и вен шеи' },
+  { id: 'pulse', label: 'Пульс на лучевой и сонной артериях' },
+  { id: 'bp', label: 'Измерить АД' },
+  { id: 'heart_ausc', label: 'Аускультация сердца' },
+  { id: 'cap_refill', label: 'Симптом белого пятна (5 сек)' },
+  { id: 'skin', label: 'Оценить кожные покровы' },
+  { id: 'ecg', label: 'Снять ЭКГ' },
+  { id: 'ecg_interpret', label: 'Интерпретировать ЭКГ' },
+  { id: 'venous', label: 'Венозный доступ' },
+  { id: 'pupils', label: 'Фотореакция зрачков' },
+  { id: 'muscle_tone', label: 'Тонус мышц' },
+  { id: 'glucose', label: 'Уровень глюкозы' },
+  { id: 'abdomen', label: 'Пальпация живота' },
+  { id: 'call', label: 'Вызвать СМП' },
+  { id: 'compressions', label: 'Компрессии (30 раз)' },
+  { id: 'aed', label: 'Работа с АНД' },
+  { id: 'breaths', label: 'ИВЛ (2 вдоха)' },
 ];
 
-// ПРАВИЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ ИЗ ПАСПОРТА (ОКС)
+// ПРАВИЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ ИЗ ПАСПОРТА
 const OKS_ORDER = [
   'consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 
   'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 
   'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 
-  'muscle_tone', 'glucose', 'abdomen', 'call',
-  // Далее остановка кровообращения
-  'compressions', 'aed', 'breaths', 'compressions'
+  'muscle_tone', 'glucose', 'abdomen', 'call', 'compressions', 'aed', 'breaths', 'compressions'
 ];
 
 const BLS_ORDER = [
@@ -88,7 +93,6 @@ const SMP_PHRASES = [
   { id: 'noaddress', text: '«Приезжайте, сами найдете»', correct: false },
 ];
 
-// Объяснения, почему действие неверное (Аккредик)
 const MISTAKE_REASONS: Record<string, string> = {
   consciousness: 'Сначала оцените сознание пациента! Подойдите к нему, встряхните за плечи и спросите: «Вам нужна помощь?».',
   gloves: 'Наденьте перчатки! Вы не можете трогать пациента без средств защиты.',
@@ -133,8 +137,6 @@ export default function Home() {
   const hasSpokenMinuteWarning = useRef(false);
 
   const currentOrder = SCENARIO_DATA[scenario].order;
-  
-  // ЭТОТ БЛОК ОТВЕЧАЕТ ЗА ПРОВЕРКУ ПОСЛЕДОВАТЕЛЬНОСТИ
   const expectedId = currentOrder[sequence.length]; 
   const expectedAction = ALL_ACTIONS.find(a => a.id === expectedId);
 
@@ -209,38 +211,27 @@ export default function Home() {
     setChallenge(null);
   };
 
-  // ГЛАВНАЯ ФУНКЦИЯ ПРОВЕРКИ (Строгая последовательность)
   const handleActionClick = (id: string) => {
-    // Если действие уже выполнено - игнорируем
     if (actions[id]) {
       setAccredicMessage('Вы уже выполнили это действие!');
       setTimeout(() => setAccredicMessage(null), 2000);
       return;
     }
 
-    // СТРОГАЯ ПРОВЕРКА: Если нажатая кнопка не совпадает с ожидаемой
     if (expectedId && id !== expectedId) {
       let msg = MISTAKE_REASONS[id];
-      
-      // Если нет специфичного объяснения, показываем, что нужно сделать
       if (!msg) {
         msg = `Ошибка! Сейчас нужно: ${expectedAction?.label.toLowerCase()}`;
       }
-
-      // Аккредик блокирует действие и выдает ошибку
       setAccredicMessage(msg);
       setTimeout(() => setAccredicMessage(null), 5000);
-      
-      // Записываем ошибку
       setMistakes(prev => [...prev, `Попытка нажать «${ALL_ACTIONS.find(a => a.id === id)?.label}» вместо «${expectedAction?.label}»`]);
-      return; // ВАЖНО: Действие не выполняется!
+      return; 
     }
 
-    // Если действие правильное
     setAccredicMessage('Верно! Молодец!');
     setTimeout(() => setAccredicMessage(null), 2000);
 
-    // Запуск мини-игр
     if (id === 'compressions') {
       setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
@@ -575,9 +566,8 @@ export default function Home() {
 
               <div className="space-y-3 max-h-[50vh] overflow-y-auto">
                 {ALL_ACTIONS.map((action) => {
-                  // Показываем только те действия, которые относятся к текущей зоне (для визуального удобства)
                   if (scenario === 'OKS1') {
-                    if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'compressions', 'breaths'].includes(action.id)) return null;
+                    if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'compressions', 'breaths', 'venous'].includes(action.id)) return null;
                     if (activeHotspot === 'crash_cart' && !['gloves', 'oxygen', 'adrenaline'].includes(action.id)) return null;
                     if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
@@ -586,10 +576,10 @@ export default function Home() {
                     }
                   }
 
+                  // Убрали иконки, оставили только текст
                   return (
-                    <button key={action.id} onClick={() => handleActionClick(action.id)} className={`w-full text-left p-3 rounded-lg border-2 transition flex items-center gap-3 ${actions[action.id] ? 'bg-green-50 border-green-500 text-green-700 font-medium' : 'border-gray-200 hover:border-blue-300'}`}>
-                      <span className="text-2xl">{action.icon}</span>
-                      <span>{action.label} {actions[action.id] && '✓'}</span>
+                    <button key={action.id} onClick={() => handleActionClick(action.id)} className={`w-full text-left p-3 rounded-lg border-2 transition ${actions[action.id] ? 'bg-green-50 border-green-500 text-green-700 font-medium' : 'border-gray-200 hover:border-blue-300'}`}>
+                      {action.label} {actions[action.id] && '✓'}
                     </button>
                   );
                 })}
