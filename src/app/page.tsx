@@ -22,6 +22,60 @@ const SCENARIO_TITLES: Record<ScenarioType, string> = {
   BLS: 'Базовая СЛР (BLS)',
 };
 
+// --- БАЗА ДАННЫХ ЭКГ (СОГЛАСНО ПАСПОРТУ) ---
+const ECG_DATA: Record<ScenarioType, any> = {
+  OKS1: {
+    initial: { image: '/ecg_oks1.jpg', correct: 'Синусовый ритм. Подъем сегмента ST I, V2-V5.', wrong: ['Фибрилляция предсердий', 'Асистолия', 'Синусовая тахикардия'] },
+    arrest45: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Желудочковая тахикардия', 'Асистолия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  },
+  OKS2: {
+    initial: { image: '/ecg_oks2.jpg', correct: 'Синусовая тахикардия. Депрессия сегмента ST I, II, aVL, V1-V5.', wrong: ['Подъем ST', 'Фибрилляция предсердий', 'Асистолия'] },
+    arrest45: { image: '/ecg_vt.jpg', correct: 'Желудочковая тахикардия.', wrong: ['Фибрилляция желудочков', 'Асистолия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  },
+  TELA: {
+    initial: { image: '/ecg_tela.jpg', correct: 'Синусовая тахикардия. Изменения сегментов S1, Q3, T3.', wrong: ['Подъем ST', 'Фибрилляция предсердий', 'Асистолия'] },
+    arrest45: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Желудочковая тахикардия', 'Асистолия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  },
+  ANAPHYLAXIS: {
+    initial: { image: '/ecg_tachycardia.jpg', correct: 'Синусовая тахикардия, ЧСС 110 уд/мин.', wrong: ['Подъем ST', 'Фибрилляция предсердий', 'Асистолия'] },
+    arrest45: { image: '/ecg_vt.jpg', correct: 'Желудочковая тахикардия.', wrong: ['Фибрилляция желудочков', 'Асистолия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  },
+  ZHKK: {
+    initial: { image: '/ecg_tachycardia.jpg', correct: 'Синусовая тахикардия, ЧСС 110 уд/мин.', wrong: ['Подъем ST', 'Фибрилляция предсердий', 'Асистолия'] },
+    arrest45: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Желудочковая тахикардия', 'Асистолия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  },
+  BOS: {
+    initial: { image: '/ecg_tachycardia.jpg', correct: 'Синусовая тахикардия, ЧСС 110 уд/мин.', wrong: ['Подъем ST', 'Фибрилляция предсердий', 'Асистолия'] },
+    arrest45: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Желудочковая тахикардия', 'Асистолия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  },
+  PNEUMOTHORAX: {
+    initial: { image: '/ecg_tachycardia.jpg', correct: 'Синусовая тахикардия, ЧСС 110 уд/мин.', wrong: ['Подъем ST', 'Фибрилляция предсердий', 'Асистолия'] },
+    arrest45: { image: '/ecg_vt.jpg', correct: 'Желудочковая тахикардия.', wrong: ['Фибрилляция желудочков', 'Асистолия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  },
+  HYPOGLYCEMIA: {
+    initial: { image: '/ecg_tachycardia.jpg', correct: 'Синусовая тахикардия, ЧСС 110 уд/мин.', wrong: ['Подъем ST', 'Фибрилляция предсердий', 'Асистолия'] },
+    arrest45: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Желудочковая тахикардия', 'Асистолия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  },
+  HYPERGLYCEMIA: {
+    initial: { image: '/ecg_tachycardia.jpg', correct: 'Синусовая тахикардия, ЧСС 110 уд/мин.', wrong: ['Подъем ST', 'Фибрилляция предсердий', 'Асистолия'] },
+    arrest45: { image: '/ecg_vt.jpg', correct: 'Желудочковая тахикардия.', wrong: ['Фибрилляция желудочков', 'Асистолия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  },
+  BLS: {
+    initial: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] },
+    arrest45: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] },
+    arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
+  }
+};
+
 const SPECIALTIES = [
   {
     id: 'general_medicine',
@@ -195,6 +249,10 @@ export default function Home() {
   const [selectedMeds, setSelectedMeds] = useState<string[]>([]);
   const [medFeedback, setMedFeedback] = useState('');
 
+  const [ecgModalOpen, setEcgModalOpen] = useState(false);
+  const [ecgFeedback, setEcgFeedback] = useState('');
+  const [currentEcg, setCurrentEcg] = useState<any>(null);
+
   const hasSpokenMinuteWarning = useRef(false);
   const isFinishing = useRef(false);
 
@@ -348,6 +406,29 @@ export default function Home() {
       if (responseText) setPatientResponse(responseText);
     }
 
+    if (id === 'ecg') {
+      toggleAction('ecg');
+      setAccredicMessage('ЭКГ снята. Пленка готова к интерпретации.');
+      setTimeout(() => setAccredicMessage(null), 2000);
+      return;
+    }
+
+    if (id === 'ecg_interpret') {
+      // ВЫБИРАЕМ ЭКГ ПО ТАЙМЕРУ
+      let ecgToShow;
+      if (timeLeft > 240) {
+        ecgToShow = ECG_DATA[scenario].initial;
+      } else if (timeLeft > 120) {
+        ecgToShow = ECG_DATA[scenario].arrest45;
+      } else {
+        ecgToShow = ECG_DATA[scenario].arrest65;
+      }
+      setCurrentEcg(ecgToShow);
+      setEcgModalOpen(true);
+      setEcgFeedback('');
+      return;
+    }
+
     if (id === 'compressions') {
       setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
@@ -378,6 +459,19 @@ export default function Home() {
     
     toggleAction(id);
     setActiveHotspot(null);
+  };
+
+  const handleEcgAnswer = (isCorrect: boolean) => {
+    if (isCorrect) {
+      setEcgFeedback(`Верно! ${currentEcg.correct}`);
+      setTimeout(() => {
+        setEcgModalOpen(false);
+        toggleAction('ecg_interpret');
+      }, 2500);
+    } else {
+      setEcgFeedback('Ошибка! Посмотрите внимательно на ЭКГ.');
+      setMistakes(prev => [...prev, 'Неверная интерпретация ЭКГ']);
+    }
   };
 
   const handleAedShock = () => {
@@ -618,6 +712,50 @@ export default function Home() {
         </div>
       </div>
 
+      {/* МОДАЛКА ЭКГ */}
+      {ecgModalOpen && currentEcg && (
+        <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-6 w-full max-w-3xl shadow-2xl flex flex-col">
+            <h3 className="text-xl font-bold mb-4 text-center text-blue-400">Интерпретация ЭКГ</h3>
+            
+            <div className="bg-white p-2 rounded-lg mb-4 flex justify-center">
+              <img src={currentEcg.image} alt="ЭКГ" className="max-h-[40vh] object-contain" />
+            </div>
+
+            <p className="text-center mb-4 text-white font-medium">Что вы видите на данной ЭКГ?</p>
+
+            {ecgFeedback && (
+              <div className={`p-3 rounded-lg mb-4 text-center font-bold ${ecgFeedback.includes('Верно') ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+                {ecgFeedback}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <button 
+                onClick={() => handleEcgAnswer(true)} 
+                className="w-full p-3 bg-gray-700 hover:bg-green-600 text-white rounded-lg text-left transition border border-gray-600"
+              >
+                {currentEcg.correct}
+              </button>
+              
+              {currentEcg.wrong.map((wrong: string, idx: number) => (
+                <button 
+                  key={idx}
+                  onClick={() => handleEcgAnswer(false)} 
+                  className="w-full p-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-left transition border border-gray-600"
+                >
+                  {wrong}
+                </button>
+              ))}
+            </div>
+            
+            {!ecgFeedback.includes('Верно') && (
+              <button onClick={() => setEcgModalOpen(false)} className="mt-4 text-gray-400 underline self-center">Закрыть</button>
+            )}
+          </div>
+        </div>
+      )}
+
       {challenge && challenge !== 'cpr' && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm text-center">
@@ -716,7 +854,7 @@ export default function Home() {
           </button>
         ))}
 
-        {activeHotspot && !aedOpen && !challenge && !phoneModal && !medicationModal && (
+        {activeHotspot && !aedOpen && !challenge && !phoneModal && !medicationModal && !ecgModalOpen && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30 p-4">
             <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm">
               <button onClick={() => setActiveHotspot(null)} className="float-right font-bold">✕</button>
