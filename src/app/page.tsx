@@ -50,7 +50,7 @@ const VOICE_INTROS: Record<ScenarioType, string> = {
   BLS: 'Вы увидели, что человеку стало плохо. Он лежит на полу без сознания. Время пошло!',
 };
 
-// --- ТОЧНЫЕ ДАННЫЕ ПАЦИЕНТОВ ИЗ ПРИЛОЖЕНИЯ 1 ---
+// --- ТОЧНЫЕ ДАННЫЕ ПАЦИЕНТОВ ---
 const PATIENT_DATA: Record<ScenarioType, any> = {
   OKS1: {
     initialVitals: { hr: 110, spo2: 88, bpSys: 90, bpDia: 40, rr: 24 },
@@ -74,189 +74,65 @@ const PATIENT_DATA: Record<ScenarioType, any> = {
       ecg_interpret: 'На ЭКГ: подъем ST',
     }
   },
-  OKS2: {
-    initialVitals: { hr: 110, spo2: 88, bpSys: 130, bpDia: 70, rr: 24 },
-    responses: {
-      consciousness: 'Открывает глаза, отставание правой половины грудной клетки',
-      airway: 'Губы и язык отечные',
-      spo2: 'Сатурация 88-89%',
-      respiratory_rate: '4 движения за 10 секунд (ЧДД 24)',
-      percussion: 'Слева и справа ясный легочный звук, выраженное притупление в нижне-базальных отделах',
-      auscultation: 'Жесткое дыхание, единичные сухие хрипы',
-      trachea: 'Трахея в норме, вены шеи спавшиеся',
-      pulse: '18 ударов за 10 секунд',
-      bp: 'САД: 130, ДАД: 70',
-      heart_ausc: 'Частые, приглушенные',
-      cap_refill: 'Симптом белого пятна исчезает через 4 секунды',
-      skin: 'Кожа во всех местах теплая, выраженный цианоз',
-      pupils: 'Зрачки одинаковые, фотореакция сохранна',
-      glucose: '6,3 ммоль/л',
-      muscle_tone: 'Мышечный тонус нормальный',
-      abdomen: 'Живот без особенностей',
-      ecg_interpret: 'На ЭКГ: подъем ST',
-    }
-  },
-  ANAPHYLAXIS: {
-    initialVitals: { hr: 110, spo2: 88, bpSys: 90, bpDia: 40, rr: 24 },
-    responses: {
-      consciousness: 'Отвечает на любые вопросы стоном',
-      airway: 'Дыхательные пути визуально проходимы',
-      spo2: 'Сатурация 88-89%',
-      respiratory_rate: '4 движения за 10 секунд (ЧДД 24)',
-      percussion: 'Слева и справа ясный легочный звук',
-      auscultation: 'Жесткое дыхание, сухие хрипы по всей поверхности',
-      trachea: 'Трахея в норме, вены шеи набухшие',
-      pulse: '18 ударов за 10 секунд, слабого наполнения',
-      bp: 'САД: 90, ДАД: 40',
-      heart_ausc: 'Частые, приглушенные',
-      cap_refill: 'Симптом белого пятна исчезает через 4 секунды',
-      skin: 'Кожа гиперемирована, теплая на ощупь, эритематозная сыпь на передней поверхности грудной клетки',
-      pupils: 'Зрачки одинаковые, фотореакция сохранна',
-      glucose: '6,3 ммоль/л',
-      muscle_tone: 'Мышечный тонус нормальный',
-      abdomen: 'Живот без особенностей',
-      ecg_interpret: 'На ЭКГ: синусовая тахикардия',
-    }
-  },
-  ZHKK: {
-    initialVitals: { hr: 110, spo2: 95, bpSys: 90, bpDia: 50, rr: 18 },
-    responses: {
-      consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-      airway: 'Дыхательные пути визуально проходимы',
-      spo2: 'Сатурация 95-98%',
-      respiratory_rate: '3 движения за 10 секунд (ЧДД 18)',
-      percussion: 'Слева и справа ясный легочный звук',
-      auscultation: 'Везикулярное дыхание, 2 зоны',
-      trachea: 'Трахея в норме, вены шеи спавшиеся',
-      pulse: '18 ударов за 10 секунд',
-      bp: 'САД: 90, ДАД: 50',
-      heart_ausc: 'Частые, приглушенные',
-      cap_refill: 'Симптом белого пятна исчезает через 4 секунды',
-      skin: 'Кожа во всех местах бледная, холодная на ощупь',
-      pupils: 'Зрачки одинаковые, фотореакция сохранна',
-      glucose: '6,3 ммоль/л',
-      muscle_tone: 'Мышечный тонус нормальный',
-      abdomen: 'Стон при осмотре верхней части живота. Доскообразный живот',
-      ecg_interpret: 'На ЭКГ: синусовая тахикардия',
-    }
-  },
-  BOS: {
-    initialVitals: { hr: 110, spo2: 88, bpSys: 130, bpDia: 80, rr: 24 },
-    responses: {
-      consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-      airway: 'Дыхательные пути визуально проходимы',
-      spo2: 'Сатурация 88-89%',
-      respiratory_rate: '4 движения за 10 секунд (ЧДД 24)',
-      percussion: 'Слева и справа ясный легочный звук',
-      auscultation: 'Жесткое дыхание, сухие хрипы по всей поверхности',
-      trachea: 'Трахея в норме, вены шеи набухшие',
-      pulse: '18 ударов за 10 секунд, слабого наполнения',
-      bp: 'САД: 130, ДАД: 80',
-      heart_ausc: 'Частые, приглушенные',
-      cap_refill: 'Симптом белого пятна исчезает через 2 секунды',
-      skin: 'Кожа во всех местах теплая, выраженный цианоз',
-      pupils: 'Зрачки одинаковые, фотореакция сохранна',
-      glucose: '6,3 ммоль/л',
-      muscle_tone: 'Мышечный тонус нормальный',
-      abdomen: 'Живот без особенностей',
-      ecg_interpret: 'На ЭКГ: синусовая тахикардия',
-    }
-  },
-  TELA: {
-    initialVitals: { hr: 110, spo2: 88, bpSys: 90, bpDia: 40, rr: 24 },
-    responses: {
-      consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-      airway: 'Дыхательные пути визуально проходимы',
-      spo2: 'Сатурация 88-89%',
-      respiratory_rate: '4 движения за 10 секунд (ЧДД 24)',
-      percussion: 'Слева и справа ясный легочный звук',
-      auscultation: 'Везикулярное дыхание, 2 зоны',
-      trachea: 'Трахея в норме, вены шеи в норме',
-      pulse: '18 ударов за 10 секунд',
-      bp: 'САД: 90, ДАД: 40',
-      heart_ausc: 'Тоны сердца частые, приглушенные, акцент 2-го тона на легочной артерии',
-      cap_refill: 'Симптом белого пятна исчезает через 4 секунды',
-      skin: 'Кожа во всех местах холодная, влажная. Кожные покровы верхней половины тела цианотичные',
-      pupils: 'Зрачки одинаковые, фотореакция сохранна',
-      glucose: '6,3 ммоль/л',
-      muscle_tone: 'Мышечный тонус нормальный',
-      abdomen: 'Живот без особенностей',
-      ecg_interpret: 'На ЭКГ: S1, Q3, T3',
-    }
-  },
-  PNEUMOTHORAX: {
-    initialVitals: { hr: 110, spo2: 88, bpSys: 80, bpDia: 40, rr: 24 },
-    responses: {
-      consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-      airway: 'Дыхательные пути визуально проходимы',
-      spo2: 'Сатурация 88-89%',
-      respiratory_rate: '4 движения за 10 секунд (ЧДД 24)',
-      percussion: 'Слева ясный легочный звук, тимпанит над всей поверхностью правого легкого',
-      auscultation: 'Везикулярное дыхание, резко ослабленное справа',
-      trachea: 'Трахея в норме, вены шеи набухшие',
-      pulse: '18 ударов за 10 секунд, слабого наполнения',
-      bp: 'САД: 80, ДАД: 40',
-      heart_ausc: 'Частые, приглушенные',
-      cap_refill: 'Симптом белого пятна исчезает через 4 секунды',
-      skin: 'Кожа во всех местах холодная, выраженный цианоз',
-      pupils: 'Зрачки одинаковые, фотореакция сохранна',
-      glucose: '6,3 ммоль/л',
-      muscle_tone: 'Мышечный тонус нормальный',
-      abdomen: 'Живот без особенностей',
-      ecg_interpret: 'На ЭКГ: синусовая тахикардия',
-    }
-  },
-  HYPOGLYCEMIA: {
-    initialVitals: { hr: 110, spo2: 95, bpSys: 120, bpDia: 70, rr: 18 },
-    responses: {
-      consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-      airway: 'Дыхательные пути визуально проходимы',
-      spo2: 'Сатурация 95-98%',
-      respiratory_rate: '3 движения за 10 секунд (ЧДД 18)',
-      percussion: 'Слева и справа ясный легочный звук',
-      auscultation: 'Везикулярное дыхание, 2 зоны',
-      trachea: 'Трахея в норме, вены шеи в норме',
-      pulse: '18 ударов за 10 секунд',
-      bp: 'САД: 120, ДАД: 70',
-      heart_ausc: 'Частые, приглушенные',
-      cap_refill: 'Симптом белого пятна исчезает через 2 секунды',
-      skin: 'Кожа во всех местах влажная, липкая, ощущается дрожь',
-      pupils: 'Зрачки одинаковые, фотореакция сохранна',
-      glucose: '2,0 ммоль/л',
-      muscle_tone: 'Мышечный тонус нормальный',
-      abdomen: 'Живот без особенностей',
-      ecg_interpret: 'На ЭКГ: синусовая тахикардия',
-    }
-  },
-  HYPERGLYCEMIA: {
-    initialVitals: { hr: 110, spo2: 95, bpSys: 120, bpDia: 70, rr: 18 },
-    responses: {
-      consciousness: 'Открывает глаза, есть экскурсия грудной клетки',
-      airway: 'Дыхательные пути визуально проходимы',
-      spo2: 'Сатурация 95-98%',
-      respiratory_rate: '3 движения за 10 секунд (ЧДД 18)',
-      percussion: 'Слева и справа ясный легочный звук',
-      auscultation: 'Везикулярное дыхание, 2 зоны',
-      trachea: 'Трахея в норме, вены шеи в норме',
-      pulse: '18 ударов за 10 секунд',
-      bp: 'САД: 120, ДАД: 70',
-      heart_ausc: 'Частые, приглушенные',
-      cap_refill: 'Симптом белого пятна исчезает через 2 секунды',
-      skin: 'Кожа во всех местах бледная, сухая',
-      pupils: 'Зрачки одинаковые, фотореакция сохранна',
-      glucose: '24 ммоль/л',
-      muscle_tone: 'Мышечный тонус нормальный',
-      abdomen: 'Живот без особенностей',
-      ecg_interpret: 'На ЭКГ: синусовая тахикардия',
-    }
-  },
+  OKS2: { /* ... */ },
+  ANAPHYLAXIS: { /* ... */ },
+  ZHKK: { /* ... */ },
+  BOS: { /* ... */ },
+  TELA: { /* ... */ },
+  PNEUMOTHORAX: { /* ... */ },
+  HYPOGLYCEMIA: { /* ... */ },
+  HYPERGLYCEMIA: { /* ... */ },
   BLS: { initialVitals: { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 }, responses: {} }
 };
 
-// (Списки CHECKLIST_... остаются прежними, я не буду их дублировать, чтобы не раздувать код, но в твоем файле они должны быть!)
+// ТЕКСТЫ ЧЛЕНА АПК
+const APK_MESSAGES: Record<string, string> = {
+  hands: 'Будем считать, что руки обработаны',
+  sterility: 'Будем считать, что всё годно',
+  venous: 'Венозный доступ уже установлен',
+  pleural_puncture: 'Будем считать, что пункция грудной полости выполнена',
+};
+
+// --- ИНТЕРАКТИВНЫЙ СЦЕНАРИЙ РАЗГОВОРА С ДИСПЕТЧЕРОМ СМП ---
+const SMP_SCRIPT = [
+  {
+    dispatcher: 'Скорая медицинская помощь слушает, что случилось?',
+    options: [
+      { text: '«Здравствуйте, я врач. У нас пострадавший мужчина 45 лет»', correct: true },
+      { text: '«Человеку плохо, приезжайте»', correct: false },
+      { text: '«Срочно нужна скорая!»', correct: false },
+    ],
+    wrongReply: 'Диспетчер: «Представьтесь, пожалуйста. Назовите возраст и пол пострадавшего».'
+  },
+  {
+    dispatcher: 'Назовите местоположение (адрес).',
+    options: [
+      { text: '«Улица Ленина, дом 5, кабинет 12»', correct: true },
+      { text: '«Мы на работе, в офисе»', correct: false },
+    ],
+    wrongReply: 'Диспетчер: «Назовите точный адрес и кабинет».'
+  },
+  {
+    dispatcher: 'Назовите основные витальные функции: сознание, дыхание, пульс.',
+    options: [
+      { text: '«Без сознания, не дышит, пульса нет»', correct: true },
+      { text: '«Он живой, но ему плохо»', correct: false },
+    ],
+    wrongReply: 'Диспетчер: «Уточните, в сознании ли он, дышит ли, есть ли пульс».'
+  },
+  {
+    dispatcher: 'Назовите объем оказываемой помощи.',
+    options: [
+      { text: '«Начинаю сердечно-легочную реанимацию»', correct: true },
+      { text: '«Жду вас, ничего не делаю»', correct: false },
+    ],
+    wrongReply: 'Диспетчер: «Назовите объём Вашего вмешательства. Какие лекарственные средства Вы ввели?»'
+  }
+];
 
 const ALL_ACTIONS = [
   { id: 'danger', label: 'Убедиться в отсутствии опасности' },
+  { id: 'hands', label: 'Обработать руки' },
   { id: 'choking', label: 'Спросить: «Вы подавились?»' },
   { id: 'back_blows', label: '5 ударов между лопатками' },
   { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)' },
@@ -303,6 +179,9 @@ const ALL_ACTIONS = [
   { id: 'breaths', label: 'ИВЛ (2 вдоха)' },
 ];
 
+// ... (ВСТАВЬ СЮДА СВОИ МАССИВЫ SCENARIO_DATA И CHECKLIST_... КАК В ПРЕДЫДУЩЕМ КОДЕ)
+const SCENARIO_DATA: any = { /* Твои чек-листы */ };
+
 type Stage = 'briefing' | 'intro' | 'playing' | 'finished';
 
 export default function Home() {
@@ -318,69 +197,34 @@ export default function Home() {
   const [accredicMessage, setAccredicMessage] = useState<string | null>(null);
   const [patientResponse, setPatientResponse] = useState<string | null>(null);
 
-  // Динамика
   const [isArrest, setIsArrest] = useState(false);
   const [vitals, setVitals] = useState({ hr: 110, spo2: 88, bpSys: 90, bpDia: 40 });
 
-  const [challenge, setChallenge] = useState<string | null>(null);
-  const [timerChallenge, setTimerChallenge] = useState(0);
-  const [holdSuccess, setHoldSuccess] = useState(false);
-  const holdInterval = useRef<NodeJS.Timeout | null>(null);
+  // ... (ОСТАЛЬНЫЕ СОСТОЯНИЯ: challenge, aedOpen, medicationModal)
   
-  const [cprCount, setCprCount] = useState(0);
-  const [cprFeedback, setCprFeedback] = useState('');
-  const lastCprTime = useRef<number>(0);
-  
-  const [aedOpen, setAedOpen] = useState(false);
-  const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
-  const [aedTimer, setAedTimer] = useState(0);
-
+  // СОСТОЯНИЯ ДЛЯ ЧАТА СМП
   const [phoneModal, setPhoneModal] = useState(false);
-  const [selectedPhrases, setSelectedPhrases] = useState<string[]>([]);
-  const [callFeedback, setCallFeedback] = useState('');
+  const [chatHistory, setChatHistory] = useState<{sender: 'dispatcher' | 'doctor', text: string}[]>([]);
+  const [smpStep, setSmpStep] = useState(0);
   const [callSuccess, setCallSuccess] = useState(false);
 
-  const [medicationModal, setMedicationModal] = useState(false);
-  const [selectedMeds, setSelectedMeds] = useState<string[]>([]);
-  const [medFeedback, setMedFeedback] = useState('');
-
-  const hasSpokenMinuteWarning = useRef(false);
-  const isFinishing = useRef(false);
-
-  const currentOrder = SCENARIO_DATA[scenario].order;
-  const currentChecklist = SCENARIO_DATA[scenario].checklist;
+  const currentOrder = SCENARIO_DATA[scenario]?.order || [];
+  const currentChecklist = SCENARIO_DATA[scenario]?.checklist || [];
   const isFloorScenario = scenario === 'BLS';
   const roomImage = isFloorScenario ? '/room_360_floor.jpg' : '/room_360_bed.jpg';
   const currentHotspots = isFloorScenario ? HOTSPOTS_FLOOR : HOTSPOTS_BED;
 
-  const playAudio = (text: string, onEnd?: () => void) => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ru-RU';
-      utterance.rate = 0.95;
-      utterance.pitch = 0.9;
-      const voices = window.speechSynthesis.getVoices();
-      const bestVoice = voices.find(v => v.lang.includes('ru') && v.name.includes('Google')) 
-                     || voices.find(v => v.lang.includes('ru') && v.name.includes('Microsoft'))
-                     || voices.find(v => v.lang.includes('ru'));
-      if (bestVoice) utterance.voice = bestVoice;
-      if (onEnd) utterance.onend = onEnd;
-      window.speechSynthesis.speak(utterance);
-    } else {
-      if (onEnd) onEnd();
-    }
-  };
+  // ... (playAudio, handleEnterRoom)
 
   useEffect(() => {
     if (stage !== 'playing') return;
     
-    // Событие на 4:30 (255 секунд)
-    if (timeLeft === 255 && !isArrest) {
+    // ПУНКТ 13: Через 4.5 минуты (осталось 240 секунд)
+    if (timeLeft === 240 && !isArrest) {
       setIsArrest(true);
-      playAudio("Внимание! У пациента прекратилась экскурсия грудной клетки. Артериальное давление не определяется. На ЭКГ асистолия. Начните реанимацию!");
+      playAudio("Экскурсии грудной клетки прекратились.");
+      setPatientResponse("Экскурсии грудной клетки прекратились.");
       setVitals({ hr: 0, spo2: 0, bpSys: 0, bpDia: 0 });
-      setPatientResponse(null); // Сбрасываем предыдущий ответ
     }
 
     if (timeLeft <= 0) { 
@@ -396,7 +240,7 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [timeLeft, stage, isArrest]);
 
-  // Установка начальных показателей при старте
+  // Установка начальных показателей
   useEffect(() => {
     if (scenario && PATIENT_DATA[scenario]) {
       setVitals(PATIENT_DATA[scenario].initialVitals);
@@ -407,45 +251,78 @@ export default function Home() {
     if (actions['oxygen'] && !isArrest) setVitals(prev => ({ ...prev, spo2: 98 }));
   }, [actions, isArrest]);
 
-  // ... (Функции handleEnterRoom, finishScenario остаются прежними)
-
   const handleActionClick = (id: string) => {
-    if (actions[id]) {
-      setAccredicMessage('Вы уже выполнили это действие!');
-      setTimeout(() => setAccredicMessage(null), 2000);
+    if (actions[id]) return;
+
+    // Вывод ответов АПК
+    if (APK_MESSAGES[id]) {
+      setPatientResponse(APK_MESSAGES[id]);
+    } else {
+      const responseText = PATIENT_DATA[scenario]?.responses?.[id];
+      if (responseText) setPatientResponse(responseText);
+    }
+
+    if (id === 'compressions') {
+      setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
     }
-
-    const expectedId = currentOrder[sequence.length];
-    const expectedAction = ALL_ACTIONS.find(a => a.id === expectedId);
-
-    if (expectedId && id !== expectedId) {
-      setAccredicMessage(`Подсказка: обычно следующим шагом идет «${expectedAction?.label}».`);
-      setTimeout(() => setAccredicMessage(null), 3000);
-      setMistakes(prev => [...prev, `Нарушен порядок: «${ALL_ACTIONS.find(a => a.id === id)?.label}» вместо «${expectedAction?.label}»`]);
-    } else if (expectedId && id === expectedId) {
-      setAccredicMessage('Верно!');
-      setTimeout(() => setAccredicMessage(null), 2000);
-    }
-
-    // Если это остановка сердца, пациент не реагирует на обычные проверки
-    if (isArrest && !['compressions', 'aed', 'breaths'].includes(id)) {
-      setPatientResponse('Пациент не реагирует. Асистолия.');
+    if (id === 'cap_refill') {
+      startHoldChallenge('cap_refill', 5);
       return;
     }
-
-    // Показ клинического ответа пациента
-    const responseText = PATIENT_DATA[scenario]?.responses?.[id];
-    if (responseText) {
-      setPatientResponse(responseText);
+    if (id === 'pulse' || id === 'respiratory_rate' || id === 'breathing') {
+      startHoldChallenge(id, 10);
+      return;
     }
-
-    // ... (Остальная логика handleActionClick)
+    if (id === 'medication') {
+      setMedicationModal(true); setSelectedMeds([]); setMedFeedback('');
+      return;
+    }
+    if (id === 'aed') {
+      setAedOpen(true); setActiveHotspot(null);
+      return;
+    }
+    
+    // ИНИЦИАЛИЗАЦИЯ ИНТЕРАКТИВНОГО ЗВОНКА
+    if (id === 'call') {
+      setPhoneModal(true);
+      setSmpStep(0);
+      setCallSuccess(false);
+      setChatHistory([{ sender: 'dispatcher', text: SMP_SCRIPT[0].dispatcher }]);
+      return;
+    }
+    
+    toggleAction(id);
+    setActiveHotspot(null);
   };
 
-  // ... (Остальной код интерфейса)
+  // --- ЛОГИКА ИНТЕРАКТИВНОГО ЗВОНКА ---
+  const handleSmpOptionClick = (option: any) => {
+    const newHistory = [...chatHistory, { sender: 'doctor' as const, text: option.text }];
+    
+    if (option.correct) {
+      if (smpStep < SMP_SCRIPT.length - 1) {
+        const nextStep = smpStep + 1;
+        setSmpStep(nextStep);
+        setChatHistory([...newHistory, { sender: 'dispatcher' as const, text: SMP_SCRIPT[nextStep].dispatcher }]);
+      } else {
+        // Звонок завершен
+        setChatHistory([...newHistory, { sender: 'dispatcher' as const, text: 'Вызов принят! Ждите.' }]);
+        setCallSuccess(true);
+        setTimeout(() => { 
+          setPhoneModal(false); 
+          toggleAction('call'); 
+        }, 3000);
+      }
+    } else {
+      // Ошибка
+      setMistakes(prev => [...prev, 'Ошибка при вызове СМП (неверная информация)']);
+      setChatHistory([...newHistory, { sender: 'dispatcher' as const, text: SMP_SCRIPT[smpStep].wrongReply }]);
+    }
+  };
 
-  // Обновленный HUD (Монитор)
+  // ... (finishScenario, остальной интерфейс)
+
   return (
     <div className={`min-h-screen bg-gray-900 text-white overflow-hidden relative ${timeLeft < 60 || isArrest ? 'animate-pulse ring-8 ring-red-600 ring-inset' : ''}`}>
       
@@ -466,7 +343,52 @@ export default function Home() {
         {isArrest && <div className="text-red-500 font-bold text-center mt-2 animate-pulse text-xs">АСИСТОЛИЯ</div>}
       </div>
 
-      {/* ... (Остальной интерфейс: комната, кнопки, модалки) */}
+      {/* ИНТЕРАКТИВНЫЙ ЧАТ С ДИСПЕТЧЕРОМ СМП */}
+      {phoneModal && (
+        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col h-[70vh]">
+            <div className="p-4 bg-gray-900 rounded-t-2xl border-b border-gray-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-blue-400">📞 Диспетчер СМП</h3>
+              {callSuccess && <span className="text-green-500 text-sm font-bold">Вызов принят</span>}
+            </div>
+
+            {/* История чата */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {chatHistory.map((msg, index) => (
+                <div key={index} className={`flex ${msg.sender === 'doctor' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] p-3 rounded-xl text-sm ${msg.sender === 'doctor' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'}`}>
+                    {msg.sender === 'dispatcher' && <span className="block text-xs text-gray-400 mb-1">Диспетчер:</span>}
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Варианты ответов */}
+            <div className="p-4 bg-gray-900 rounded-b-2xl border-t border-gray-700">
+              {!callSuccess ? (
+                <div className="space-y-2">
+                  {SMP_SCRIPT[smpStep].options.map((option, index) => (
+                    <button 
+                      key={index}
+                      onClick={() => handleSmpOptionClick(option)}
+                      className="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm transition border border-gray-600"
+                    >
+                      {option.text}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <button onClick={() => setPhoneModal(false)} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold">
+                  Завершить звонок
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ... (Остальной интерфейс: комната, кнопки действий, модалки АНД и лечения) */}
     </div>
   );
 }
