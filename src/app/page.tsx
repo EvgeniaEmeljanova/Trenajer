@@ -22,7 +22,7 @@ const SCENARIO_TITLES: Record<ScenarioType, string> = {
   BLS: 'Базовая СЛР (BLS)',
 };
 
-// --- БАЗА ДАННЫХ ЭКГ (СОГЛАСНО ПАСПОРТУ) ---
+// --- БАЗА ДАННЫХ ЭКГ ---
 const ECG_DATA: Record<ScenarioType, any> = {
   OKS1: {
     initial: { image: '/ecg_oks1.jpg', correct: 'Синусовый ритм. Подъем сегмента ST I, V2-V5.', wrong: ['Фибрилляция предсердий', 'Асистолия', 'Синусовая тахикардия'] },
@@ -414,7 +414,6 @@ export default function Home() {
     }
 
     if (id === 'ecg_interpret') {
-      // ВЫБИРАЕМ ЭКГ ПО ТАЙМЕРУ
       let ecgToShow;
       if (timeLeft > 240) {
         ecgToShow = ECG_DATA[scenario].initial;
