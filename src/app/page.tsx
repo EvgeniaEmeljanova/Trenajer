@@ -1,26 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, Sphere } from '@react-three/drei';
-import * as THREE from 'three';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
-
-function Room360({ imageUrl }: { imageUrl: string }) {
-  const texture = useLoader(THREE.TextureLoader, imageUrl);
-  return (
-    <>
-      <Sphere args={[10, 60, 60]} scale={[-1, 1, 1]}>
-        <meshBasicMaterial map={texture} />
-      </Sphere>
-      <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={-0.4} minPolarAngle={Math.PI / 2.5} maxPolarAngle={Math.PI / 1.5} />
-    </>
-  );
-}
 
 type ScenarioType = 'OKS1' | 'OKS2' | 'ANAPHYLAXIS' | 'ZHKK' | 'BOS' | 'TELA' | 'PNEUMOTHORAX' | 'HYPOGLYCEMIA' | 'HYPERGLYCEMIA' | 'BLS';
 
@@ -161,7 +146,7 @@ const SCENARIO_DATA: Record<ScenarioType, { order: string[], checklist: any[] }>
   BLS: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'recovery'], checklist: CHECKLIST_BLS },
 };
 
-const HOTSPOTS_BED = [
+const HOTSPOTS = [
   { id: 'patient', x: 42, y: 25, w: 16, h: 30, label: 'Пациент' },
   { id: 'crash_cart', x: 28, y: 25, w: 12, h: 20, label: 'Укладка' },
   { id: 'monitor', x: 60, y: 15, w: 10, h: 18, label: 'Монитор' },
@@ -169,21 +154,11 @@ const HOTSPOTS_BED = [
   { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
 ];
 
-const HOTSPOTS_FLOOR = [
-  { id: 'patient', x: 40, y: 60, w: 20, h: 25, label: 'Пациент (на полу)' },
-  { id: 'crash_cart', x: 20, y: 30, w: 12, h: 20, label: 'Укладка' },
-  { id: 'monitor', x: 65, y: 20, w: 10, h: 18, label: 'Монитор' },
-  { id: 'phone', x: 80, y: 25, w: 8, h: 10, label: 'Телефон' },
-  { id: 'aed', x: 75, y: 10, w: 8, h: 10, label: 'АНД' },
-];
-
 type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'finished';
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>('menu');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
-  const [selectedStation, setSelectedStation] = useState<any>(null);
-  
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [actions, setActions] = useState<Record<string, boolean>>({});
   const [sequence, setSequence] = useState<string[]>([]);
@@ -220,17 +195,11 @@ export default function Home() {
   const [selectedMeds, setSelectedMeds] = useState<string[]>([]);
   const [medFeedback, setMedFeedback] = useState('');
 
-  const [ecgModalOpen, setEcgModalOpen] = useState(false);
-  const [ecgFeedback, setEcgFeedback] = useState('');
-
   const hasSpokenMinuteWarning = useRef(false);
   const isFinishing = useRef(false);
 
   const currentOrder = SCENARIO_DATA[scenario]?.order || [];
   const currentChecklist = SCENARIO_DATA[scenario]?.checklist || [];
-  const isFloorScenario = scenario === 'BLS';
-  const roomImage = isFloorScenario ? '/room_360_floor.jpg' : '/room_360_bed.jpg';
-  const currentHotspots = isFloorScenario ? HOTSPOTS_FLOOR : HOTSPOTS_BED;
 
   const playAudio = (text: string, onEnd?: () => void) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -291,8 +260,6 @@ export default function Home() {
 
   const handleSelectStation = (station: any) => {
     if (station.type === 'locked') return;
-    
-    setSelectedStation(station);
     
     if (station.type === 'single') {
       setScenario(station.id as ScenarioType);
@@ -381,19 +348,6 @@ export default function Home() {
       if (responseText) setPatientResponse(responseText);
     }
 
-    if (id === 'ecg') {
-      toggleAction('ecg');
-      setAccredicMessage('ЭКГ снята. Пленка готова к интерпретации.');
-      setTimeout(() => setAccredicMessage(null), 2000);
-      return;
-    }
-
-    if (id === 'ecg_interpret') {
-      setEcgModalOpen(true);
-      setEcgFeedback('');
-      return;
-    }
-
     if (id === 'compressions') {
       setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
@@ -424,19 +378,6 @@ export default function Home() {
     
     toggleAction(id);
     setActiveHotspot(null);
-  };
-
-  const handleEcgAnswer = (isCorrect: boolean) => {
-    if (isCorrect) {
-      setEcgFeedback('Верно! На ЭКГ: Синусовый ритм. Подъем сегмента ST I, V2-V5.');
-      setTimeout(() => {
-        setEcgModalOpen(false);
-        toggleAction('ecg_interpret');
-      }, 2500);
-    } else {
-      setEcgFeedback('Ошибка! Посмотрите внимательно на сегмент ST.');
-      setMistakes(prev => [...prev, 'Неверная интерпретация ЭКГ']);
-    }
   };
 
   const handleAedShock = () => {
@@ -540,7 +481,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8 flex flex-col items-center justify-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">Аккред и Ко</h1>
-        <h2 className="text-2xl text-red-500 font-bold mb-4">ТЕСТОВЫЙ РЕЖИМ - ВЫБОР СПЕЦИАЛЬНОСТИ</h2>
+        <h2 className="text-2xl text-red-500 font-bold mb-4">ВЫБОР СПЕЦИАЛЬНОСТИ</h2>
         <p className="text-gray-400 mb-8 text-lg">Выберите специальность для прохождения ОСКЭ</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
           {SPECIALTIES.map(spec => (
@@ -677,42 +618,6 @@ export default function Home() {
         </div>
       </div>
 
-      {ecgModalOpen && (
-        <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-6 w-full max-w-3xl shadow-2xl flex flex-col">
-            <h3 className="text-xl font-bold mb-4 text-center text-blue-400">Интерпретация ЭКГ</h3>
-            
-            <div className="bg-white p-2 rounded-lg mb-4 flex justify-center">
-              <img src="/ecg_oks1.jpg" alt="ЭКГ" className="max-h-[40vh] object-contain" />
-            </div>
-
-            <p className="text-center mb-4 text-white font-medium">Что вы видите на данной ЭКГ?</p>
-
-            {ecgFeedback && (
-              <div className={`p-3 rounded-lg mb-4 text-center font-bold ${ecgFeedback.includes('Верно') ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                {ecgFeedback}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <button onClick={() => handleEcgAnswer(true)} className="w-full p-3 bg-gray-700 hover:bg-green-600 text-white rounded-lg text-left transition border border-gray-600">
-                Синусовый ритм. Подъем сегмента ST I, V2-V5
-              </button>
-              <button onClick={() => handleEcgAnswer(false)} className="w-full p-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-left transition border border-gray-600">
-                Фибрилляция предсердий
-              </button>
-              <button onClick={() => handleEcgAnswer(false)} className="w-full p-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-left transition border border-gray-600">
-                Асистолия
-              </button>
-            </div>
-            
-            {!ecgFeedback.includes('Верно') && (
-              <button onClick={() => setEcgModalOpen(false)} className="mt-4 text-gray-400 underline self-center">Закрыть</button>
-            )}
-          </div>
-        </div>
-      )}
-
       {challenge && challenge !== 'cpr' && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm text-center">
@@ -794,13 +699,9 @@ export default function Home() {
       )}
 
       <div className="relative w-full max-w-[1200px] mx-auto">
-        <Canvas>
-          <Suspense fallback={null}>
-            <Room360 imageUrl={roomImage} />
-          </Suspense>
-        </Canvas>
+        <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
 
-        {currentHotspots.map((spot) => (
+        {HOTSPOTS.map((spot) => (
           <button 
             key={spot.id} 
             onClick={() => {
@@ -815,7 +716,7 @@ export default function Home() {
           </button>
         ))}
 
-        {activeHotspot && !aedOpen && !challenge && !phoneModal && !medicationModal && !ecgModalOpen && (
+        {activeHotspot && !aedOpen && !challenge && !phoneModal && !medicationModal && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30 p-4">
             <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm">
               <button onClick={() => setActiveHotspot(null)} className="float-right font-bold">✕</button>
