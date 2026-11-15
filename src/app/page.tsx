@@ -173,7 +173,9 @@ const ALL_ACTIONS = [
   { id: 'medication_route', label: 'Выбрать способ введения' }, { id: 'additional_meds', label: 'Дополнительные препараты' }, { id: 'infusion', label: 'Инфузионная терапия' },
   { id: 'infusion_dose', label: 'Расчет объема инфузии' }, { id: 'priority_med', label: 'Приоритет ЛС (Адреналин)' }, { id: 'raise_bed', label: 'Придать возвышенное положение голове' },
   { id: 'pleural_puncture', label: 'Пункция плевральной полости' }, { id: 'abcde_sequence', label: 'Проверить последовательность ABCDE' }, { id: 'abcde_repeat', label: 'Повторный осмотр ABCDE' },
-  { id: 'verbalize', label: 'Комментировать действия вслух' }, { id: 'compressions', label: 'Компрессии (30 раз)' }, { id: 'aed', label: 'Работа с АНД' }, { id: 'breaths', label: 'ИВЛ (2 вдоха)' },
+  { id: 'verbalize', label: 'Комментировать действия вслух' }, { id: 'compressions', label: 'Компрессии (30 раз)' }, { id: 'breaths', label: 'ИВЛ (2 вдоха)' }, 
+  { id: 'aed', label: 'Работа с АНД' }, 
+  { id: 'compressions_repeat', label: 'Продолжить СЛР (компрессии)' }
 ];
 
 const CHECKLIST_OKS1 = [{ id: 'consciousness', text: 'Оценил сознание' }, { id: 'gloves', text: 'Надел перчатки' }, { id: 'airway', text: 'Оценил проходимость дых. путей' }, { id: 'spo2', text: 'Пульсоксиметрия' }, { id: 'oxygen', text: 'Кислородотерапия по показаниям' }, { id: 'respiratory_rate', text: 'Подсчет ЧДД' }, { id: 'percussion', text: 'Перкуссия легких' }, { id: 'auscultation', text: 'Аускультация легких' }, { id: 'trachea', text: 'Осмотр трахеи и вен' }, { id: 'pulse', text: 'Пальпация пульса' }, { id: 'bp', text: 'Измерил АД' }, { id: 'heart_ausc', text: 'Аускультация сердца' }, { id: 'cap_refill', text: 'Симптом капиллярного пятна' }, { id: 'ecg', text: 'Снял ЭКГ' }, { id: 'ecg_interpret', text: 'Интерпретировал ЭКГ' }, { id: 'venous', text: 'Венозный доступ' }, { id: 'pupils', text: 'Фотореакция зрачков' }, { id: 'muscle_tone', text: 'Тонус мышц' }, { id: 'glucose', text: 'Уровень глюкозы' }, { id: 'abdomen', text: 'Пальпация живота' }, { id: 'medication', text: 'Диагноз и лечение' }, { id: 'call', text: 'Вызов СМП' }, { id: 'compressions', text: 'Компрессии' }, { id: 'aed', text: 'АНД' }, { id: 'breaths', text: 'ИВЛ' }];
@@ -301,7 +303,7 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [timeLeft, stage, isArrest]);
 
-  // ТАЙМЕР ДЛЯ АНД (ДЕФИБРИЛЛЯТОРА)
+  // ТАЙМЕР ДЛЯ АНД
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (aedState === 'analyzing' && aedTimer > 0) {
@@ -441,8 +443,9 @@ export default function Home() {
       return;
     }
 
-    if (id === 'compressions') {
-      setChallenge('cpr'); setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
+    if (id === 'compressions' || id === 'compressions_repeat') {
+      setChallenge(id === 'compressions' ? 'cpr' : 'cpr_repeat');
+      setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
     }
     if (id === 'cap_refill') {
@@ -459,7 +462,7 @@ export default function Home() {
     }
     if (id === 'aed') {
       setAedOpen(true); setActiveHotspot(null);
-      setAedState('idle'); // сбрасываем состояние при открытии
+      setAedState('idle'); 
       setAedTimer(0);
       return;
     }
@@ -572,14 +575,20 @@ export default function Home() {
     setCprFeedback(feedback);
     setCprCount(prev => {
       const next = prev + 1;
-      if (next >= 30) setTimeout(() => { setChallenge(null); toggleAction('compressions'); }, 500);
+      if (next >= 30) setTimeout(() => { 
+        setChallenge(null); 
+        toggleAction(challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions'); 
+      }, 500);
       return next;
     });
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (challenge === 'cpr' && e.code === 'Space') { e.preventDefault(); handleCprClick(); }
+      if ((challenge === 'cpr' || challenge === 'cpr_repeat') && e.code === 'Space') { 
+        e.preventDefault(); 
+        handleCprClick(); 
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -770,7 +779,7 @@ export default function Home() {
         </div>
       )}
 
-      {challenge && challenge !== 'cpr' && (
+      {challenge && challenge !== 'cpr' && challenge !== 'cpr_repeat' && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm text-center">
             <h3 className="text-xl font-bold mb-4">{challenge === 'cap_refill' ? 'Симптом белого пятна' : challenge === 'pulse' ? 'Оценка пульса' : 'Оценка дыхания'}</h3>
@@ -822,7 +831,7 @@ export default function Home() {
         </div>
       )}
 
-      {challenge === 'cpr' && (
+      {(challenge === 'cpr' || challenge === 'cpr_repeat') && (
         <div className="absolute inset-0 bg-gray-900/95 flex flex-col items-center justify-center z-50 p-4">
           <h2 className="text-3xl font-bold mb-2 text-white">Компрессии</h2>
           <p className="text-gray-400 mb-8">Нажимайте в ритме 100-120 в минуту</p>
@@ -889,7 +898,7 @@ export default function Home() {
                     if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   } else {
-                    if (activeHotspot === 'patient' && !['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'compressions', 'breaths', 'recovery'].includes(action.id)) return null;
+                    if (activeHotspot === 'patient' && !['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'compressions', 'compressions_repeat', 'breaths', 'recovery'].includes(action.id)) return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   }
                   return (
