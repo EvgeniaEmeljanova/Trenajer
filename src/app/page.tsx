@@ -301,6 +301,19 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [timeLeft, stage, isArrest]);
 
+  // ТАЙМЕР ДЛЯ АНД (ДЕФИБРИЛЛЯТОРА)
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (aedState === 'analyzing' && aedTimer > 0) {
+      timer = setTimeout(() => {
+        setAedTimer(prev => prev - 1);
+      }, 1000);
+    } else if (aedState === 'analyzing' && aedTimer === 0) {
+      setAedState('shock');
+    }
+    return () => clearTimeout(timer);
+  }, [aedState, aedTimer]);
+
   useEffect(() => {
     if (scenario && PATIENT_DATA[scenario]) {
       setVitals(PATIENT_DATA[scenario].initialVitals);
@@ -446,6 +459,8 @@ export default function Home() {
     }
     if (id === 'aed') {
       setAedOpen(true); setActiveHotspot(null);
+      setAedState('idle'); // сбрасываем состояние при открытии
+      setAedTimer(0);
       return;
     }
     if (id === 'call') {
@@ -842,8 +857,13 @@ export default function Home() {
           <button 
             key={spot.id} 
             onClick={() => {
-              if (spot.id === 'aed') setAedOpen(true);
-              else setActiveHotspot(spot.id);
+              if (spot.id === 'aed') {
+                setAedOpen(true);
+                setAedState('idle');
+                setAedTimer(0);
+              } else {
+                setActiveHotspot(spot.id);
+              }
             }} 
             className="absolute border-2 border-transparent hover:border-blue-400/70 hover:bg-blue-400/20 rounded-xl z-10 transition-all cursor-pointer" 
             style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, height: `${spot.h}%` }} 
