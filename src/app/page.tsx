@@ -220,7 +220,6 @@ export default function Home() {
   const [selectedMeds, setSelectedMeds] = useState<string[]>([]);
   const [medFeedback, setMedFeedback] = useState('');
 
-  // НОВОЕ СОСТОЯНИЕ ДЛЯ ЭКГ
   const [ecgModalOpen, setEcgModalOpen] = useState(false);
   const [ecgFeedback, setEcgFeedback] = useState('');
 
@@ -440,7 +439,6 @@ export default function Home() {
     }
   };
 
-  // ... (Остальные функции handleAedShock, handleSmpOptionClick, handleMedicationSubmit, handleCprClick остаются прежними)
   const handleAedShock = () => {
     if (aedState === 'shock') {
       setAedState('success'); 
@@ -541,7 +539,8 @@ export default function Home() {
   if (stage === 'menu') {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8 flex flex-col items-center justify-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">Аккред и Ко</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">Аккред и Ко</h1>
+        <h2 className="text-2xl text-red-500 font-bold mb-4">ТЕСТОВЫЙ РЕЖИМ - ВЫБОР СПЕЦИАЛЬНОСТИ</h2>
         <p className="text-gray-400 mb-8 text-lg">Выберите специальность для прохождения ОСКЭ</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
           {SPECIALTIES.map(spec => (
@@ -678,7 +677,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* МОДАЛКА ЭКГ */}
       {ecgModalOpen && (
         <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 border-2 border-blue-500 rounded-2xl p-6 w-full max-w-3xl shadow-2xl flex flex-col">
@@ -715,7 +713,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Остальные модалки (challenge, phoneModal, cpr, aed) остаются без изменений */}
       {challenge && challenge !== 'cpr' && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm text-center">
