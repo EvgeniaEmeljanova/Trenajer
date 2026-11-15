@@ -37,7 +37,6 @@ const SCENARIO_TITLES: Record<ScenarioType, string> = {
   BLS: 'Базовая СЛР (BLS)',
 };
 
-// --- МЕНЮ СПЕЦИАЛЬНОСТЕЙ ---
 const SPECIALTIES = [
   {
     id: 'general_medicine',
@@ -80,7 +79,6 @@ const VOICE_INTROS: Record<ScenarioType, string> = {
   BLS: 'Вы увидели, что человеку стало плохо. Он лежит на полу без сознания. Время пошло!',
 };
 
-// --- ДАННЫЕ ПАЦИЕНТОВ (ИЗ ПРИЛОЖЕНИЯ 1) ---
 const PATIENT_DATA: Record<ScenarioType, any> = {
   OKS1: { initialVitals: { hr: 110, spo2: 88, bpSys: 90, bpDia: 40, rr: 24 }, responses: { consciousness: 'Открывает глаза, есть экскурсия грудной клетки', airway: 'Дыхательные пути визуально проходимы', spo2: 'Сатурация 88-89%', respiratory_rate: '4 движения за 10 секунд', percussion: 'Слева и справа ясный легочный звук', auscultation: 'Везикулярное дыхание, влажные хрипы', trachea: 'Трахея в норме, вены шеи набухшие', pulse: '18 ударов за 10 секунд, слабого наполнения', bp: 'САД: 90, ДАД: 40', heart_ausc: 'Частые, приглушенные', cap_refill: 'Симптом исчезает через 4 секунды', skin: 'Кожа холодная, влажная', pupils: 'Зрачки одинаковые', glucose: '6,3 ммоль/л', muscle_tone: 'Тонус нормальный', abdomen: 'Живот без особенностей', ecg_interpret: 'На ЭКГ: подъем ST' } },
   OKS2: { initialVitals: { hr: 110, spo2: 88, bpSys: 130, bpDia: 70, rr: 24 }, responses: { consciousness: 'Открывает глаза, отставание правой половины', airway: 'Губы и язык отечные', spo2: 'Сатурация 88-89%', respiratory_rate: '4 движения за 10 секунд', percussion: 'Слева и справа ясный, притупление', auscultation: 'Жесткое дыхание, хрипы', trachea: 'Трахея в норме, вены спавшиеся', pulse: '18 ударов за 10 секунд', bp: 'САД: 130, ДАД: 70', heart_ausc: 'Частые', cap_refill: 'Симптом исчезает через 4 секунды', skin: 'Кожа теплая, цианоз', pupils: 'Зрачки одинаковые', glucose: '6,3 ммоль/л', muscle_tone: 'Тонус нормальный', abdomen: 'Живот без особенностей', ecg_interpret: 'На ЭКГ: подъем ST' } },
@@ -108,6 +106,19 @@ const SMP_SCRIPT = [
   { dispatcher: 'Назовите объем оказываемой помощи.', options: [{ text: '«Начинаю сердечно-легочную реанимацию»', correct: true }, { text: '«Жду вас, ничего не делаю»', correct: false }], wrongReply: 'Диспетчер: «Назовите объём Вашего вмешательства. Какие лекарственные средства Вы ввели?»' }
 ];
 
+const MEDICATIONS: Record<ScenarioType, { name: string, correct: boolean }[]> = {
+  OKS1: [{ name: 'Ацетилсалициловая кислота', correct: true }, { name: 'Гепарин', correct: true }, { name: 'Морфин', correct: true }, { name: 'Адреналин', correct: false }],
+  OKS2: [{ name: 'Ацетилсалициловая кислота', correct: true }, { name: 'Нитроглицерин', correct: true }, { name: 'Фуросемид', correct: true }, { name: 'Сальбутамол', correct: false }],
+  ANAPHYLAXIS: [{ name: 'Эпинефрин', correct: true }, { name: 'Инфузия NaCl', correct: true }, { name: 'Гидрокортизон', correct: true }, { name: 'Аспирин', correct: false }],
+  ZHKK: [{ name: 'Омепразол', correct: true }, { name: 'Инфузия NaCl', correct: true }, { name: 'Адреналин', correct: false }],
+  BOS: [{ name: 'Сальбутамол', correct: true }, { name: 'Ипратропий', correct: true }, { name: 'Преднизолон', correct: true }, { name: 'Аспирин', correct: false }],
+  TELA: [{ name: 'Гепарин', correct: true }, { name: 'Тромболитики', correct: true }, { name: 'Аспирин', correct: false }],
+  PNEUMOTHORAX: [{ name: 'Пункция', correct: true }, { name: 'Морфин', correct: false }],
+  HYPOGLYCEMIA: [{ name: 'Глюкоза 40%', correct: true }, { name: 'Глюкоза 5%', correct: true }, { name: 'Адреналин', correct: false }],
+  HYPERGLYCEMIA: [{ name: 'Инфузия NaCl', correct: true }, { name: 'Инсулин', correct: true }, { name: 'Глюкоза', correct: false }],
+  BLS: []
+};
+
 const ALL_ACTIONS = [
   { id: 'danger', label: 'Убедиться в отсутствии опасности' }, { id: 'hands', label: 'Обработать руки' }, { id: 'choking', label: 'Спросить: «Вы подавились?»' },
   { id: 'back_blows', label: '5 ударов между лопатками' }, { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)' }, { id: 'breathing', label: 'Оценить дыхание (10 сек)' },
@@ -126,7 +137,6 @@ const ALL_ACTIONS = [
   { id: 'verbalize', label: 'Комментировать действия вслух' }, { id: 'compressions', label: 'Компрессии (30 раз)' }, { id: 'aed', label: 'Работа с АНД' }, { id: 'breaths', label: 'ИВЛ (2 вдоха)' },
 ];
 
-// --- ЧЕК-ЛИСТЫ ---
 const CHECKLIST_OKS1 = [{ id: 'consciousness', text: 'Оценил сознание' }, { id: 'gloves', text: 'Надел перчатки' }, { id: 'airway', text: 'Оценил проходимость дых. путей' }, { id: 'spo2', text: 'Пульсоксиметрия' }, { id: 'oxygen', text: 'Кислородотерапия по показаниям' }, { id: 'respiratory_rate', text: 'Подсчет ЧДД' }, { id: 'percussion', text: 'Перкуссия легких' }, { id: 'auscultation', text: 'Аускультация легких' }, { id: 'trachea', text: 'Осмотр трахеи и вен' }, { id: 'pulse', text: 'Пальпация пульса' }, { id: 'bp', text: 'Измерил АД' }, { id: 'heart_ausc', text: 'Аускультация сердца' }, { id: 'cap_refill', text: 'Симптом капиллярного пятна' }, { id: 'ecg', text: 'Снял ЭКГ' }, { id: 'ecg_interpret', text: 'Интерпретировал ЭКГ' }, { id: 'venous', text: 'Венозный доступ' }, { id: 'pupils', text: 'Фотореакция зрачков' }, { id: 'muscle_tone', text: 'Тонус мышц' }, { id: 'glucose', text: 'Уровень глюкозы' }, { id: 'abdomen', text: 'Пальпация живота' }, { id: 'medication', text: 'Диагноз и лечение' }, { id: 'call', text: 'Вызов СМП' }, { id: 'compressions', text: 'Компрессии' }, { id: 'aed', text: 'АНД' }, { id: 'breaths', text: 'ИВЛ' }];
 const CHECKLIST_OKS2 = [{ id: 'consciousness', text: 'Оценил сознание' }, { id: 'gloves', text: 'Надел перчатки' }, { id: 'airway', text: 'Оценил проходимость дых. путей' }, { id: 'spo2', text: 'Пульсоксиметрия' }, { id: 'oxygen', text: 'Кислородотерапия по показаниям' }, { id: 'respiratory_rate', text: 'Подсчет ЧДД' }, { id: 'percussion', text: 'Перкуссия легких' }, { id: 'auscultation', text: 'Аускультация легких' }, { id: 'trachea', text: 'Осмотр трахеи и вен' }, { id: 'pulse', text: 'Пальпация пульса' }, { id: 'bp', text: 'Измерил АД' }, { id: 'heart_ausc', text: 'Аускультация сердца' }, { id: 'cap_refill', text: 'Симптом капиллярного пятна' }, { id: 'ecg', text: 'Снял ЭКГ' }, { id: 'ecg_interpret', text: 'Интерпретировал ЭКГ' }, { id: 'venous', text: 'Венозный доступ' }, { id: 'pupils', text: 'Фотореакция зрачков' }, { id: 'muscle_tone', text: 'Тонус мышц' }, { id: 'glucose', text: 'Уровень глюкозы' }, { id: 'abdomen', text: 'Пальпация живота' }, { id: 'raise_bed', text: 'Придал возвышенное положение' }, { id: 'medication', text: 'Диагноз и лечение' }, { id: 'call', text: 'Вызов СМП' }, { id: 'abcde_sequence', text: 'Соблюдал ABCDE' }, { id: 'abcde_repeat', text: 'Повторный ABCDE' }, { id: 'verbalize', text: 'Комментировал действия' }, { id: 'compressions', text: 'Компрессии' }, { id: 'aed', text: 'АНД' }, { id: 'breaths', text: 'ИВЛ' }];
 const CHECKLIST_ANAPHYLAXIS = [{ id: 'consciousness', text: 'Оценил сознание' }, { id: 'gloves', text: 'Надел перчатки' }, { id: 'airway', text: 'Оценил проходимость дых. путей' }, { id: 'spo2', text: 'Пульсоксиметрия' }, { id: 'oxygen', text: 'Кислородотерапия' }, { id: 'respiratory_rate', text: 'Подсчет ЧДД' }, { id: 'percussion', text: 'Перкуссия легких' }, { id: 'auscultation', text: 'Аускультация легких' }, { id: 'trachea', text: 'Осмотр трахеи и вен' }, { id: 'pulse', text: 'Пальпация пульса' }, { id: 'bp', text: 'Измерил АД' }, { id: 'heart_ausc', text: 'Аускультация сердца' }, { id: 'cap_refill', text: 'Симптом капиллярного пятна' }, { id: 'ecg', text: 'Снял ЭКГ' }, { id: 'ecg_interpret', text: 'Интерпретировал ЭКГ' }, { id: 'venous', text: 'Венозный доступ' }, { id: 'pupils', text: 'Фотореакция зрачков' }, { id: 'muscle_tone', text: 'Тонус мышц' }, { id: 'glucose', text: 'Уровень глюкозы' }, { id: 'abdomen', text: 'Пальпация живота' }, { id: 'medication', text: 'Диагноз и лечение' }, { id: 'priority_med', text: 'Приоритет ЛС (Адреналин)' }, { id: 'call', text: 'Вызов СМП' }, { id: 'abcde_sequence', text: 'Соблюдал ABCDE' }, { id: 'abcde_repeat', text: 'Повторный ABCDE' }, { id: 'verbalize', text: 'Комментировал действия' }, { id: 'compressions', text: 'Компрессии' }, { id: 'aed', text: 'АНД' }, { id: 'breaths', text: 'ИВЛ' }];
@@ -309,7 +319,7 @@ export default function Home() {
     if (scenario === 'HYPOGLYCEMIA' && actions['oxygen_wrong']) penalty += 10;
     if (scenario === 'HYPERGLYCEMIA' && actions['oxygen_wrong']) penalty += 10;
 
-    const completedItems = currentChecklist.filter(item => actions[item.id]).length;
+    const completedItems = currentChecklist.filter((item: any) => actions[item.id]).length;
     const totalItems = currentChecklist.length;
     let calculatedScore = Math.round((completedItems / totalItems) * 100);
     
@@ -431,8 +441,8 @@ export default function Home() {
   };
 
   const handleMedicationSubmit = () => {
-    const correctMeds = MEDICATIONS[scenario]?.filter((m: any) => m.correct).map((m: any) => m.name) || [];
-    const incorrectMeds = MEDICATIONS[scenario]?.filter((m: any) => !m.correct).map((m: any) => m.name) || [];
+    const correctMeds = MEDICATIONS[scenario]?.filter(m => m.correct).map(m => m.name) || [];
+    const incorrectMeds = MEDICATIONS[scenario]?.filter(m => !m.correct).map(m => m.name) || [];
 
     const selectedIncorrect = selectedMeds.filter(m => incorrectMeds.includes(m));
     const selectedCorrect = selectedMeds.filter(m => correctMeds.includes(m));
@@ -497,7 +507,6 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [challenge]);
 
-  // --- ЭКРАНЫ ---
   if (stage === 'menu') {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8 flex flex-col items-center justify-center">
