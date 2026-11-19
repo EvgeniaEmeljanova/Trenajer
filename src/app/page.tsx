@@ -259,7 +259,7 @@ export default function Home() {
   const [patientResponse, setPatientResponse] = useState<string | null>(null);
 
   const [isArrest, setIsArrest] = useState(false);
-  const [vitals, setVitals] = useState({ hr: 110, spo2: 88, bpSys: 90, bpDia: 40 });
+  const [vitals, setVitals] = useState<{ hr: number; spo2: number; bpSys: number; bpDia: number; rr?: number }>({ hr: 110, spo2: 88, bpSys: 90, bpDia: 40 });
 
   const [challenge, setChallenge] = useState<string | null>(null);
   const [timerChallenge, setTimerChallenge] = useState(0);
