@@ -181,7 +181,7 @@ const MEDICATIONS: Record<ScenarioType, { name: string, correct: boolean }[]> = 
 const ALL_ACTIONS = [
   { id: 'danger', label: 'Убедиться в отсутствии опасности' }, { id: 'hands', label: 'Обработать руки' }, { id: 'choking', label: 'Спросить: «Вы подавились?»' },
   { id: 'back_blows', label: '5 ударов между лопатками' }, { id: 'heimlich', label: '5 надавливаний на живот (Геймлих)' }, { id: 'breathing', label: 'Оценить дыхание (10 сек)' },
-  { id: 'recovery', label: 'Устойчивое боковое положение' }, { id: 'consciousness', label: 'Оценить сознание' }, { id: 'gloves', label: 'Надеть перчатки' },
+  { id: 'recovery', label: 'Устойчивое боковое положение' }, { id: 'reassess_consciousness', label: 'Повторно оценить сознание' }, { id: 'reassess_breathing', label: 'Повторно оценить дыхание (10 сек)' }, { id: 'consciousness', label: 'Оценить сознание' }, { id: 'gloves', label: 'Надеть перчатки' },
   { id: 'airway', label: 'Осмотреть полость рта' }, { id: 'spo2', label: 'Пульсоксиметрия' }, { id: 'oxygen', label: 'Кислородотерапия' },
   { id: 'oxygen_wrong', label: 'Кислород (при отсутствии показаний)' }, { id: 'respiratory_rate', label: 'Подсчет ЧДД (10 сек)' }, { id: 'percussion', label: 'Перкуссия легких' },
   { id: 'auscultation', label: 'Аускультация легких' }, { id: 'trachea', label: 'Осмотр трахеи и вен шеи' }, { id: 'pulse', label: 'Пульс на лучевой и сонной артериях' },
@@ -209,7 +209,12 @@ const CHECKLIST_HYPOGLYCEMIA = [{ id: 'consciousness', text: 'Оценил со�
 const CHECKLIST_HYPERGLYCEMIA = [{ id: 'consciousness', text: 'Оценил сознание' }, { id: 'gloves', text: 'Надел перчатки' }, { id: 'airway', text: 'Оценил проходимость дых. путей' }, { id: 'spo2', text: 'Пульсоксиметрия' }, { id: 'respiratory_rate', text: 'Подсчет ЧДД' }, { id: 'percussion', text: 'Перкуссия легких' }, { id: 'auscultation', text: 'Аускультация легких' }, { id: 'trachea', text: 'Осмотр трахеи и вен' }, { id: 'pulse', text: 'Пальпация пульса' }, { id: 'bp', text: 'Измерил АД' }, { id: 'heart_ausc', text: 'Аускультация сердца' }, { id: 'cap_refill', text: 'Симптом капиллярного пятна' }, { id: 'ecg', text: 'Снял ЭКГ' }, { id: 'ecg_interpret', text: 'Интерпретировал ЭКГ' }, { id: 'venous', text: 'Венозный доступ' }, { id: 'pupils', text: 'Фотореакция зрачков' }, { id: 'muscle_tone', text: 'Тонус мышц' }, { id: 'glucose', text: 'Уровень глюкозы' }, { id: 'abdomen', text: 'Пальпация живота' }, { id: 'medication', text: 'Диагноз и лечение' }, { id: 'infusion', text: 'Инфузионная терапия' }, { id: 'infusion_dose', text: 'Объем инфузии' }, { id: 'call', text: 'Вызов СМП' }, { id: 'abcde_sequence', text: 'Соблюдал ABCDE' }, { id: 'abcde_repeat', text: 'Повторный ABCDE' }, { id: 'verbalize', text: 'Комментировал действия' }, { id: 'compressions', text: 'Компрессии' }, { id: 'aed', text: 'АНД' }, { id: 'breaths', text: 'ИВЛ' }];
 const CHECKLIST_BLS = [{ id: 'danger', text: 'Убедиться в отсутствии опасности' }, { id: 'choking', text: 'Спросить: «Вы подавились?»' }, { id: 'back_blows', text: '5 ударов между лопатками' }, { id: 'heimlich', text: '5 надавливаний на живот' }, { id: 'consciousness', text: 'Оценил сознание' }, { id: 'airway', text: 'Открыл дыхательные пути' }, { id: 'breathing', text: 'Оценил дыхание' }, { id: 'call', text: 'Вызов СМП' }, { id: 'compressions', text: 'Компрессии (30 раз)' }, { id: 'breaths', text: 'Сделать 2 вдоха' }, { id: 'aed', text: 'Работа с АНД' }, { id: 'compressions_repeat', text: 'Продолжить СЛР' }, { id: 'recovery', text: 'Устойчивое боковое положение' }];
 const CHECKLIST_BLS_CHOKING = CHECKLIST_BLS.filter(item => item.id !== 'recovery');
-const CHECKLIST_BLS_ARREST = CHECKLIST_BLS.filter(item => !['choking', 'back_blows', 'heimlich'].includes(item.id));
+const CHECKLIST_BLS_ARREST = [
+  ...CHECKLIST_BLS.filter(item => !['choking', 'back_blows', 'heimlich', 'recovery'].includes(item.id)),
+  { id: 'reassess_consciousness', text: 'Повторно оценил сознание' },
+  { id: 'reassess_breathing', text: 'Повторно оценил дыхание' },
+  { id: 'recovery', text: 'Устойчивое боковое положение' }
+];
 
 const SCENARIO_DATA: Record<ScenarioType, { order: string[], checklist: any[] }> = {
   OKS1: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'medication', 'call', 'compressions', 'aed', 'breaths'], checklist: CHECKLIST_OKS1 },
@@ -224,8 +229,8 @@ const SCENARIO_DATA: Record<ScenarioType, { order: string[], checklist: any[] }>
   BLS: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'recovery'], checklist: CHECKLIST_BLS },
   BLS1: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
   BLS2: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
-  BLS3: { order: ['danger', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
-  BLS4: { order: ['danger', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
+  BLS3: { order: ['danger', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'reassess_consciousness', 'reassess_breathing', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
+  BLS4: { order: ['danger', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'reassess_consciousness', 'reassess_breathing', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
 };
 
 const HOTSPOTS = [
@@ -567,8 +572,23 @@ export default function Home() {
       toggleAction(id);
       return;
     }
+    if (isBlsScenario && id === 'reassess_consciousness') {
+      if (!needsRecoveryPosition || !blsRosc) return;
+      setPatientResponse('На обращение и осторожное потряхивание за плечи пострадавший не реагирует.');
+      toggleAction(id);
+      return;
+    }
+    if (isBlsScenario && id === 'reassess_breathing') {
+      if (!needsRecoveryPosition || !blsRosc) return;
+      startHoldChallenge(id, 10);
+      return;
+    }
     if (isBlsScenario && id === 'recovery') {
       if (!needsRecoveryPosition || !blsRosc) return;
+      if (!actions['reassess_consciousness'] || !actions['reassess_breathing']) {
+        setPatientResponse('Сначала повторно оцените сознание и дыхание пострадавшего.');
+        return;
+      }
       setPatientResponse('Устойчивое боковое положение выполнено. Дыхание контролируется. Испытание завершено.');
       toggleAction(id);
       setTimeout(() => finishScenario(), 1800);
@@ -1035,8 +1055,8 @@ export default function Home() {
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   } else {
                     const chokingActions = ['choking', 'back_blows', 'heimlich'];
-                    if (activeHotspot === 'patient' && !['danger', 'consciousness', 'airway', 'breathing', 'compressions', 'compressions_repeat', 'breaths', 'recovery', ...((scenario === 'BLS1' || scenario === 'BLS2') ? chokingActions : [])].includes(action.id)) return null;
-                    if (activeHotspot === 'patient' && action.id === 'recovery' && (!needsRecoveryPosition || !blsRosc)) return null;
+                    if (activeHotspot === 'patient' && !['danger', 'consciousness', 'airway', 'breathing', 'compressions', 'compressions_repeat', 'breaths', 'recovery', 'reassess_consciousness', 'reassess_breathing', ...((scenario === 'BLS1' || scenario === 'BLS2') ? chokingActions : [])].includes(action.id)) return null;
+                    if (activeHotspot === 'patient' && ['recovery', 'reassess_consciousness', 'reassess_breathing'].includes(action.id) && (!needsRecoveryPosition || !blsRosc)) return null;
                     if (activeHotspot === 'patient' && action.id === 'aed') return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   }
