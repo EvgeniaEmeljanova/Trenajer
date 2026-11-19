@@ -7,7 +7,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
-type ScenarioType = 'OKS1' | 'OKS2' | 'ANAPHYLAXIS' | 'ZHKK' | 'BOS' | 'TELA' | 'PNEUMOTHORAX' | 'HYPOGLYCEMIA' | 'HYPERGLYCEMIA' | 'BLS';
+type ScenarioType = 'OKS1' | 'OKS2' | 'ANAPHYLAXIS' | 'ZHKK' | 'BOS' | 'TELA' | 'PNEUMOTHORAX' | 'HYPOGLYCEMIA' | 'HYPERGLYCEMIA' | 'BLS' | 'BLS1' | 'BLS2' | 'BLS3' | 'BLS4';
 
 const SCENARIO_TITLES: Record<ScenarioType, string> = {
   OKS1: 'ОКС 1 (Инфаркт миокарда)',
@@ -20,6 +20,10 @@ const SCENARIO_TITLES: Record<ScenarioType, string> = {
   HYPOGLYCEMIA: 'Гипогликемия',
   HYPERGLYCEMIA: 'Гипергликемия',
   BLS: 'Базовая СЛР (BLS)',
+  BLS1: 'Базовая СЛР — сценарий 1: инородное тело, разряд АНД',
+  BLS2: 'Базовая СЛР — сценарий 2: инородное тело, без разряда АНД',
+  BLS3: 'Базовая СЛР — сценарий 3: остановка сердца, разряд АНД',
+  BLS4: 'Базовая СЛР — сценарий 4: остановка сердца, без разряда АНД',
 };
 
 // --- БАЗА ДАННЫХ ЭКГ ---
@@ -73,7 +77,11 @@ const ECG_DATA: Record<ScenarioType, any> = {
     initial: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] },
     arrest45: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] },
     arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
-  }
+  },
+  BLS1: { initial: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Асистолия', 'Синусовый ритм', 'Электрическая активность без пульса'] }, arrest45: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Асистолия', 'Синусовый ритм', 'Электрическая активность без пульса'] }, arrest65: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Асистолия', 'Синусовый ритм', 'Электрическая активность без пульса'] } },
+  BLS2: { initial: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }, arrest45: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }, arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] } },
+  BLS3: { initial: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Асистолия', 'Синусовый ритм', 'Электрическая активность без пульса'] }, arrest45: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Асистолия', 'Синусовый ритм', 'Электрическая активность без пульса'] }, arrest65: { image: '/ecg_vf.jpg', correct: 'Фибрилляция желудочков.', wrong: ['Асистолия', 'Синусовый ритм', 'Электрическая активность без пульса'] } },
+  BLS4: { initial: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }, arrest45: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }, arrest65: { image: '/ecg_asystole.jpg', correct: 'Асистолия.', wrong: ['Фибрилляция желудочков', 'Желудочковая тахикардия', 'Синусовый ритм'] }
 };
 
 const SPECIALTIES = [
@@ -116,6 +124,10 @@ const VOICE_INTROS: Record<ScenarioType, string> = {
   HYPOGLYCEMIA: 'Пациент 50 лет. Состояние спутанное, кожа влажная. Время пошло!',
   HYPERGLYCEMIA: 'Пациент 35 лет. Сухость во рту, слабость. Время пошло!',
   BLS: 'Вы увидели, что человеку стало плохо. Он лежит на полу без сознания. Время пошло!',
+  BLS1: 'Мужчина подавился пищей. Он в сознании, не может эффективно откашляться. Время пошло!',
+  BLS2: 'Мужчина подавился пищей. Он в сознании, не может эффективно откашляться. Время пошло!',
+  BLS3: 'Мужчина лежит на полу без сознания, нормального дыхания нет. Время пошло!',
+  BLS4: 'Мужчина лежит на полу без сознания, нормального дыхания нет. Время пошло!',
 };
 
 const PATIENT_DATA: Record<ScenarioType, any> = {
@@ -128,7 +140,11 @@ const PATIENT_DATA: Record<ScenarioType, any> = {
   PNEUMOTHORAX: { initialVitals: { hr: 110, spo2: 88, bpSys: 80, bpDia: 40, rr: 24 }, responses: { consciousness: 'Открывает глаза', airway: 'Дыхательные пути проходимы', spo2: 'Сатурация 88-89%', respiratory_rate: '4 движения за 10 секунд', percussion: 'Тимпанит справа', auscultation: 'Ослабленное дыхание справа', trachea: 'Вены шеи набухшие', pulse: '18 ударов за 10 секунд', bp: 'САД: 80, ДАД: 40', heart_ausc: 'Частые', cap_refill: 'Симптом исчезает через 4 секунды', skin: 'Кожа холодная, цианоз', pupils: 'Зрачки одинаковые', glucose: '6,3 ммоль/л', muscle_tone: 'Тонус нормальный', abdomen: 'Живот без особенностей', ecg_interpret: 'На ЭКГ: синусовая тахикардия' } },
   HYPOGLYCEMIA: { initialVitals: { hr: 110, spo2: 95, bpSys: 120, bpDia: 70, rr: 18 }, responses: { consciousness: 'Открывает глаза', airway: 'Дыхательные пути проходимы', spo2: 'Сатурация 95-98%', respiratory_rate: '3 движения за 10 секунд', percussion: 'Слева и справа ясный', auscultation: 'Везикулярное дыхание', trachea: 'Вены в норме', pulse: '18 ударов за 10 секунд', bp: 'САД: 120, ДАД: 70', heart_ausc: 'Частые', cap_refill: 'Симптом исчезает через 2 секунды', skin: 'Кожа влажная, липкая', pupils: 'Зрачки одинаковые', glucose: '2,0 ммоль/л', muscle_tone: 'Тонус нормальный', abdomen: 'Живот без особенностей', ecg_interpret: 'На ЭКГ: синусовая тахикардия' } },
   HYPERGLYCEMIA: { initialVitals: { hr: 110, spo2: 95, bpSys: 120, bpDia: 70, rr: 18 }, responses: { consciousness: 'Открывает глаза', airway: 'Дыхательные пути проходимы', spo2: 'Сатурация 95-98%', respiratory_rate: '3 движения за 10 секунд', percussion: 'Слева и справа ясный', auscultation: 'Везикулярное дыхание', trachea: 'Вены в норме', pulse: '18 ударов за 10 секунд', bp: 'САД: 120, ДАД: 70', heart_ausc: 'Частые', cap_refill: 'Симптом исчезает через 2 секунды', skin: 'Кожа бледная, сухая', pupils: 'Зрачки одинаковые', glucose: '24 ммоль/л', muscle_tone: 'Тонус нормальный', abdomen: 'Живот без особенностей', ecg_interpret: 'На ЭКГ: синусовая тахикардия' } },
-  BLS: { initialVitals: { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 }, responses: {} }
+  BLS: { initialVitals: { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 }, responses: {} },
+  BLS1: { initialVitals: { hr: 110, spo2: 94, bpSys: 120, bpDia: 80, rr: 0 }, responses: {} },
+  BLS2: { initialVitals: { hr: 110, spo2: 94, bpSys: 120, bpDia: 80, rr: 0 }, responses: {} },
+  BLS3: { initialVitals: { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 }, responses: {} },
+  BLS4: { initialVitals: { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 }, responses: {} }
 };
 
 const APK_MESSAGES: Record<string, string> = {
@@ -155,7 +171,11 @@ const MEDICATIONS: Record<ScenarioType, { name: string, correct: boolean }[]> = 
   PNEUMOTHORAX: [{ name: 'Пункция', correct: true }, { name: 'Морфин', correct: false }],
   HYPOGLYCEMIA: [{ name: 'Глюкоза 40%', correct: true }, { name: 'Глюкоза 5%', correct: true }, { name: 'Адреналин', correct: false }],
   HYPERGLYCEMIA: [{ name: 'Инфузия NaCl', correct: true }, { name: 'Инсулин', correct: true }, { name: 'Глюкоза', correct: false }],
-  BLS: []
+  BLS: [],
+  BLS1: [],
+  BLS2: [],
+  BLS3: [],
+  BLS4: []
 };
 
 const ALL_ACTIONS = [
@@ -188,6 +208,8 @@ const CHECKLIST_PNEUMOTHORAX = [{ id: 'consciousness', text: 'Оценил со�
 const CHECKLIST_HYPOGLYCEMIA = [{ id: 'consciousness', text: 'Оценил сознание' }, { id: 'gloves', text: 'Надел перчатки' }, { id: 'airway', text: 'Оценил проходимость дых. путей' }, { id: 'spo2', text: 'Пульсоксиметрия' }, { id: 'respiratory_rate', text: 'Подсчет ЧДД' }, { id: 'percussion', text: 'Перкуссия легких' }, { id: 'auscultation', text: 'Аускультация легких' }, { id: 'trachea', text: 'Осмотр трахеи и вен' }, { id: 'pulse', text: 'Пальпация пульса' }, { id: 'bp', text: 'Измерил АД' }, { id: 'heart_ausc', text: 'Аускультация сердца' }, { id: 'cap_refill', text: 'Симптом капиллярного пятна' }, { id: 'ecg', text: 'Снял ЭКГ' }, { id: 'ecg_interpret', text: 'Интерпретировал ЭКГ' }, { id: 'venous', text: 'Венозный доступ' }, { id: 'pupils', text: 'Фотореакция зрачков' }, { id: 'muscle_tone', text: 'Тонус мышц' }, { id: 'glucose', text: 'Уровень глюкозы' }, { id: 'abdomen', text: 'Пальпация живота' }, { id: 'medication', text: 'Диагноз и лечение' }, { id: 'medication_correct', text: 'Верный препарат' }, { id: 'medication_dose', text: 'Верная дозировка' }, { id: 'medication_route', text: 'Способ введения' }, { id: 'additional_meds', text: 'Дополнительные препараты' }, { id: 'call', text: 'Вызов СМП' }, { id: 'abcde_sequence', text: 'Соблюдал ABCDE' }, { id: 'abcde_repeat', text: 'Повторный ABCDE' }, { id: 'verbalize', text: 'Комментировал действия' }, { id: 'compressions', text: 'Компрессии' }, { id: 'aed', text: 'АНД' }, { id: 'breaths', text: 'ИВЛ' }];
 const CHECKLIST_HYPERGLYCEMIA = [{ id: 'consciousness', text: 'Оценил сознание' }, { id: 'gloves', text: 'Надел перчатки' }, { id: 'airway', text: 'Оценил проходимость дых. путей' }, { id: 'spo2', text: 'Пульсоксиметрия' }, { id: 'respiratory_rate', text: 'Подсчет ЧДД' }, { id: 'percussion', text: 'Перкуссия легких' }, { id: 'auscultation', text: 'Аускультация легких' }, { id: 'trachea', text: 'Осмотр трахеи и вен' }, { id: 'pulse', text: 'Пальпация пульса' }, { id: 'bp', text: 'Измерил АД' }, { id: 'heart_ausc', text: 'Аускультация сердца' }, { id: 'cap_refill', text: 'Симптом капиллярного пятна' }, { id: 'ecg', text: 'Снял ЭКГ' }, { id: 'ecg_interpret', text: 'Интерпретировал ЭКГ' }, { id: 'venous', text: 'Венозный доступ' }, { id: 'pupils', text: 'Фотореакция зрачков' }, { id: 'muscle_tone', text: 'Тонус мышц' }, { id: 'glucose', text: 'Уровень глюкозы' }, { id: 'abdomen', text: 'Пальпация живота' }, { id: 'medication', text: 'Диагноз и лечение' }, { id: 'infusion', text: 'Инфузионная терапия' }, { id: 'infusion_dose', text: 'Объем инфузии' }, { id: 'call', text: 'Вызов СМП' }, { id: 'abcde_sequence', text: 'Соблюдал ABCDE' }, { id: 'abcde_repeat', text: 'Повторный ABCDE' }, { id: 'verbalize', text: 'Комментировал действия' }, { id: 'compressions', text: 'Компрессии' }, { id: 'aed', text: 'АНД' }, { id: 'breaths', text: 'ИВЛ' }];
 const CHECKLIST_BLS = [{ id: 'danger', text: 'Убедиться в отсутствии опасности' }, { id: 'choking', text: 'Спросить: «Вы подавились?»' }, { id: 'back_blows', text: '5 ударов между лопатками' }, { id: 'heimlich', text: '5 надавливаний на живот' }, { id: 'consciousness', text: 'Оценил сознание' }, { id: 'airway', text: 'Открыл дыхательные пути' }, { id: 'breathing', text: 'Оценил дыхание' }, { id: 'call', text: 'Вызов СМП' }, { id: 'compressions', text: 'Компрессии (30 раз)' }, { id: 'breaths', text: 'Сделать 2 вдоха' }, { id: 'aed', text: 'Работа с АНД' }, { id: 'compressions_repeat', text: 'Продолжить СЛР' }, { id: 'recovery', text: 'Устойчивое боковое положение' }];
+const CHECKLIST_BLS_CHOKING = CHECKLIST_BLS.filter(item => item.id !== 'recovery');
+const CHECKLIST_BLS_ARREST = CHECKLIST_BLS.filter(item => !['choking', 'back_blows', 'heimlich'].includes(item.id));
 
 const SCENARIO_DATA: Record<ScenarioType, { order: string[], checklist: any[] }> = {
   OKS1: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'oxygen', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'ecg', 'ecg_interpret', 'venous', 'pupils', 'muscle_tone', 'glucose', 'abdomen', 'medication', 'call', 'compressions', 'aed', 'breaths'], checklist: CHECKLIST_OKS1 },
@@ -200,6 +222,10 @@ const SCENARIO_DATA: Record<ScenarioType, { order: string[], checklist: any[] }>
   HYPOGLYCEMIA: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'medication', 'call'], checklist: CHECKLIST_HYPOGLYCEMIA },
   HYPERGLYCEMIA: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'infusion', 'call'], checklist: CHECKLIST_HYPERGLYCEMIA },
   BLS: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'recovery'], checklist: CHECKLIST_BLS },
+  BLS1: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
+  BLS2: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
+  BLS3: { order: ['danger', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
+  BLS4: { order: ['danger', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
 };
 
 const HOTSPOTS = [
@@ -239,8 +265,13 @@ export default function Home() {
   const lastCprTime = useRef<number>(0);
   
   const [aedOpen, setAedOpen] = useState(false);
-  const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'success'>('idle');
+  const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'no_shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
+  const [blsCompressionElapsed, setBlsCompressionElapsed] = useState(0);
+  const [blsCompressionRunning, setBlsCompressionRunning] = useState(false);
+  const [blsAedAvailable, setBlsAedAvailable] = useState(false);
+  const [blsSecondCycle, setBlsSecondCycle] = useState(false);
+  const [blsRosc, setBlsRosc] = useState(false);
 
   const [phoneModal, setPhoneModal] = useState(false);
   const [chatHistory, setChatHistory] = useState<{sender: 'dispatcher' | 'doctor', text: string}[]>([]);
@@ -258,6 +289,9 @@ export default function Home() {
   const hasSpokenMinuteWarning = useRef(false);
   const isFinishing = useRef(false);
 
+  const isBlsScenario = scenario.startsWith('BLS');
+  const isBlsShockable = scenario === 'BLS1' || scenario === 'BLS3';
+  const needsRecoveryPosition = scenario === 'BLS3' || scenario === 'BLS4';
   const currentOrder = SCENARIO_DATA[scenario]?.order || [];
   const currentChecklist = SCENARIO_DATA[scenario]?.checklist || [];
 
@@ -283,7 +317,7 @@ export default function Home() {
   useEffect(() => {
     if (stage !== 'playing') return;
     
-    if (timeLeft === 240 && !isArrest) {
+    if (timeLeft === 240 && !isArrest && !scenario.startsWith('BLS')) {
       setIsArrest(true);
       playAudio("Экскурсии грудной клетки прекратились.");
       setPatientResponse("Экскурсии грудной клетки прекратились.");
@@ -295,13 +329,13 @@ export default function Home() {
       finishScenario(); 
       return; 
     }
-    if (timeLeft === 60 && !hasSpokenMinuteWarning.current) {
+    if (timeLeft === 60 && !hasSpokenMinuteWarning.current && !scenario.startsWith('BLS')) {
       playAudio("У вас осталась одна минута.");
       hasSpokenMinuteWarning.current = true;
     }
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, stage, isArrest]);
+  }, [timeLeft, stage, isArrest, scenario]);
 
   // ТАЙМЕР ДЛЯ АНД
   useEffect(() => {
@@ -311,16 +345,52 @@ export default function Home() {
         setAedTimer(prev => prev - 1);
       }, 1000);
     } else if (aedState === 'analyzing' && aedTimer === 0) {
-      setAedState('shock');
+      setAedState(isBlsScenario && !isBlsShockable ? 'no_shock' : 'shock');
     }
     return () => clearTimeout(timer);
-  }, [aedState, aedTimer]);
+  }, [aedState, aedTimer, isBlsScenario, isBlsShockable]);
 
   useEffect(() => {
     if (scenario && PATIENT_DATA[scenario]) {
       setVitals(PATIENT_DATA[scenario].initialVitals);
     }
+    const arrestAtStart = scenario === 'BLS3' || scenario === 'BLS4';
+    setIsArrest(arrestAtStart);
+    setBlsCompressionElapsed(0);
+    setBlsCompressionRunning(false);
+    setBlsAedAvailable(false);
+    setBlsSecondCycle(false);
+    setBlsRosc(false);
   }, [scenario]);
+
+  useEffect(() => {
+    if (stage !== 'playing' || !scenario.startsWith('BLS') || !blsCompressionRunning || blsRosc) return;
+    const timer = setInterval(() => setBlsCompressionElapsed(value => value + 1), 1000);
+    return () => clearInterval(timer);
+  }, [stage, scenario, blsCompressionRunning, blsRosc]);
+
+  useEffect(() => {
+    if (!scenario.startsWith('BLS')) return;
+    if (!blsSecondCycle && blsCompressionElapsed >= 120) {
+      setBlsAedAvailable(true);
+    }
+    if (blsSecondCycle && blsCompressionElapsed >= 120 && !blsRosc) {
+      setBlsRosc(true);
+      setBlsCompressionRunning(false);
+      setIsArrest(false);
+      setVitals({ hr: 82, spo2: 96, bpSys: 110, bpDia: 70, rr: 16 });
+      if (scenario === 'BLS1' || scenario === 'BLS2') {
+        const message = 'Появились произвольные движения, кожные покровы розовеют. Испытание завершено. Ожидайте голосовой команды, чтобы покинуть станцию.';
+        setPatientResponse(message);
+        playAudio(message);
+        setTimeout(() => finishScenario(), 3500);
+      } else {
+        const message = 'Появились произвольные движения, кожные покровы розовеют. Оцените состояние пострадавшего. Дальнейшие навыки демонстрируйте на условном пострадавшем.';
+        setPatientResponse(message);
+        playAudio(message);
+      }
+    }
+  }, [scenario, blsSecondCycle, blsCompressionElapsed, blsRosc]);
 
   useEffect(() => {
     if (actions['oxygen'] && !isArrest) setVitals(prev => ({ ...prev, spo2: 98 }));
@@ -335,12 +405,22 @@ export default function Home() {
     if (station.type === 'locked') return;
     
     if (station.type === 'single') {
-      setScenario(station.id as ScenarioType);
+      const selectedScenario = station.id === 'BLS'
+        ? (['BLS1', 'BLS2', 'BLS3', 'BLS4'][Math.floor(Math.random() * 4)] as ScenarioType)
+        : station.id as ScenarioType;
+      setScenario(selectedScenario);
+      setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null);
+      setTimeLeft(510); setScore(0); setIsArrest(false); setBlsCompressionElapsed(0);
+      setBlsCompressionRunning(false); setBlsAedAvailable(false); setBlsSecondCycle(false); setBlsRosc(false);
+      isFinishing.current = false; hasSpokenMinuteWarning.current = false;
       setStage('briefing');
     } else if (station.type === 'group') {
       const scenarios = station.scenarios;
       const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
       setScenario(randomScenario);
+      setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null);
+      setTimeLeft(510); setScore(0); setIsArrest(false);
+      isFinishing.current = false; hasSpokenMinuteWarning.current = false;
       setStage('briefing');
     }
   };
@@ -461,9 +541,37 @@ export default function Home() {
       return;
     }
     if (id === 'aed') {
+      if (isBlsScenario && !blsAedAvailable) {
+        setPatientResponse('АНД в данный момент Вам недоступен. Продолжайте СЛР.');
+        return;
+      }
       setAedOpen(true); setActiveHotspot(null);
-      setAedState('idle'); 
+      setAedState('idle');
       setAedTimer(0);
+      return;
+    }
+    if (isBlsScenario && id === 'choking') {
+      setPatientResponse('Пострадавший кивает, показывая, что подавился.');
+      toggleAction(id);
+      return;
+    }
+    if (isBlsScenario && id === 'back_blows') {
+      setPatientResponse('Удалить инородное тело из дыхательных путей пострадавшего не удалось!');
+      toggleAction(id);
+      return;
+    }
+    if (isBlsScenario && id === 'heimlich') {
+      setPatientResponse('Инородное тело удалено. Пациент находится на полу. Окажите ему помощь.');
+      setIsArrest(true);
+      setVitals({ hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 });
+      toggleAction(id);
+      return;
+    }
+    if (isBlsScenario && id === 'recovery') {
+      if (!needsRecoveryPosition || !blsRosc) return;
+      setPatientResponse('Устойчивое боковое положение выполнено. Дыхание контролируется. Испытание завершено.');
+      toggleAction(id);
+      setTimeout(() => finishScenario(), 1800);
       return;
     }
     if (id === 'call') {
@@ -491,12 +599,24 @@ export default function Home() {
     }
   };
 
-  const handleAedShock = () => {
-    if (aedState === 'shock') {
-      setAedState('success'); 
-      toggleAction('aed');
-      setTimeout(() => setAedOpen(false), 1500);
+  const completeAedUse = () => {
+    setAedState('success');
+    toggleAction('aed');
+    if (isBlsScenario) {
+      setBlsSecondCycle(true);
+      setBlsCompressionElapsed(0);
+      setBlsCompressionRunning(false);
+      setPatientResponse(isBlsShockable ? 'Разряд выполнен. Немедленно возобновите СЛР.' : 'Разряд не показан. Немедленно возобновите СЛР.');
     }
+    setTimeout(() => setAedOpen(false), 1200);
+  };
+
+  const handleAedShock = () => {
+    if (aedState === 'shock') completeAedUse();
+  };
+
+  const handleAedNoShock = () => {
+    if (aedState === 'no_shock') completeAedUse();
   };
 
   const handleSmpOptionClick = (option: any) => {
@@ -551,6 +671,9 @@ export default function Home() {
   };
 
   const handleCprClick = () => {
+    if (isBlsScenario && !blsCompressionRunning && !blsRosc) {
+      setBlsCompressionRunning(true);
+    }
     const now = Date.now();
     let feedback = '';
     if (lastCprTime.current !== 0) {
@@ -575,9 +698,14 @@ export default function Home() {
     setCprFeedback(feedback);
     setCprCount(prev => {
       const next = prev + 1;
-      if (next >= 30) setTimeout(() => { 
-        setChallenge(null); 
-        toggleAction(challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions'); 
+      if (next >= 30) setTimeout(() => {
+        setChallenge(null);
+        const completedId = challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions';
+        toggleAction(completedId);
+        if (isBlsScenario && completedId === 'compressions_repeat') {
+          setBlsCompressionElapsed(0);
+          setBlsCompressionRunning(true);
+        }
       }, 500);
       return next;
     });
@@ -712,7 +840,7 @@ export default function Home() {
       </div>
 
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
-        <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 ? 'text-red-500' : 'text-green-400'}`}>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
+        <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 && !isBlsScenario ? 'text-red-500' : 'text-green-400'}`}>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
 
@@ -847,17 +975,21 @@ export default function Home() {
             <div className="w-full bg-black text-green-400 text-center p-6 rounded-lg mb-6 min-h-[120px] flex flex-col justify-center">
               {aedState === 'idle' && <span className="text-xl">АНД ГОТОВ</span>}
               {aedState === 'analyzing' && <span className="text-2xl animate-pulse">АНАЛИЗ... {aedTimer}</span>}
-              {aedState === 'shock' && <span className="text-2xl text-red-500 font-bold animate-pulse">РАЗРЯД!</span>}
+              {aedState === 'shock' && <span className="text-2xl text-red-500 font-bold animate-pulse">РАЗРЯД ПОКАЗАН</span>}
+              {aedState === 'no_shock' && <span className="text-xl text-yellow-300 font-bold">РАЗРЯД НЕ ПОКАЗАН</span>}
               {aedState === 'success' && <span className="text-2xl text-green-500">ГОТОВО</span>}
             </div>
             <div className="grid grid-cols-2 gap-4 w-full">
               <button onClick={() => { if (aedState === 'idle') { setAedState('analyzing'); setAedTimer(3); } }} disabled={aedState !== 'idle'} className="bg-blue-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Анализ</button>
               <button onClick={handleAedShock} disabled={aedState !== 'shock'} className="bg-red-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Разряд</button>
+              {aedState === 'no_shock' && <button onClick={handleAedNoShock} className="col-span-2 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl">Продолжить СЛР без разряда</button>}
             </div>
             <button onClick={() => setAedOpen(false)} className="mt-6 text-gray-400 underline">Закрыть</button>
           </div>
         </div>
       )}
+
+      {isBlsScenario && <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-40 rounded-lg bg-black/80 px-4 py-2 text-xs text-center text-white">{blsRosc ? 'Признаки жизни восстановились' : blsAedAvailable ? (blsSecondCycle ? 'Продолжайте СЛР: второй цикл' : 'АНД доступен') : blsCompressionRunning ? `СЛР: ${Math.floor(blsCompressionElapsed / 60)}:${String(blsCompressionElapsed % 60).padStart(2, '0')} — АНД пока недоступен` : 'Начните СЛР'}</div>}
 
       <div className="relative w-full max-w-[1200px] mx-auto">
         <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
@@ -867,6 +999,10 @@ export default function Home() {
             key={spot.id} 
             onClick={() => {
               if (spot.id === 'aed') {
+                if (isBlsScenario && !blsAedAvailable) {
+                  setPatientResponse('АНД в данный момент Вам недоступен. Продолжайте СЛР.');
+                  return;
+                }
                 setAedOpen(true);
                 setAedState('idle');
                 setAedTimer(0);
@@ -892,13 +1028,16 @@ export default function Home() {
               </div>
               <div className="space-y-3 max-h-[50vh] overflow-y-auto">
                 {ALL_ACTIONS.map((action) => {
-                  if (scenario !== 'BLS') {
+                  if (!isBlsScenario) {
                     if (activeHotspot === 'patient' && !['consciousness', 'airway', 'respiratory_rate', 'percussion', 'auscultation', 'trachea', 'pulse', 'bp', 'heart_ausc', 'cap_refill', 'skin', 'pupils', 'muscle_tone', 'abdomen', 'compressions', 'breaths', 'venous', 'danger', 'choking', 'back_blows', 'heimlich', 'breathing', 'recovery', 'medication', 'hands', 'pleural_puncture', 'raise_bed', 'infusion', 'additional_meds', 'priority_med', 'medication_correct', 'medication_dose', 'medication_route', 'infusion_dose', 'abcde_sequence', 'abcde_repeat', 'verbalize'].includes(action.id)) return null;
                     if (activeHotspot === 'crash_cart' && !['gloves', 'oxygen', 'adrenaline', 'hands'].includes(action.id)) return null;
                     if (activeHotspot === 'monitor' && !['ecg', 'ecg_interpret', 'spo2'].includes(action.id)) return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   } else {
-                    if (activeHotspot === 'patient' && !['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'compressions', 'compressions_repeat', 'breaths', 'recovery'].includes(action.id)) return null;
+                    const chokingActions = ['choking', 'back_blows', 'heimlich'];
+                    if (activeHotspot === 'patient' && !['danger', 'consciousness', 'airway', 'breathing', 'compressions', 'compressions_repeat', 'breaths', 'recovery', ...((scenario === 'BLS1' || scenario === 'BLS2') ? chokingActions : [])].includes(action.id)) return null;
+                    if (activeHotspot === 'patient' && action.id === 'recovery' && (!needsRecoveryPosition || !blsRosc)) return null;
+                    if (activeHotspot === 'patient' && action.id === 'aed') return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   }
                   return (
