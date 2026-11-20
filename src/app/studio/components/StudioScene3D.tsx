@@ -371,8 +371,43 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         onSelectRef.current('compression');
         return true;
       };
+      const hitTarget=(clientX:number,clientY:number)=>{
+        const rect=canvas.getBoundingClientRect();
+        if(!rect.width||!rect.height)return null;
+        const nx=((clientX-rect.left)/rect.width)*2-1;
+        const ny=1-((clientY-rect.top)/rect.height)*2;
+        const aspect=rect.width/Math.max(rect.height,1);
+        const tan=Math.tan((ROOM_SPEC.camera.fov*Math.PI/180)/2);
+        const forward=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
+        const right=[Math.cos(yaw),0,Math.sin(yaw)];
+        const up=[-Math.sin(yaw)*Math.sin(pitch),Math.cos(pitch),Math.cos(yaw)*Math.sin(pitch)];
+        const direction=[0,1,2].map(i=>forward[i]+right[i]*nx*tan*aspect+up[i]*ny*tan);
+        const length=Math.hypot(...direction);
+        for(let i=0;i<3;i++)direction[i]/=length;
+        const origin=[player.x,player.y,player.z];
+        let closest=Infinity;
+        let selectedTarget: typeof targets[number] | null=null;
+        for(const target of targets){
+          const radius=target.id==='aed'?0.34:target.id==='manikin_cpr'?0.32:0.27;
+          const offset=origin.map((v,i)=>v-target.position[i]);
+          const b=2*offset.reduce((sum,v,i)=>sum+v*direction[i],0);
+          const c=offset.reduce((sum,v)=>sum+v*v,0)-radius*radius;
+          const discriminant=b*b-4*c;
+          if(discriminant<0)continue;
+          const distance=(-b-Math.sqrt(discriminant))/2;
+          if(distance>0&&distance<closest){closest=distance;selectedTarget=target;}
+        }
+        return selectedTarget;
+      };
       const interact=()=>{const target=nearestRef.current;if(target)onSelectRef.current(target.action);};
-      const pointerUp=(e:PointerEvent)=>{const wasMoved=pointerMoved;dragging=false;if(!wasMoved){if(!hitChest(e.clientX,e.clientY))interact();}};
+      const pointerUp=(e:PointerEvent)=>{
+        const wasMoved=pointerMoved;
+        dragging=false;
+        if(!wasMoved&&!hitChest(e.clientX,e.clientY)){
+          const clicked=hitTarget(e.clientX,e.clientY);
+          if(clicked)onSelectRef.current(clicked.action);
+        }
+      };
 
       const keyDown=(e:KeyboardEvent)=>{if(e.key.toLowerCase()==='e'){e.preventDefault();interact();return;}if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();keys.add(e.key.toLowerCase());}};
       const keyUp=(e:KeyboardEvent)=>keys.delete(e.key.toLowerCase());
