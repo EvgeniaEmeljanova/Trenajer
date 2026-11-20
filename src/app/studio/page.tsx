@@ -82,6 +82,14 @@ export default function AkkredikStudioPage() {
     compressionTimes.current = [];
   }
 
+  function handleSceneSelect(value: string) {
+    if (value === 'compression') {
+      registerCompression();
+      return;
+    }
+    setSelectedAction(value);
+  }
+
   const activeStation = useMemo(
     () => stations[specialty].find((item) => item.id === station),
     [specialty, station],
@@ -147,7 +155,7 @@ export default function AkkredikStudioPage() {
             <section className="scene-panel">
               <div className="scene-toolbar"><div><span className="scene-live" /> СИМУЛЯЦИОННАЯ СЦЕНА</div><div className="scene-tools"><button type="button" title="Уменьшить масштаб" onClick={() => setSelectedAction('zoom-out')}>−</button><button type="button" title="Увеличить масштаб" onClick={() => setSelectedAction('zoom-in')}>＋</button><button type="button" title="Сбросить вид" onClick={() => setSelectedAction('patient')}>⟲</button></div></div>
               <div className="scene-canvas scene-canvas-webgl">
-                <StudioSceneLoader selected={selectedAction} onSelect={setSelectedAction} />
+                <StudioSceneLoader selected={selectedAction} onSelect={handleSceneSelect} />
               </div>
               <div className="scene-legend"><span><i className="legend-blue" /> Пациент</span><span><i className="legend-green" /> Оборудование</span><span><i className="legend-amber" /> Активное действие</span></div>
             </section>
