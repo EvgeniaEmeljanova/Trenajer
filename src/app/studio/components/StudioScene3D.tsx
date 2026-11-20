@@ -116,6 +116,8 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [webglAvailable, setWebglAvailable] = useState(true);
   const selectedRef = useRef(selected);
+  const nearestRef = useRef<{ id: string; label: string; action: string } | null>(null);
+  const [nearby, setNearby] = useState<string | null>(null);
   selectedRef.current = selected;
 
   useEffect(() => {
@@ -132,6 +134,14 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
     let dragging = false;
     let lastX = 0, lastY = 0;
     const keys = new Set<string>();
+    const targets = [
+      { id: 'manikin_cpr', label: 'Манекен для СЛР', action: 'patient', position: [-0.6, 0.2, 0] },
+      { id: 'manikin_choking_vest', label: 'Тренажёр-жилет', action: 'choking', position: [-1.45, 0.2, 1.05] },
+      { id: 'phone', label: 'Телефон для вызова помощи', action: 'call', position: [0.15, 0.1, 0.92] },
+      { id: 'aed', label: 'Учебный АНД', action: 'aed', position: [-0.6, 0.25, 1.55] },
+      { id: 'antiseptic_stand', label: 'Подставка с антисептиком', action: 'antiseptic', position: [1.35, 0.5, -1.45] },
+    ];
+    let lastNearby = '';
     let lastFrame = performance.now();
     try {
       program = gl.createProgram();
@@ -234,26 +244,43 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       const pointerDown=(e:PointerEvent)=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);};
       const pointerMove=(e:PointerEvent)=>{if(!dragging)return;yaw-=(e.clientX-lastX)*0.0045;pitch=Math.max(-0.85,Math.min(0.85,pitch+(e.clientY-lastY)*0.004));lastX=e.clientX;lastY=e.clientY;render();};
       const pointerUp=()=>{dragging=false;};
-      const keyDown=(e:KeyboardEvent)=>{if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();keys.add(e.key.toLowerCase());}};
+      const interact=()=>{const target=nearestRef.current;if(target)onSelect(target.action);};
+      const canvasClick=()=>{if(!dragging)interact();};
+      const keyDown=(e:KeyboardEvent)=>{if(e.key.toLowerCase()==='e'){e.preventDefault();interact();return;}if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();keys.add(e.key.toLowerCase());}};
       const keyUp=(e:KeyboardEvent)=>keys.delete(e.key.toLowerCase());
       const tick=(now:number)=>{const dt=Math.min((now-lastFrame)/1000,0.05);lastFrame=now;
         const speed=(keys.has('shift')?2.2:1.35)*dt;
         const forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);
         const side=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0);
-        player.x+= (Math.sin(yaw)*forward+Math.cos(yaw)*side)*speed;
-        player.z+= (-Math.cos(yaw)*forward+Math.sin(yaw)*side)*speed;
-        player.x=Math.max(-2.25,Math.min(2.25,player.x));player.z=Math.max(-2.25,Math.min(2.25,player.z));
+        const nextX=player.x+(Math.sin(yaw)*forward+Math.cos(yaw)*side)*speed;
+        const nextZ=player.z+(-Math.cos(yaw)*forward+Math.sin(yaw)*side)*speed;
+        const obstacles = [{x:2.0,z:-0.8,r:0.62},{x:2.0,z:-1.5,r:0.34},{x:2.0,z:-0.1,r:0.34},{x:0.9,z:2.25,r:0.48}];
+        const blocked=obstacles.some(o=>Math.hypot(nextX-o.x,nextZ-o.z)<o.r);
+        if(!blocked){player.x=Math.max(-2.25,Math.min(2.25,nextX));player.z=Math.max(-2.25,Math.min(2.25,nextZ));}
+        let nearest: typeof targets[number] | null = null;
+        let nearestDistance=1.65;
+        const view=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
+        for(const target of targets){
+          const dx=target.position[0]-player.x,dy=target.position[1]-player.y,dz=target.position[2]-player.z;
+          const distance=Math.hypot(dx,dy,dz);
+          if(distance>nearestDistance)continue;
+          const dot=(dx*view[0]+dy*view[1]+dz*view[2])/Math.max(distance,0.001);
+          if(dot>0.72){nearest=target;nearestDistance=distance;}
+        }
+        nearestRef.current=nearest;
+        const nextLabel=nearest?.label ?? '';
+        if(nextLabel!==lastNearby){lastNearby=nextLabel;setNearby(nextLabel||null);}
         draw();raf=requestAnimationFrame(tick);
       };
-      canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);
+      canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('click',canvasClick);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);
       window.addEventListener('keydown',keyDown);window.addEventListener('keyup',keyUp);
       const resize=()=>render();window.addEventListener('resize',resize);render();raf=requestAnimationFrame(tick);
-      return ()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerUp);meshes.forEach(m=>{gl.deleteBuffer(m.p);gl.deleteBuffer(m.n);});if(program)gl.deleteProgram(program);};
+      return ()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('click',canvasClick);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerUp);meshes.forEach(m=>{gl.deleteBuffer(m.p);gl.deleteBuffer(m.n);});if(program)gl.deleteProgram(program);};
     } catch {
       setWebglAvailable(false);
       gl.clearColor(0.88,0.93,0.96,1);gl.clear(gl.COLOR_BUFFER_BIT);
     }
-  }, []);
+  }, [onSelect]);
 
   return (
     <div className="scene3d-wrap">
@@ -267,6 +294,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
             <button type="button" className={selected === 'cpr' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('cpr')}>СЛР</button>
           </div>
           <div className="scene3d-hint">WASD / стрелки — движение · мышь или палец — осмотр комнаты</div>
+          {nearby && <button type="button" className="scene3d-interact" onClick={() => { const target = nearestRef.current; if (target) onSelect(target.action); }}>E · Взаимодействовать: {nearby}</button>}
         </>
       ) : (
         <div className="scene2d-fallback">
