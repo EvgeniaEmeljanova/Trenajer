@@ -194,7 +194,6 @@ export function buildAdultCprManikin(): ManikinPart[] {
   const lengthScale = 0.72;
   for (const part of parts) {
     part.position[2] *= lengthScale;
-    part.scale[2] *= lengthScale;
     const p = part.geometry.p;
     const n = part.geometry.n;
     for (let i = 2; i < p.length; i += 3) p[i] *= lengthScale;
