@@ -157,7 +157,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       { id: 'manikin_cpr', label: 'Манекен для СЛР', action: 'patient', position: [-0.6, 0.2, 0] },
       { id: 'manikin_choking_vest', label: 'Тренажёр-жилет', action: 'choking', position: [-1.45, 0.2, 1.05] },
       { id: 'phone', label: 'Телефон для вызова помощи', action: 'call', position: [0.15, 0.1, 0.92] },
-      { id: 'aed', label: 'Учебный АНД', action: 'aed', position: [-0.6, 0.25, 1.55] },
+      { id: 'aed', label: 'Учебный АНД', action: 'aed', position: [0.95, 0.92, 0.88] },
       { id: 'antiseptic_stand', label: 'Подставка с антисептиком', action: 'antiseptic', position: [1.35, 0.5, -1.45] },
     ];
     let lastNearby = '';
@@ -256,25 +256,30 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       add({position:[-1.45,0.23,1.05],scale:[0.22,0.13,0.46],color:[0.85,0.55,0.16]},'sphere');
       // Phone, AED, antiseptic station and APK desk.
       addBox('phone',dark,0.02);
-      // AED trainer: recognizable case, recessed screen, controls, pad icons and cable details.
+      // AED trainer on a dedicated low trolley, clearly separated from the mannequin.
+      const aedX=0.95, aedZ=0.88;
+      addCylinder([aedX,0.25,aedZ],0.025,0.5,metal);
+      add({position:[aedX,0.045,aedZ],scale:[0.27,0.035,0.22],color:dark});
+      addSphere([aedX-0.18,0.055,aedZ+0.14],[0.045,0.045,0.045],dark);
+      addSphere([aedX+0.18,0.055,aedZ+0.14],[0.045,0.045,0.045],dark);
       addBox('aed',white,0.12);
-      add({position:[-0.6,0.292,1.55],scale:[0.132,0.014,0.09],color:[0.025,0.09,0.13]});
-      add({position:[-0.6,0.309,1.55],scale:[0.112,0.005,0.07],color:[0.12,0.55,0.62]});
-      add({position:[-0.6,0.314,1.55],scale:[0.078,0.002,0.004],color:[0.72,0.9,0.88]});
-      add({position:[-0.6,0.314,1.57],scale:[0.052,0.002,0.003],color:[0.72,0.9,0.88]});
-      addSphere([-0.48,0.305,1.47],[0.026,0.014,0.026],green);
-      addSphere([-0.48,0.305,1.55],[0.026,0.014,0.026],amber);
-      addSphere([-0.48,0.305,1.63],[0.026,0.014,0.026],[0.82,0.18,0.16]);
-      add({position:[-0.72,0.298,1.47],scale:[0.04,0.01,0.04],color:dark});
-      addSphere([-0.72,0.312,1.47],[0.025,0.014,0.025],amber);
-      add({position:[-0.6,0.285,1.4],scale:[0.055,0.009,0.025],color:[0.12,0.62,0.43]});
-      // Electrode pads are visible beside the case; their leads run toward the unit.
-      add({position:[-0.52,0.145,1.77],scale:[0.078,0.012,0.05],color:white});
-      add({position:[-0.68,0.145,1.77],scale:[0.078,0.012,0.05],color:white});
-      add({position:[-0.52,0.16,1.77],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
-      add({position:[-0.68,0.16,1.77],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
-      addCylinder([-0.46,0.12,1.68],0.009,0.28,dark);
-      addCylinder([-0.74,0.12,1.68],0.009,0.28,dark);
+      add({position:[aedX,0.735,aedZ],scale:[0.132,0.014,0.09],color:[0.025,0.09,0.13]});
+      add({position:[aedX,0.752,aedZ],scale:[0.112,0.005,0.07],color:[0.12,0.55,0.62]});
+      add({position:[aedX,0.757,aedZ-0.02],scale:[0.078,0.002,0.004],color:[0.72,0.9,0.88]});
+      add({position:[aedX,0.757,aedZ+0.02],scale:[0.052,0.002,0.003],color:[0.72,0.9,0.88]});
+      addSphere([aedX+0.12,0.748,aedZ-0.08],[0.026,0.014,0.026],green);
+      addSphere([aedX+0.12,0.748,aedZ],[0.026,0.014,0.026],amber);
+      addSphere([aedX+0.12,0.748,aedZ+0.08],[0.026,0.014,0.026],[0.82,0.18,0.16]);
+      add({position:[aedX-0.12,0.74,aedZ-0.08],scale:[0.04,0.01,0.04],color:dark});
+      addSphere([aedX-0.12,0.754,aedZ-0.08],[0.025,0.014,0.025],amber);
+      add({position:[aedX,0.727,aedZ-0.15],scale:[0.055,0.009,0.025],color:[0.12,0.62,0.43]});
+      // Pads are displayed on the trolley's side, away from the mannequin's feet.
+      add({position:[aedX+0.31,0.12,aedZ-0.03],scale:[0.078,0.012,0.05],color:white});
+      add({position:[aedX+0.31,0.12,aedZ+0.13],scale:[0.078,0.012,0.05],color:white});
+      add({position:[aedX+0.31,0.135,aedZ-0.03],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
+      add({position:[aedX+0.31,0.135,aedZ+0.13],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
+      addCylinder([aedX+0.22,0.16,aedZ],0.009,0.32,dark);
+      addCylinder([aedX+0.22,0.16,aedZ+0.12],0.009,0.32,dark);
       // Cable coils and the trolley's rounded metal uprights.
       addCylinder([1.35,0.25,-1.45],0.025,0.42,metal);
       addCylinder([1.22,0.1,-1.45],0.018,0.18,dark);
@@ -383,14 +388,14 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         const blocked=obstacles.some(o=>Math.hypot(nextX-o.x,nextZ-o.z)<o.r);
         if(!blocked){player.x=Math.max(-2.25,Math.min(2.25,nextX));player.z=Math.max(-2.25,Math.min(2.25,nextZ));}
         let nearest: typeof targets[number] | null = null;
-        let nearestDistance=1.65;
+        let nearestDistance=1.9;
         const view=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
         for(const target of targets){
           const dx=target.position[0]-player.x,dy=target.position[1]-player.y,dz=target.position[2]-player.z;
           const distance=Math.hypot(dx,dy,dz);
           if(distance>nearestDistance)continue;
           const dot=(dx*view[0]+dy*view[1]+dz*view[2])/Math.max(distance,0.001);
-          if(dot>0.72){nearest=target;nearestDistance=distance;}
+          if(dot>0.48){nearest=target;nearestDistance=distance;}
         }
         nearestRef.current=nearest;
         const nextLabel=nearest?.label ?? '';
