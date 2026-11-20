@@ -116,9 +116,11 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [webglAvailable, setWebglAvailable] = useState(true);
   const selectedRef = useRef(selected);
+  const onSelectRef = useRef(onSelect);
   const nearestRef = useRef<{ id: string; label: string; action: string } | null>(null);
   const [nearby, setNearby] = useState<string | null>(null);
   selectedRef.current = selected;
+  onSelectRef.current = onSelect;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -278,10 +280,10 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         const t=(-b-Math.sqrt(discriminant))/(2*a);
         if(t<=0)return false;
         chestAnimationStart=performance.now();
-        onSelect('compression');
+        onSelectRef.current('compression');
         return true;
       };
-      const interact=()=>{const target=nearestRef.current;if(target)onSelect(target.action);};
+      const interact=()=>{const target=nearestRef.current;if(target)onSelectRef.current(target.action);};
       const pointerUp=(e:PointerEvent)=>{const wasMoved=pointerMoved;dragging=false;if(!wasMoved){if(!hitChest(e.clientX,e.clientY))interact();}};
 
       const keyDown=(e:KeyboardEvent)=>{if(e.key.toLowerCase()==='e'){e.preventDefault();interact();return;}if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();keys.add(e.key.toLowerCase());}};
@@ -318,7 +320,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       setWebglAvailable(false);
       gl.clearColor(0.88,0.93,0.96,1);gl.clear(gl.COLOR_BUFFER_BIT);
     }
-  }, [onSelect]);
+  }, []);
 
   return (
     <div className="scene3d-wrap">
@@ -327,9 +329,9 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
           <canvas ref={canvasRef} className="scene3d-canvas" aria-label="Объёмная интерактивная сцена симуляционного кабинета. Управление от первого лица: WASD или стрелки — движение, мышь/палец — осмотр." />
           <div className="scene3d-label">3D · ВИД ОТ ПЕРВОГО ЛИЦА</div>
           <div className="scene3d-hotspots">
-            <button type="button" className={selected === 'patient' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('patient')}>Пациент</button>
-            <button type="button" className={selected === 'aed' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('aed')}>АНД</button>
-            <button type="button" className={selected === 'cpr' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('cpr')}>СЛР</button>
+            <button type="button" className={selected === 'patient' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelectRef.current('patient')}>Пациент</button>
+            <button type="button" className={selected === 'aed' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelectRef.current('aed')}>АНД</button>
+            <button type="button" className={selected === 'cpr' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelectRef.current('cpr')}>СЛР</button>
           </div>
           <div className="scene3d-hint">WASD / стрелки — движение · мышь или палец — осмотр комнаты</div>
           {selected === 'cpr' ? <div className="scene3d-chest-hint">Наведите прицел на грудную клетку манекена и нажмите, чтобы выполнить одну компрессию</div> : nearby && <button type="button" className="scene3d-interact" onClick={() => { const target = nearestRef.current; if (target) onSelect(target.action); }}>E · Взаимодействовать: {nearby}</button>}
