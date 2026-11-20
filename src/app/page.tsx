@@ -469,10 +469,10 @@ export default function Home() {
   };
 
   const toggleAction = (id: string) => {
-    if (!actions[id]) {
+    if (!actionsRef.current[id]) {
       actionsRef.current = { ...actionsRef.current, [id]: true };
       setActions((prev) => ({ ...prev, [id]: true }));
-      setSequence((prev) => [...prev, id]);
+      setSequence((prev) => prev.includes(id) ? prev : [...prev, id]);
     }
     setChallenge(null);
   };
