@@ -409,8 +409,8 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         const length=Math.hypot(...direction);
         for(let i=0;i<3;i++)direction[i]/=length;
         const origin=[player.x,player.y,player.z];
-        const center=[-0.6,0.27,-0.35];
-        const radii=[0.25,0.17,0.28];
+        const center=[-0.6,0.27,-0.18];
+        const radii=[0.25,0.17,0.23];
         const o=origin.map((v,i)=>(v-center[i])/radii[i]);
         const d=direction.map((v,i)=>v/radii[i]);
         const a=d.reduce((sum,v)=>sum+v*v,0);
