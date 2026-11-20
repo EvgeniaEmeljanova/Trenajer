@@ -143,6 +143,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
     ];
     let lastNearby = '';
     let lastFrame = performance.now();
+    let chestAnimationStart = 0;
     try {
       program = gl.createProgram();
       if (!program) return;
@@ -164,6 +165,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       const add=(mesh:Mesh, shape:'cube'|'sphere'='cube')=>{
         const data=shape==='cube'?cube:sphere;
         meshes.push({mesh,p:createBuffer(data.p),n:createBuffer(data.n),count:data.p.length/3,shape});
+        return mesh;
       };
       const blue=[0.68,0.81,0.87], white=[0.88,0.93,0.95], metal=[0.48,0.61,0.67], skin=[0.79,0.55,0.42], scrubs=[0.16,0.43,0.56], dark=[0.08,0.19,0.24], green=[0.12,0.62,0.43], amber=[0.9,0.63,0.2];
       const spec = (id: string) => ROOM_SPEC.objects.find((item) => item.id === id)!;
@@ -183,7 +185,8 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       addBox('mat_rescuer',[0.33,0.57,0.68],0.015);
       // Adult CPR mannequin: head to north (-Z), feet to south (+Z).
       add({position:[-0.6,0.25,-0.73],scale:[0.19,0.12,0.19],color:skin},'sphere');
-      add({position:[-0.6,0.23,-0.25],scale:[0.22,0.13,0.43],color:scrubs},'sphere');
+      const chestMesh = add({position:[-0.6,0.23,-0.25],scale:[0.22,0.13,0.43],color:scrubs},'sphere');
+      const chestBaseScale = [...chestMesh.scale];
       add({position:[-0.6,0.22,0.23],scale:[0.2,0.12,0.25],color:scrubs},'sphere');
       add({position:[-0.6,0.2,0.73],scale:[0.13,0.1,0.19],color:blue},'sphere');
       add({position:[-0.83,0.2,-0.16],scale:[0.09,0.08,0.42],color:skin,rotation:[0,0,-0.08]},'sphere');
@@ -230,6 +233,10 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         const eye=[player.x,player.y,player.z];
         const target=[eye[0]+forward[0],eye[1]+forward[1],eye[2]+forward[2]];
         const vp=multiply(perspective(ROOM_SPEC.camera.fov*Math.PI/180,width/Math.max(height,1),0.05,40),lookAt(eye,target,[0,1,0]));
+        const compressionPhase = chestAnimationStart ? (performance.now() - chestAnimationStart) / 170 : 1;
+        const compressionAmount = compressionPhase >= 0 && compressionPhase < 1 ? Math.sin(compressionPhase * Math.PI) : 0;
+        chestMesh.scale[1] = chestBaseScale[1] * (1 - compressionAmount * 0.22);
+        chestMesh.position[1] = 0.23 - compressionAmount * 0.018;
         for(const item of meshes){
           gl.bindBuffer(gl.ARRAY_BUFFER,item.p); gl.enableVertexAttribArray(positionLoc); gl.vertexAttribPointer(positionLoc,3,gl.FLOAT,false,0,0);
           gl.bindBuffer(gl.ARRAY_BUFFER,item.n); gl.enableVertexAttribArray(normalLoc); gl.vertexAttribPointer(normalLoc,3,gl.FLOAT,false,0,0);
@@ -241,11 +248,42 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         }
       };
       const render=()=>{draw();};
-      const pointerDown=(e:PointerEvent)=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);};
-      const pointerMove=(e:PointerEvent)=>{if(!dragging)return;yaw-=(e.clientX-lastX)*0.0045;pitch=Math.max(-0.85,Math.min(0.85,pitch+(e.clientY-lastY)*0.004));lastX=e.clientX;lastY=e.clientY;render();};
-      const pointerUp=()=>{dragging=false;};
+      let pointerStartX = 0, pointerStartY = 0, pointerMoved = false;
+      const pointerDown=(e:PointerEvent)=>{dragging=true;pointerMoved=false;pointerStartX=e.clientX;pointerStartY=e.clientY;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);};
+      const pointerMove=(e:PointerEvent)=>{if(!dragging)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;if(Math.hypot(e.clientX-pointerStartX,e.clientY-pointerStartY)>7)pointerMoved=true;yaw-=dx*0.0045;pitch=Math.max(-0.85,Math.min(0.85,pitch+dy*0.004));lastX=e.clientX;lastY=e.clientY;render();};
+      const hitChest=(clientX:number,clientY:number)=>{
+        if(selectedRef.current!=='cpr')return false;
+        const rect=canvas.getBoundingClientRect();
+        const nx=((clientX-rect.left)/rect.width)*2-1;
+        const ny=1-((clientY-rect.top)/rect.height)*2;
+        const aspect=rect.width/Math.max(rect.height,1);
+        const tan=Math.tan((ROOM_SPEC.camera.fov*Math.PI/180)/2);
+        const forward=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
+        const right=[Math.cos(yaw),0,Math.sin(yaw)];
+        const up=[-Math.sin(yaw)*Math.sin(pitch),Math.cos(pitch),Math.cos(yaw)*Math.sin(pitch)];
+        const direction=[0,1,2].map(i=>forward[i]+right[i]*nx*tan*aspect+up[i]*ny*tan);
+        const length=Math.hypot(...direction);
+        for(let i=0;i<3;i++)direction[i]/=length;
+        const origin=[player.x,player.y,player.z];
+        const center=[-0.6,0.27,-0.35];
+        const radii=[0.25,0.17,0.28];
+        const o=origin.map((v,i)=>(v-center[i])/radii[i]);
+        const d=direction.map((v,i)=>v/radii[i]);
+        const a=d.reduce((sum,v)=>sum+v*v,0);
+        const b=2*o.reduce((sum,v,i)=>sum+v*d[i],0);
+        const c=o.reduce((sum,v)=>sum+v*v,0)-1;
+        const discriminant=b*b-4*a*c;
+        const distanceToChest=Math.hypot(player.x-center[0],player.y-center[1],player.z-center[2]);
+        if(discriminant<0||distanceToChest>2.1)return false;
+        const t=(-b-Math.sqrt(discriminant))/(2*a);
+        if(t<=0)return false;
+        chestAnimationStart=performance.now();
+        onSelect('compression');
+        return true;
+      };
       const interact=()=>{const target=nearestRef.current;if(target)onSelect(target.action);};
-      const canvasClick=()=>{if(!dragging)interact();};
+      const pointerUp=(e:PointerEvent)=>{const wasMoved=pointerMoved;dragging=false;if(!wasMoved){if(!hitChest(e.clientX,e.clientY))interact();}};
+
       const keyDown=(e:KeyboardEvent)=>{if(e.key.toLowerCase()==='e'){e.preventDefault();interact();return;}if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();keys.add(e.key.toLowerCase());}};
       const keyUp=(e:KeyboardEvent)=>keys.delete(e.key.toLowerCase());
       const tick=(now:number)=>{const dt=Math.min((now-lastFrame)/1000,0.05);lastFrame=now;
@@ -272,10 +310,10 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         if(nextLabel!==lastNearby){lastNearby=nextLabel;setNearby(nextLabel||null);}
         draw();raf=requestAnimationFrame(tick);
       };
-      canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('click',canvasClick);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);
+      canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);
       window.addEventListener('keydown',keyDown);window.addEventListener('keyup',keyUp);
       const resize=()=>render();window.addEventListener('resize',resize);render();raf=requestAnimationFrame(tick);
-      return ()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('click',canvasClick);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerUp);meshes.forEach(m=>{gl.deleteBuffer(m.p);gl.deleteBuffer(m.n);});if(program)gl.deleteProgram(program);};
+      return ()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerUp);meshes.forEach(m=>{gl.deleteBuffer(m.p);gl.deleteBuffer(m.n);});if(program)gl.deleteProgram(program);};
     } catch {
       setWebglAvailable(false);
       gl.clearColor(0.88,0.93,0.96,1);gl.clear(gl.COLOR_BUFFER_BIT);
@@ -294,7 +332,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
             <button type="button" className={selected === 'cpr' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('cpr')}>СЛР</button>
           </div>
           <div className="scene3d-hint">WASD / стрелки — движение · мышь или палец — осмотр комнаты</div>
-          {nearby && <button type="button" className="scene3d-interact" onClick={() => { const target = nearestRef.current; if (target) onSelect(target.action); }}>E · Взаимодействовать: {nearby}</button>}
+          {selected === 'cpr' ? <div className="scene3d-chest-hint">Наведите прицел на грудную клетку манекена и нажмите, чтобы выполнить одну компрессию</div> : nearby && <button type="button" className="scene3d-interact" onClick={() => { const target = nearestRef.current; if (target) onSelect(target.action); }}>E · Взаимодействовать: {nearby}</button>}
         </>
       ) : (
         <div className="scene2d-fallback">
