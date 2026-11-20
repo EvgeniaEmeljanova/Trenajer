@@ -357,6 +357,13 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       addBox('tech_shelf',metal);
       // Door and wall-mounted station display / clock.
       addBox('door',[0.48,0.57,0.62]);
+      // Recessed doorway surround, brushed-metal handle and narrow safety glazing.
+      add({position:[-2.69,1.08,-2.425],scale:[0.035,1.12,0.045],color:metal});
+      add({position:[-1.71,1.08,-2.425],scale:[0.035,1.12,0.045],color:metal});
+      add({position:[-2.2,2.18,-2.425],scale:[0.52,0.035,0.045],color:metal});
+      add({position:[-2.2,1.67,-2.445],scale:[0.22,0.23,0.012],color:[0.48,0.69,0.76]});
+      add({position:[-2.2,1.67,-2.435],scale:[0.18,0.19,0.008],color:[0.68,0.82,0.86]});
+      add({position:[-1.88,1.02,-2.42],scale:[0.025,0.11,0.025],color:[0.76,0.81,0.83]});
       add({position:[-2.44,1.6,0],scale:[0.025,0.23,0.35],color:dark});
       add({position:[-2.41,2.0,0.9],scale:[0.025,0.12,0.12],color:white});
       // Recessed LED ceiling panels with layered diffusers and slim frames.
