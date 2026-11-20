@@ -502,11 +502,31 @@ export default function Home() {
 
   const checkBlsActionOrder = (id: string) => {
     if (!isBlsScenario) return true;
-    const repeatableCompletedAction = actionsRef.current[id] &&
-      ['compressions', 'compressions_repeat', 'breaths'].includes(id);
-    if (repeatableCompletedAction) return true;
 
-    const expectedAction = currentOrder.find((actionId) => !actionsRef.current[actionId]);
+    // Циклы СЛР (30 компрессий + 2 вдоха) можно повторять,
+    // пока АНД не готов, и после его применения.
+    if (id === 'compressions_repeat' || id === 'breaths') {
+      if (actionsRef.current.compressions && !blsRosc) return true;
+    }
+    if (actionsRef.current[id] && ['compressions', 'compressions_repeat', 'breaths'].includes(id)) return true;
+
+    // АНД разрешён только после двух минут СЛР и выполнения первого цикла 30:2.
+    if (id === 'aed') {
+      if (!blsAedAvailable) {
+        setPatientResponse('Продолжайте СЛР: чередуйте 30 компрессий и 2 вдоха. АНД станет доступен после двух минут.');
+        return false;
+      }
+      if (!actionsRef.current.compressions || !actionsRef.current.breaths) {
+        setPatientResponse('Сначала выполните 30 компрессий и 2 вдоха.');
+        return false;
+      }
+      return true;
+    }
+
+    const expectedAction = currentOrder.find((actionId) =>
+      !actionsRef.current[actionId] &&
+      !(['compressions_repeat', 'breaths'].includes(actionId) && id !== actionId)
+    );
     if (id === expectedAction) return true;
 
     const expectedLabel = ALL_ACTIONS.find((action) => action.id === expectedAction)?.label || 'следующий обязательный этап';
@@ -832,9 +852,11 @@ export default function Home() {
   }
 
   if (stage === 'finished') {
+    const requiredBlsOrder = currentOrder.filter((actionId) => !['compressions_repeat', 'breaths'].includes(actionId));
+    const completedBlsOrder = sequence.filter((actionId) => !['compressions_repeat', 'breaths'].includes(actionId));
     const isBlsSequenceCorrect = !isBlsScenario ||
-      (sequence.length === currentOrder.length &&
-       currentOrder.every((actionId, index) => sequence[index] === actionId));
+      (completedBlsOrder.length === requiredBlsOrder.length &&
+       requiredBlsOrder.every((actionId, index) => completedBlsOrder[index] === actionId));
     const isPassed = score >= 70 && isBlsSequenceCorrect;
     
     return (
@@ -1046,11 +1068,11 @@ export default function Home() {
             key={spot.id} 
             onClick={() => {
               if (spot.id === 'aed') {
-                if (isBlsScenario && !checkBlsActionOrder('aed')) return;
                 if (isBlsScenario && !blsAedAvailable) {
                   setPatientResponse('АНД пока недоступен. Продолжайте СЛР до двух минут, чередуя 30 компрессий и 2 вдоха.');
                   return;
                 }
+                if (isBlsScenario && !checkBlsActionOrder('aed')) return;
                 setAedOpen(true);
                 setAedState('idle');
                 setAedTimer(0);
