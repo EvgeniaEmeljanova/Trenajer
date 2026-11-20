@@ -266,6 +266,58 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         add({position:[1.0+x*0.3,1.18,-2.405],scale:[0.075,0.075,0.012],color:white});
         add({position:[1.0+x*0.3,1.18,-2.388],scale:[0.025,0.025,0.006],color:x%2===0?green:blue});
       }
+      // Architectural upgrade: observation glazing, a clinical display wall and built-in storage.
+      // West-wall observation window with a soft blue laminated-glass appearance.
+      add({position:[-2.425,1.86,-1.08],scale:[0.018,0.43,0.69],color:[0.49,0.69,0.76]});
+      add({position:[-2.402,1.86,-1.08],scale:[0.012,0.37,0.62],color:[0.66,0.81,0.85]});
+      for(const z of [-1.79,-0.37]){
+        add({position:[-2.39,1.86,z],scale:[0.035,0.49,0.035],color:metal});
+      }
+      for(const y of [1.37,2.35]){
+        add({position:[-2.39,y,-1.08],scale:[0.035,0.035,0.75],color:metal});
+      }
+      // Fine mullion and a subtle lower privacy band.
+      add({position:[-2.375,1.86,-1.08],scale:[0.018,0.42,0.012],color:trimLight});
+      add({position:[-2.374,1.56,-1.08],scale:[0.018,0.12,0.61],color:[0.77,0.86,0.88]});
+
+      // Large flush-mounted clinical information display on the north wall.
+      add({position:[-0.72,1.82,-2.425],scale:[0.72,0.48,0.025],color:[0.22,0.31,0.36]});
+      add({position:[-0.72,1.82,-2.393],scale:[0.66,0.42,0.012],color:[0.055,0.15,0.19]});
+      add({position:[-0.72,2.055,-2.378],scale:[0.44,0.012,0.006],color:[0.22,0.78,0.72]});
+      add({position:[-0.72,1.60,-2.378],scale:[0.44,0.008,0.006],color:[0.28,0.42,0.47]});
+      // A restrained ECG-like status trace made from short luminous segments.
+      const tracePoints=[[-1.24,1.82],[-1.13,1.82],[-1.07,1.88],[-1.01,1.72],[-0.94,1.98],[-0.86,1.82],[-0.72,1.82],[-0.64,1.87],[-0.58,1.76],[-0.51,1.91],[-0.43,1.82]];
+      for(let i=0;i<tracePoints.length-1;i++){
+        const a=tracePoints[i],b=tracePoints[i+1];
+        const dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy);
+        add({position:[(a[0]+b[0])/2,(a[1]+b[1])/2,-2.375],scale:[length/2,0.006,0.004],color:[0.24,0.9,0.78],rotation:[0,0,Math.atan2(dy,dx)]});
+      }
+
+      // Built-in low clinical storage along the south wall, with a continuous worktop.
+      add({position:[-1.42,0.48,2.34],scale:[0.78,0.43,0.12],color:[0.82,0.88,0.9]});
+      add({position:[-1.42,0.72,2.30],scale:[0.82,0.035,0.17],color:[0.94,0.96,0.96]});
+      for(const x of [-1.94,-1.42,-0.90]){
+        add({position:[x,0.47,2.205],scale:[0.018,0.34,0.012],color:metal});
+        add({position:[x+0.18,0.49,2.192],scale:[0.012,0.075,0.008],color:[0.57,0.68,0.72]});
+      }
+      // A narrow open shelf and two softly lit storage cubbies.
+      add({position:[-1.42,1.12,2.405],scale:[0.82,0.025,0.12],color:metal});
+      add({position:[-1.42,1.34,2.43],scale:[0.78,0.22,0.035],color:[0.87,0.92,0.93]});
+      add({position:[-1.68,1.34,2.405],scale:[0.012,0.18,0.018],color:trim});
+      add({position:[-1.16,1.34,2.405],scale:[0.012,0.18,0.018],color:trim});
+      add({position:[-1.42,1.45,2.405],scale:[0.52,0.012,0.018],color:trim});
+
+      // Vertical corner guards and a subtle continuous floor perimeter inlay.
+      for(const x of [-2.42,2.42]){
+        for(const z of [-2.42,2.42]){
+          add({position:[x,1.48,z],scale:[0.035,1.38,0.035],color:[0.78,0.85,0.87]});
+        }
+      }
+      add({position:[0,0.008,-2.30],scale:[2.30,0.003,0.012],color:[0.78,0.84,0.85]});
+      add({position:[0,0.008,2.30],scale:[2.30,0.003,0.012],color:[0.78,0.84,0.85]});
+      add({position:[-2.30,0.008,0],scale:[0.012,0.003,2.30],color:[0.78,0.84,0.85]});
+      add({position:[2.30,0.008,0],scale:[0.012,0.003,2.30],color:[0.78,0.84,0.85]});
+
       // Floor mats.
       addBox('mat_patient',[0.25,0.55,0.67],0.015);
       addBox('mat_rescuer',[0.33,0.57,0.68],0.015);
