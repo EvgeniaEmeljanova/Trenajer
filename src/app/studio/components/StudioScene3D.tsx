@@ -28,9 +28,13 @@ varying vec3 vNormal;
 void main() {
   vec3 n = normalize(vNormal);
   vec3 light = normalize(vec3(-0.45, 0.85, 0.65));
+  vec3 fill = normalize(vec3(0.55, 0.25, -0.45));
   float diffuse = max(dot(n, light), 0.0);
-  float shade = 0.42 + diffuse * 0.58;
-  gl_FragColor = vec4(uColor * shade, 1.0);
+  float softFill = max(dot(n, fill), 0.0);
+  float highlight = pow(max(dot(reflect(-light, n), vec3(0.0, 0.45, 0.9)), 0.0), 22.0);
+  float shade = 0.34 + diffuse * 0.48 + softFill * 0.12;
+  vec3 litColor = uColor * shade + vec3(0.16, 0.19, 0.21) * highlight;
+  gl_FragColor = vec4(litColor, 1.0);
 }`;
 
 function compile(gl: WebGLRenderingContext, type: number, source: string) {
@@ -101,13 +105,26 @@ function cubeData() {
   return {p,n};
 }
 
-function sphereData(rows=14, cols=20) {
+function sphereData(rows=24, cols=32) {
   const p:number[]=[]; const n:number[]=[];
   for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) {
     const u=x/cols, v=y/rows, u2=(x+1)/cols, v2=(y+1)/rows;
     const point=(a:number,b:number)=>[Math.sin(b*Math.PI)*Math.cos(a*2*Math.PI),Math.cos(b*Math.PI),Math.sin(b*Math.PI)*Math.sin(a*2*Math.PI)];
-    const a=point(u,v), b=point(u2,v), c=point(u2,v2), d=point(u,v2);
-    for(const q of [a,b,c,a,c,d]) { p.push(...q); n.push(...q); }
+    const a=point(u,v), b=point(u2,v), d=point(u,v2), e=point(u2,v2);
+    for(const q of [a,b,e,a,e,d]) { p.push(...q); n.push(...q); }
+  }
+  return {p,n};
+}
+
+function cylinderData(segments=24) {
+  const p:number[]=[]; const n:number[]=[];
+  for(let i=0;i<segments;i++) {
+    const a=i/segments*Math.PI*2, b=(i+1)/segments*Math.PI*2;
+    const p1=[Math.cos(a),-1,Math.sin(a)], p2=[Math.cos(b),-1,Math.sin(b)];
+    const p3=[Math.cos(b),1,Math.sin(b)], p4=[Math.cos(a),1,Math.sin(a)];
+    const n1=[Math.cos(a),0,Math.sin(a)], n2=[Math.cos(b),0,Math.sin(b)];
+    for(const [q,norm] of [[p1,n1],[p2,n2],[p3,n2],[p1,n1],[p3,n2],[p4,n1]] as number[][][]) { p.push(...q); n.push(...norm); }
+    for(const q of [[0,-1,0],p2,p1,[0,1,0],p4,p3]) { p.push(...q); n.push(0,q[1]===-1?-1:1,0); }
   }
   return {p,n};
 }
@@ -155,8 +172,13 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program) || 'Ошибка программы');
       gl.useProgram(program);
 
+      const device = navigator as Navigator & { deviceMemory?: number };
+      const cores = navigator.hardwareConcurrency || 4;
+      const memory = device.deviceMemory || 4;
+      const lowPower = cores <= 4 || memory <= 4;
       const cube = cubeData();
-      const sphere = sphereData();
+      const sphere = sphereData(lowPower ? 16 : 30, lowPower ? 24 : 40);
+      const cylinder = cylinderData(lowPower ? 16 : 28);
       const createBuffer = (data:number[]) => {
         const buffer=gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
@@ -164,8 +186,8 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         return buffer;
       };
       const meshes: { mesh:Mesh; p:WebGLBuffer; n:WebGLBuffer; count:number; shape:'cube'|'sphere' }[] = [];
-      const add=(mesh:Mesh, shape:'cube'|'sphere'='cube')=>{
-        const data=shape==='cube'?cube:sphere;
+      const add=(mesh:Mesh, shape:'cube'|'sphere'|'cylinder'='cube')=>{
+        const data=shape==='cube'?cube:shape==='sphere'?sphere:cylinder;
         meshes.push({mesh,p:createBuffer(data.p),n:createBuffer(data.n),count:data.p.length/3,shape});
         return mesh;
       };
@@ -175,6 +197,10 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         const o = spec(id);
         add({position:[o.position[0],o.position[1]+yOffset,o.position[2]],scale:[o.size[0]/2,o.size[1]/2,o.size[2]/2],color,rotation:[0,((o.rotationY ?? 0)*Math.PI)/180,0]});
       };
+      const addCylinder = (position:number[], radius:number, height:number, color:number[]) =>
+        add({position,scale:[radius,height/2,radius],color},'cylinder');
+      const addSphere = (position:number[], scale:number[], color:number[]) =>
+        add({position,scale,color},'sphere');
       // Room shell: 5 x 5 x 3 metres. North is -Z, south is +Z.
       add({position:[0,-0.08,0],scale:[2.5,0.08,2.5],color:[0.78,0.76,0.72]});
       add({position:[0,1.5,-2.5],scale:[2.5,1.5,0.05],color:[0.92,0.94,0.94]});
@@ -186,24 +212,50 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       addBox('mat_patient',[0.25,0.55,0.67],0.015);
       addBox('mat_rescuer',[0.33,0.57,0.68],0.015);
       // Adult CPR mannequin: head to north (-Z), feet to south (+Z).
-      add({position:[-0.6,0.25,-0.73],scale:[0.19,0.12,0.19],color:skin},'sphere');
-      const chestMesh = add({position:[-0.6,0.23,-0.25],scale:[0.22,0.13,0.43],color:scrubs},'sphere');
+      addSphere([-0.6,0.25,-0.73],[0.19,0.13,0.2],skin);
+      addSphere([-0.6,0.24,-0.58],[0.09,0.08,0.1],[0.9,0.68,0.54]);
+      addSphere([-0.6,0.23,-0.49],[0.055,0.045,0.08],skin);
+      addSphere([-0.69,0.29,-0.79],[0.025,0.018,0.018],dark);
+      addSphere([-0.51,0.29,-0.79],[0.025,0.018,0.018],dark);
+      addSphere([-0.6,0.2,-0.42],[0.09,0.09,0.12],skin);
+      const chestMesh = addSphere([-0.6,0.23,-0.25],[0.22,0.13,0.43],scrubs);
       const chestBaseScale = [...chestMesh.scale];
-      add({position:[-0.6,0.22,0.23],scale:[0.2,0.12,0.25],color:scrubs},'sphere');
-      add({position:[-0.6,0.2,0.73],scale:[0.13,0.1,0.19],color:blue},'sphere');
-      add({position:[-0.83,0.2,-0.16],scale:[0.09,0.08,0.42],color:skin,rotation:[0,0,-0.08]},'sphere');
-      add({position:[-0.37,0.2,-0.16],scale:[0.09,0.08,0.42],color:skin,rotation:[0,0,0.08]},'sphere');
+      addSphere([-0.6,0.22,0.23],[0.2,0.12,0.25],scrubs);
+      addSphere([-0.6,0.2,0.73],[0.13,0.1,0.19],blue);
+      addSphere([-0.83,0.2,-0.16],[0.09,0.08,0.42],skin);
+      addSphere([-0.37,0.2,-0.16],[0.09,0.08,0.42],skin);
+      addSphere([-0.83,0.2,0.25],[0.075,0.07,0.12],skin);
+      addSphere([-0.37,0.2,0.25],[0.075,0.07,0.12],skin);
       // Choking-response training vest / manikin beside the CPR mat.
       add({position:[-1.45,0.23,1.05],scale:[0.22,0.13,0.46],color:[0.85,0.55,0.16]},'sphere');
       // Phone, AED, antiseptic station and APK desk.
       addBox('phone',dark,0.02);
+      // AED training unit: soft-edged visual layers, display, status lights, controls and electrode pads.
       addBox('aed',white,0.12);
-      add({position:[-0.6,0.29,1.69],scale:[0.14,0.09,0.018],color:dark});
-      add({position:[-0.6,0.19,1.69],scale:[0.045,0.045,0.025],color:amber},'sphere');
+      add({position:[-0.6,0.292,1.55],scale:[0.125,0.012,0.082],color:[0.035,0.12,0.17]});
+      add({position:[-0.6,0.307,1.55],scale:[0.105,0.004,0.062],color:[0.16,0.62,0.68]});
+      addSphere([-0.48,0.305,1.47],[0.025,0.012,0.025],green);
+      addSphere([-0.48,0.305,1.55],[0.025,0.012,0.025],amber);
+      addSphere([-0.48,0.305,1.63],[0.025,0.012,0.025],[0.82,0.18,0.16]);
+      add({position:[-0.72,0.298,1.47],scale:[0.035,0.008,0.035],color:dark});
+      addSphere([-0.72,0.31,1.47],[0.022,0.012,0.022],amber);
+      add({position:[-0.52,0.145,1.77],scale:[0.075,0.008,0.045],color:white});
+      add({position:[-0.68,0.145,1.77],scale:[0.075,0.008,0.045],color:white});
+      add({position:[-0.52,0.158,1.77],scale:[0.045,0.006,0.025],color:[0.16,0.7,0.66]});
+      add({position:[-0.68,0.158,1.77],scale:[0.045,0.006,0.025],color:[0.16,0.7,0.66]});
+      // Cable coils and the trolley's rounded metal uprights.
+      addCylinder([1.35,0.25,-1.45],0.025,0.42,metal);
+      addCylinder([1.22,0.1,-1.45],0.018,0.18,dark);
+      addCylinder([1.48,0.1,-1.45],0.018,0.18,dark);
       addBox('antiseptic_stand',metal);
-      add({position:[1.35,0.68,-1.45],scale:[0.07,0.18,0.07],color:green});
-      add({position:[1.35,0.68,-1.45],scale:[0.04,0.1,0.04],color:white});
+      addSphere([1.35,0.68,-1.45],[0.07,0.18,0.07],green);
+      addSphere([1.35,0.68,-1.45],[0.04,0.1,0.04],white);
       addBox('apk_desk',white);
+      addCylinder([2.0,0.34,-0.8],0.045,0.68,metal);
+      addCylinder([1.55,0.34,-0.55],0.035,0.68,metal);
+      addCylinder([2.45,0.34,-0.55],0.035,0.68,metal);
+      addCylinder([1.55,0.34,-1.05],0.035,0.68,metal);
+      addCylinder([2.45,0.34,-1.05],0.035,0.68,metal);
       addBox('apk_chair_1',metal);
       addBox('apk_chair_2',metal);
       addBox('apk_pc',dark);
@@ -227,7 +279,8 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       const colorLoc=gl.getUniformLocation(program,'uColor');
       const draw=()=>{
         const width=canvas.clientWidth, height=canvas.clientHeight;
-        const dpr=Math.min(window.devicePixelRatio||1,1.6);
+        const qualityCap = lowPower ? 1 : cores <= 8 ? 1.25 : 1.6;
+        const dpr=Math.min(window.devicePixelRatio||1,qualityCap);
         if(canvas.width!==Math.floor(width*dpr)||canvas.height!==Math.floor(height*dpr)){canvas.width=Math.floor(width*dpr);canvas.height=Math.floor(height*dpr);}
         gl.viewport(0,0,canvas.width,canvas.height);
         gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.clearColor(0.88,0.93,0.96,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
