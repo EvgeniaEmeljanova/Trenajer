@@ -226,11 +226,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
           const model=modelMatrix(item.mesh);
           gl.uniformMatrix4fv(modelLoc,false,new Float32Array(model));
           gl.uniformMatrix4fv(mvpLoc,false,new Float32Array(multiply(vp,model)));
-          const isCprHand = cprHands.includes(item.mesh);
-          const handColor = selectedRef.current === 'cpr' && isCprHand
-            ? [0.96,0.63,0.22]
-            : item.mesh.color;
-          gl.uniform3fv(colorLoc,new Float32Array(handColor));
+          gl.uniform3fv(colorLoc,new Float32Array(item.mesh.color));
           gl.drawArrays(gl.TRIANGLES,0,item.count);
         }
       };
