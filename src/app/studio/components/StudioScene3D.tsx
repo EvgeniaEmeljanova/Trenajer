@@ -171,9 +171,19 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       add({position:[-0.45,1.08,0],scale:[0.78,0.24,0.43],color:scrubs},'sphere');
       add({position:[0.55,1.07,0.22],scale:[0.86,0.2,0.24],color:blue},'sphere');
       add({position:[0.55,1.07,-0.22],scale:[0.86,0.2,0.24],color:blue},'sphere');
-      // Arms resting alongside torso
+      // Arms resting alongside the torso
       add({position:[-0.85,0.98,0.58],scale:[0.74,0.13,0.13],color:skin,rotation:[0,0,-0.05]},'sphere');
       add({position:[-0.85,0.98,-0.58],scale:[0.74,0.13,0.13],color:skin,rotation:[0,0,-0.05]},'sphere');
+      // CPR demonstration: forearms approach the centre of the chest,
+      // with two clearly visible stacked palms over the sternum.
+      add({position:[-0.62,1.34,0.34],scale:[0.48,0.085,0.105],color:skin,rotation:[0,0.58,0]},'sphere');
+      add({position:[-0.62,1.34,-0.34],scale:[0.48,0.085,0.105],color:skin,rotation:[0,-0.58,0]},'sphere');
+      const cprHands: Mesh[] = [];
+      const upperPalm: Mesh = {position:[-0.48,1.43,0.015],scale:[0.19,0.055,0.145],color:skin};
+      const lowerPalm: Mesh = {position:[-0.48,1.37,0.015],scale:[0.17,0.045,0.13],color:[0.72,0.47,0.36]};
+      cprHands.push(upperPalm, lowerPalm);
+      add(upperPalm,'sphere');
+      add(lowerPalm,'sphere');
       // Monitor and stand
       add({position:[2.9,1.72,-0.2],scale:[0.58,0.43,0.16],color:metal});
       add({position:[2.9,1.75,0.0],scale:[0.49,0.33,0.04],color:dark});
@@ -208,7 +218,11 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
           const model=modelMatrix(item.mesh);
           gl.uniformMatrix4fv(modelLoc,false,new Float32Array(model));
           gl.uniformMatrix4fv(mvpLoc,false,new Float32Array(multiply(vp,model)));
-          gl.uniform3fv(colorLoc,new Float32Array(item.mesh.color));
+          const isCprHand = cprHands.includes(item.mesh);
+          const handColor = selectedRef.current === 'cpr' && isCprHand
+            ? [0.96,0.63,0.22]
+            : item.mesh.color;
+          gl.uniform3fv(colorLoc,new Float32Array(handColor));
           gl.drawArrays(gl.TRIANGLES,0,item.count);
         }
       };
