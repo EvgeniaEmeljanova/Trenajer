@@ -256,30 +256,33 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       add({position:[-1.45,0.23,1.05],scale:[0.22,0.13,0.46],color:[0.85,0.55,0.16]},'sphere');
       // Phone, AED, antiseptic station and APK desk.
       addBox('phone',dark,0.02);
-      // AED trainer on a dedicated low trolley, clearly separated from the mannequin.
-      const aedX=0.95, aedZ=0.88;
+      // AED trainer placed beside the patient's upper torso, within reach without covering the CPR chest.
+      const aedX=0.22, aedZ=-0.24, aedY=0.60;
       addCylinder([aedX,0.25,aedZ],0.025,0.5,metal);
       add({position:[aedX,0.045,aedZ],scale:[0.27,0.035,0.22],color:dark});
       addSphere([aedX-0.18,0.055,aedZ+0.14],[0.045,0.045,0.045],dark);
       addSphere([aedX+0.18,0.055,aedZ+0.14],[0.045,0.045,0.045],dark);
       addBox('aed',white,0.12);
-      add({position:[aedX,0.735,aedZ],scale:[0.132,0.014,0.09],color:[0.025,0.09,0.13]});
-      add({position:[aedX,0.752,aedZ],scale:[0.112,0.005,0.07],color:[0.12,0.55,0.62]});
-      add({position:[aedX,0.757,aedZ-0.02],scale:[0.078,0.002,0.004],color:[0.72,0.9,0.88]});
-      add({position:[aedX,0.757,aedZ+0.02],scale:[0.052,0.002,0.003],color:[0.72,0.9,0.88]});
-      addSphere([aedX+0.12,0.748,aedZ-0.08],[0.026,0.014,0.026],green);
-      addSphere([aedX+0.12,0.748,aedZ],[0.026,0.014,0.026],amber);
-      addSphere([aedX+0.12,0.748,aedZ+0.08],[0.026,0.014,0.026],[0.82,0.18,0.16]);
-      add({position:[aedX-0.12,0.74,aedZ-0.08],scale:[0.04,0.01,0.04],color:dark});
-      addSphere([aedX-0.12,0.754,aedZ-0.08],[0.025,0.014,0.025],amber);
-      add({position:[aedX,0.727,aedZ-0.15],scale:[0.055,0.009,0.025],color:[0.12,0.62,0.43]});
-      // Pads are displayed on the trolley's side, away from the mannequin's feet.
+      // High-contrast front panel, display and large tactile buttons.
+      add({position:[aedX,aedY,aedZ-0.166],scale:[0.145,0.092,0.009],color:dark});
+      add({position:[aedX-0.035,aedY+0.018,aedZ-0.177],scale:[0.075,0.047,0.004],color:[0.08,0.32,0.37]});
+      add({position:[aedX-0.035,aedY+0.02,aedZ-0.181],scale:[0.052,0.002,0.002],color:[0.2,0.92,0.76]});
+      add({position:[aedX-0.035,aedY-0.006,aedZ-0.181],scale:[0.062,0.002,0.002],color:[0.72,0.9,0.88]});
+      add({position:[aedX+0.07,aedY+0.035,aedZ-0.178],scale:[0.025,0.012,0.004],color:green});
+      add({position:[aedX+0.07,aedY+0.005,aedZ-0.178],scale:[0.025,0.012,0.004],color:amber});
+      addSphere([aedX-0.105,aedY-0.075,aedZ-0.18],[0.032,0.032,0.018],green);
+      addSphere([aedX+0.035,aedY-0.075,aedZ-0.18],[0.038,0.038,0.02],[0.86,0.16,0.12]);
+      addSphere([aedX+0.13,aedY-0.075,aedZ-0.18],[0.022,0.022,0.016],amber);
+      add({position:[aedX,aedY+0.135,aedZ-0.02],scale:[0.09,0.012,0.045],color:[0.12,0.62,0.43]});
+      // Two electrode pads rest on the trolley shelf; leads remain visible.
       add({position:[aedX+0.31,0.12,aedZ-0.03],scale:[0.078,0.012,0.05],color:white});
       add({position:[aedX+0.31,0.12,aedZ+0.13],scale:[0.078,0.012,0.05],color:white});
       add({position:[aedX+0.31,0.135,aedZ-0.03],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
       add({position:[aedX+0.31,0.135,aedZ+0.13],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
-      addCylinder([aedX+0.22,0.16,aedZ],0.009,0.32,dark);
-      addCylinder([aedX+0.22,0.16,aedZ+0.12],0.009,0.32,dark);
+      addLimb([aedX+0.12,0.49,aedZ-0.12],[aedX+0.25,0.31,aedZ-0.06],0.012,dark);
+      addLimb([aedX+0.25,0.31,aedZ-0.06],[aedX+0.30,0.16,aedZ-0.03],0.012,dark);
+      addLimb([aedX+0.12,0.49,aedZ-0.12],[aedX+0.25,0.31,aedZ+0.10],0.012,dark);
+      addLimb([aedX+0.25,0.31,aedZ+0.10],[aedX+0.30,0.16,aedZ+0.13],0.012,dark);
       // Cable coils and the trolley's rounded metal uprights.
       addCylinder([1.35,0.25,-1.45],0.025,0.42,metal);
       addCylinder([1.22,0.1,-1.45],0.018,0.18,dark);
