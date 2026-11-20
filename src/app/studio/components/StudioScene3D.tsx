@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { ROOM_SPEC } from '../scene/room-spec';
 
 type Props = {
   selected: string;
@@ -125,11 +126,13 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
     setWebglAvailable(true);
     let program: WebGLProgram | null = null;
     let raf = 0;
-    let yaw = 0.62;
-    let pitch = 0.48;
-    let distance = 8.8;
+    let yaw = 0;
+    let pitch = 0;
+    const player = { x: 0, y: 1.6, z: 0 };
     let dragging = false;
     let lastX = 0, lastY = 0;
+    const keys = new Set<string>();
+    let lastFrame = performance.now();
     try {
       program = gl.createProgram();
       if (!program) return;
@@ -153,50 +156,54 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         meshes.push({mesh,p:createBuffer(data.p),n:createBuffer(data.n),count:data.p.length/3,shape});
       };
       const blue=[0.68,0.81,0.87], white=[0.88,0.93,0.95], metal=[0.48,0.61,0.67], skin=[0.79,0.55,0.42], scrubs=[0.16,0.43,0.56], dark=[0.08,0.19,0.24], green=[0.12,0.62,0.43], amber=[0.9,0.63,0.2];
-      // Room shell and floor
-      add({position:[0,-0.16,0],scale:[5.2,0.12,4.1],color:[0.76,0.84,0.88]});
-      add({position:[0,2.7,-3.6],scale:[5.2,2.8,0.12],color:[0.9,0.94,0.96]});
-      add({position:[-5.05,2.7,0],scale:[0.12,2.8,3.7],color:[0.83,0.9,0.93]});
-      // Bed frame, mattress and legs
-      add({position:[-0.1,0.83,0],scale:[2.35,0.13,0.88],color:white});
-      add({position:[-0.1,0.67,0],scale:[2.18,0.08,0.76],color:metal});
-      for(const x of [-1.9,1.65]) for(const z of [-0.62,0.62]) {
-        add({position:[x,0.35,z],scale:[0.07,0.34,0.07],color:metal});
-        add({position:[x,0.08,z],scale:[0.12,0.07,0.12],color:dark},'sphere');
+      const spec = (id: string) => ROOM_SPEC.objects.find((item) => item.id === id)!;
+      const addBox = (id: string, color: number[], yOffset = 0) => {
+        const o = spec(id);
+        add({position:[o.position[0],o.position[1]+yOffset,o.position[2]],scale:[o.size[0]/2,o.size[1]/2,o.size[2]/2],color,rotation:[0,((o.rotationY ?? 0)*Math.PI)/180,0]});
+      };
+      // Room shell: 5 x 5 x 3 metres. North is -Z, south is +Z.
+      add({position:[0,-0.08,0],scale:[2.5,0.08,2.5],color:[0.78,0.76,0.72]});
+      add({position:[0,1.5,-2.5],scale:[2.5,1.5,0.05],color:[0.92,0.94,0.94]});
+      add({position:[0,1.5,2.5],scale:[2.5,1.5,0.05],color:[0.91,0.93,0.94]});
+      add({position:[-2.5,1.5,0],scale:[0.05,1.5,2.5],color:[0.86,0.9,0.92]});
+      add({position:[2.5,1.5,0],scale:[0.05,1.5,2.5],color:[0.86,0.9,0.92]});
+      add({position:[0,3,0],scale:[2.5,0.05,2.5],color:[0.97,0.97,0.95]});
+      // Floor mats.
+      addBox('mat_patient',[0.25,0.55,0.67],0.015);
+      addBox('mat_rescuer',[0.33,0.57,0.68],0.015);
+      // Adult CPR mannequin: head to north (-Z), feet to south (+Z).
+      add({position:[-0.6,0.25,-0.73],scale:[0.19,0.12,0.19],color:skin},'sphere');
+      add({position:[-0.6,0.23,-0.25],scale:[0.22,0.13,0.43],color:scrubs},'sphere');
+      add({position:[-0.6,0.22,0.23],scale:[0.2,0.12,0.25],color:scrubs},'sphere');
+      add({position:[-0.6,0.2,0.73],scale:[0.13,0.1,0.19],color:blue},'sphere');
+      add({position:[-0.83,0.2,-0.16],scale:[0.09,0.08,0.42],color:skin,rotation:[0,0,-0.08]},'sphere');
+      add({position:[-0.37,0.2,-0.16],scale:[0.09,0.08,0.42],color:skin,rotation:[0,0,0.08]},'sphere');
+      // Choking-response training vest / manikin beside the CPR mat.
+      add({position:[-1.45,0.23,1.05],scale:[0.22,0.13,0.46],color:[0.85,0.55,0.16]},'sphere');
+      // Phone, AED, antiseptic station and APK desk.
+      addBox('phone',dark,0.02);
+      addBox('aed',white,0.12);
+      add({position:[-0.6,0.29,1.69],scale:[0.14,0.09,0.018],color:dark});
+      add({position:[-0.6,0.19,1.69],scale:[0.045,0.045,0.025],color:amber},'sphere');
+      addBox('antiseptic_stand',metal);
+      add({position:[1.35,0.68,-1.45],scale:[0.07,0.18,0.07],color:green});
+      add({position:[1.35,0.68,-1.45],scale:[0.04,0.1,0.04],color:white});
+      addBox('apk_desk',white);
+      addBox('apk_chair_1',metal);
+      addBox('apk_chair_2',metal);
+      addBox('apk_pc',dark);
+      addBox('apk_pc_cpr',dark);
+      addBox('apk_camera',metal);
+      addBox('tech_camera',dark);
+      addBox('tech_shelf',metal);
+      // Door and wall-mounted station display / clock.
+      addBox('door',[0.48,0.57,0.62]);
+      add({position:[-2.44,1.6,0],scale:[0.025,0.23,0.35],color:dark});
+      add({position:[-2.41,2.0,0.9],scale:[0.025,0.12,0.12],color:white});
+      // Soft ceiling fixtures.
+      for (const x of [-1.4,1.4]) for (const z of [-1.35,1.35]) {
+        add({position:[x,2.88,z],scale:[0.42,0.025,0.28],color:[1,0.98,0.88]});
       }
-      add({position:[-2.43,1.0,0],scale:[0.12,0.34,0.92],color:blue});
-      // Patient mannequin, lying on back, head at left
-      add({position:[-1.83,1.22,0],scale:[0.31,0.31,0.31],color:skin},'sphere');
-      add({position:[-1.22,1.1,0],scale:[0.68,0.28,0.47],color:scrubs},'sphere');
-      add({position:[-0.45,1.08,0],scale:[0.78,0.24,0.43],color:scrubs},'sphere');
-      add({position:[0.55,1.07,0.22],scale:[0.86,0.2,0.24],color:blue},'sphere');
-      add({position:[0.55,1.07,-0.22],scale:[0.86,0.2,0.24],color:blue},'sphere');
-      // Arms resting alongside the torso
-      add({position:[-0.85,0.98,0.58],scale:[0.74,0.13,0.13],color:skin,rotation:[0,0,-0.05]},'sphere');
-      add({position:[-0.85,0.98,-0.58],scale:[0.74,0.13,0.13],color:skin,rotation:[0,0,-0.05]},'sphere');
-      // CPR demonstration: forearms approach the centre of the chest,
-      // with two clearly visible stacked palms over the sternum.
-      add({position:[-0.62,1.34,0.34],scale:[0.48,0.085,0.105],color:skin,rotation:[0,0.58,0]},'sphere');
-      add({position:[-0.62,1.34,-0.34],scale:[0.48,0.085,0.105],color:skin,rotation:[0,-0.58,0]},'sphere');
-      const cprHands: Mesh[] = [];
-      const upperPalm: Mesh = {position:[-0.48,1.43,0.015],scale:[0.19,0.055,0.145],color:skin};
-      const lowerPalm: Mesh = {position:[-0.48,1.37,0.015],scale:[0.17,0.045,0.13],color:[0.72,0.47,0.36]};
-      cprHands.push(upperPalm, lowerPalm);
-      add(upperPalm,'sphere');
-      add(lowerPalm,'sphere');
-      // Monitor and stand
-      add({position:[2.9,1.72,-0.2],scale:[0.58,0.43,0.16],color:metal});
-      add({position:[2.9,1.75,0.0],scale:[0.49,0.33,0.04],color:dark});
-      add({position:[2.9,1.1,-0.2],scale:[0.08,0.48,0.08],color:metal});
-      add({position:[2.9,0.62,-0.2],scale:[0.42,0.07,0.34],color:metal});
-      // AED cart/device
-      add({position:[-3.2,1.2,0.7],scale:[0.42,0.52,0.27],color:white});
-      add({position:[-3.2,1.26,0.99],scale:[0.27,0.23,0.035],color:dark});
-      add({position:[-3.2,0.83,0.7],scale:[0.12,0.12,0.12],color:amber},'sphere');
-      add({position:[-3.2,0.54,0.7],scale:[0.55,0.08,0.38],color:metal});
-      // Wall-mounted clinical panel
-      add({position:[2.8,2.55,-3.35],scale:[0.9,0.48,0.1],color:blue});
-      add({position:[2.8,2.55,-3.22],scale:[0.68,0.28,0.04],color:dark});
 
       const positionLoc=gl.getAttribLocation(program,'aPosition');
       const normalLoc=gl.getAttribLocation(program,'aNormal');
@@ -209,9 +216,10 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         if(canvas.width!==Math.floor(width*dpr)||canvas.height!==Math.floor(height*dpr)){canvas.width=Math.floor(width*dpr);canvas.height=Math.floor(height*dpr);}
         gl.viewport(0,0,canvas.width,canvas.height);
         gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.clearColor(0.88,0.93,0.96,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-        const target=[0,1.05,0];
-        const eye=[target[0]+Math.sin(yaw)*Math.cos(pitch)*distance,target[1]+Math.sin(pitch)*distance,target[2]+Math.cos(yaw)*Math.cos(pitch)*distance];
-        const vp=multiply(perspective(0.72,width/Math.max(height,1),0.1,60),lookAt(eye,target,[0,1,0]));
+        const forward=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
+        const eye=[player.x,player.y,player.z];
+        const target=[eye[0]+forward[0],eye[1]+forward[1],eye[2]+forward[2]];
+        const vp=multiply(perspective(ROOM_SPEC.camera.fov*Math.PI/180,width/Math.max(height,1),0.05,40),lookAt(eye,target,[0,1,0]));
         for(const item of meshes){
           gl.bindBuffer(gl.ARRAY_BUFFER,item.p); gl.enableVertexAttribArray(positionLoc); gl.vertexAttribPointer(positionLoc,3,gl.FLOAT,false,0,0);
           gl.bindBuffer(gl.ARRAY_BUFFER,item.n); gl.enableVertexAttribArray(normalLoc); gl.vertexAttribPointer(normalLoc,3,gl.FLOAT,false,0,0);
@@ -228,12 +236,23 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       };
       const render=()=>{draw();};
       const pointerDown=(e:PointerEvent)=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);};
-      const pointerMove=(e:PointerEvent)=>{if(!dragging)return;yaw-=(e.clientX-lastX)*0.008;pitch=Math.max(0.08,Math.min(1.12,pitch+(e.clientY-lastY)*0.006));lastX=e.clientX;lastY=e.clientY;render();};
+      const pointerMove=(e:PointerEvent)=>{if(!dragging)return;yaw-=(e.clientX-lastX)*0.0045;pitch=Math.max(-0.85,Math.min(0.85,pitch+(e.clientY-lastY)*0.004));lastX=e.clientX;lastY=e.clientY;render();};
       const pointerUp=()=>{dragging=false;};
-      const wheel=(e:WheelEvent)=>{distance=Math.max(5.5,Math.min(13,distance+e.deltaY*0.008));render();};
-      canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);canvas.addEventListener('wheel',wheel,{passive:true});
-      const resize=()=>render();window.addEventListener('resize',resize);render();
-      return ()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerUp);canvas.removeEventListener('wheel',wheel);meshes.forEach(m=>{gl.deleteBuffer(m.p);gl.deleteBuffer(m.n);});if(program)gl.deleteProgram(program);};
+      const keyDown=(e:KeyboardEvent)=>{if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();keys.add(e.key.toLowerCase());}};
+      const keyUp=(e:KeyboardEvent)=>keys.delete(e.key.toLowerCase());
+      const tick=(now:number)=>{const dt=Math.min((now-lastFrame)/1000,0.05);lastFrame=now;
+        const speed=(keys.has('shift')?2.2:1.35)*dt;
+        const forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);
+        const side=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0);
+        player.x+= (Math.sin(yaw)*forward+Math.cos(yaw)*side)*speed;
+        player.z+= (-Math.cos(yaw)*forward+Math.sin(yaw)*side)*speed;
+        player.x=Math.max(-2.25,Math.min(2.25,player.x));player.z=Math.max(-2.25,Math.min(2.25,player.z));
+        draw();raf=requestAnimationFrame(tick);
+      };
+      canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);
+      window.addEventListener('keydown',keyDown);window.addEventListener('keyup',keyUp);
+      const resize=()=>render();window.addEventListener('resize',resize);render();raf=requestAnimationFrame(tick);
+      return ()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerUp);meshes.forEach(m=>{gl.deleteBuffer(m.p);gl.deleteBuffer(m.n);});if(program)gl.deleteProgram(program);};
     } catch {
       setWebglAvailable(false);
       gl.clearColor(0.88,0.93,0.96,1);gl.clear(gl.COLOR_BUFFER_BIT);
@@ -244,14 +263,14 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
     <div className="scene3d-wrap">
       {webglAvailable ? (
         <>
-          <canvas ref={canvasRef} className="scene3d-canvas" aria-label="Объёмная интерактивная сцена симуляционного кабинета. Перетаскивайте для поворота камеры, используйте колесо мыши для масштаба." />
-          <div className="scene3d-label">WEBGL · ОБЪЁМНАЯ СЦЕНА</div>
+          <canvas ref={canvasRef} className="scene3d-canvas" aria-label="Объёмная интерактивная сцена симуляционного кабинета. Управление от первого лица: WASD или стрелки — движение, мышь/палец — осмотр." />
+          <div className="scene3d-label">3D · ВИД ОТ ПЕРВОГО ЛИЦА</div>
           <div className="scene3d-hotspots">
             <button type="button" className={selected === 'patient' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('patient')}>Пациент</button>
             <button type="button" className={selected === 'aed' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('aed')}>АНД</button>
             <button type="button" className={selected === 'cpr' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('cpr')}>СЛР</button>
           </div>
-          <div className="scene3d-hint">Зажмите и перемещайте для поворота · колесо мыши — масштаб</div>
+          <div className="scene3d-hint">WASD / стрелки — движение · мышь или палец — осмотр комнаты</div>
         </>
       ) : (
         <div className="scene2d-fallback">
