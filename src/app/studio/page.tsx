@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import './studio.css';
+import StudioSceneLoader from './components/StudioSceneLoader';
 
 type Specialty = 'Лечебное дело' | 'Педиатрия';
 type Mode = 'training' | 'exam';
@@ -98,23 +99,8 @@ export default function AkkredikStudioPage() {
           <div className="simulation-grid">
             <section className="scene-panel">
               <div className="scene-toolbar"><div><span className="scene-live" /> СИМУЛЯЦИОННАЯ СЦЕНА</div><div className="scene-tools"><button type="button" title="Уменьшить масштаб" onClick={() => setSelectedAction('zoom-out')}>−</button><button type="button" title="Увеличить масштаб" onClick={() => setSelectedAction('zoom-in')}>＋</button><button type="button" title="Сбросить вид" onClick={() => setSelectedAction('patient')}>⟲</button></div></div>
-              <div className="scene-canvas">
-                <div className="scene-grid" />
-                <div className="room-wall wall-back"><div className="wall-light" /><div className="wall-panel"><span>SIMULATION LAB</span><b>01</b></div></div>
-                <div className="room-floor" />
-                <div className="monitor-stand"><div className="monitor-screen"><div className="monitor-wave">〰〰〰</div><small>ECG · SpO₂ · NIBP</small></div><div className="monitor-neck" /><div className="monitor-base" /></div>
-                <div className="aed-device"><div className="aed-top"><span>АНД</span><b>♥</b></div><div className="aed-screen">АНАЛИЗ РИТМА</div><div className="aed-button" /></div>
-                <div className="bed-shadow" />
-                <div className="patient-bed"><div className="bed-head" /><div className="bed-frame" /><div className="bed-leg leg-one" /><div className="bed-leg leg-two" /><div className="bed-leg leg-three" /><div className="bed-wheel wheel-one" /><div className="bed-wheel wheel-two" /></div>
-                <div className="patient-figure" aria-label="Учебный манекен пациента">
-                  <div className="patient-head"><div className="patient-ear" /><div className="patient-face"><i /><i /><span /></div></div>
-                  <div className="patient-neck" /><div className="patient-torso"><div className="scrub-seam" /></div>
-                  <div className="patient-arm arm-left"><span /></div><div className="patient-arm arm-right"><span /></div>
-                  <div className="patient-leg leg-left"><span /></div><div className="patient-leg leg-right"><span /></div>
-                </div>
-                <button type="button" className="scene-hotspot hotspot-patient" onClick={() => setSelectedAction('patient')} aria-label="Выбрать пациента"><span>1</span></button>
-                <button type="button" className="scene-hotspot hotspot-aed" onClick={() => setSelectedAction('aed')} aria-label="Выбрать АНД"><span>2</span></button>
-                <div className="scene-caption"><span className="caption-pulse" /> 3D-СЦЕНА · ИНТЕРАКТИВНЫЕ ОБЪЕКТЫ</div>
+              <div className="scene-canvas scene-canvas-webgl">
+                <StudioSceneLoader selected={selectedAction} onSelect={setSelectedAction} />
               </div>
               <div className="scene-legend"><span><i className="legend-blue" /> Пациент</span><span><i className="legend-green" /> Оборудование</span><span><i className="legend-amber" /> Активное действие</span></div>
             </section>
