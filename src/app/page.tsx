@@ -249,6 +249,7 @@ export default function Home() {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [actions, setActions] = useState<Record<string, boolean>>({});
+  const actionsRef = useRef<Record<string, boolean>>({});
   const [sequence, setSequence] = useState<string[]>([]);
   const [timeLeft, setTimeLeft] = useState(510);
   const [score, setScore] = useState(0);
@@ -415,7 +416,7 @@ export default function Home() {
         ? (['BLS1', 'BLS2', 'BLS3', 'BLS4'][Math.floor(Math.random() * 4)] as ScenarioType)
         : station.id as ScenarioType;
       setScenario(selectedScenario);
-      setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null);
+      actionsRef.current = {}; setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null);
       setTimeLeft(510); setScore(0); setIsArrest(false); setBlsCompressionElapsed(0);
       setBlsCompressionRunning(false); setBlsAedAvailable(false); setBlsSecondCycle(false); setBlsRosc(false);
       isFinishing.current = false; hasSpokenMinuteWarning.current = false;
@@ -448,7 +449,7 @@ export default function Home() {
     if (scenario === 'HYPOGLYCEMIA' && actions['oxygen_wrong']) penalty += 10;
     if (scenario === 'HYPERGLYCEMIA' && actions['oxygen_wrong']) penalty += 10;
 
-    const completedItems = currentChecklist.filter((item: any) => actions[item.id]).length;
+    const completedItems = currentChecklist.filter((item: any) => actionsRef.current[item.id]).length;
     const totalItems = currentChecklist.length;
     let calculatedScore = Math.round((completedItems / totalItems) * 100);
     
@@ -469,6 +470,7 @@ export default function Home() {
 
   const toggleAction = (id: string) => {
     if (actions[id]) return;
+    actionsRef.current = { ...actionsRef.current, [id]: true };
     setActions((prev) => ({ ...prev, [id]: true }));
     setSequence((prev) => [...prev, id]);
     setChallenge(null);
