@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Props = {
   selected: string;
@@ -113,6 +113,7 @@ function sphereData(rows=14, cols=20) {
 
 export default function StudioScene3D({ selected, onSelect }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [webglAvailable, setWebglAvailable] = useState(true);
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
 
@@ -120,7 +121,8 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const gl = canvas.getContext('webgl', { antialias: true, alpha: false });
-    if (!gl) return;
+    if (!gl) { setWebglAvailable(false); return; }
+    setWebglAvailable(true);
     let program: WebGLProgram | null = null;
     let raf = 0;
     let yaw = 0.62;
@@ -219,20 +221,38 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       const resize=()=>render();window.addEventListener('resize',resize);render();
       return ()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerUp);canvas.removeEventListener('wheel',wheel);meshes.forEach(m=>{gl.deleteBuffer(m.p);gl.deleteBuffer(m.n);});if(program)gl.deleteProgram(program);};
     } catch {
+      setWebglAvailable(false);
       gl.clearColor(0.88,0.93,0.96,1);gl.clear(gl.COLOR_BUFFER_BIT);
     }
   }, []);
 
   return (
     <div className="scene3d-wrap">
-      <canvas ref={canvasRef} className="scene3d-canvas" aria-label="Объёмная интерактивная сцена симуляционного кабинета. Перетаскивайте для поворота камеры, используйте колесо мыши для масштаба." />
-      <div className="scene3d-label">WEBGL · ОБЪЁМНАЯ СЦЕНА</div>
-      <div className="scene3d-hotspots">
-        <button type="button" className={selected === 'patient' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('patient')}>Пациент</button>
-        <button type="button" className={selected === 'aed' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('aed')}>АНД</button>
-        <button type="button" className={selected === 'cpr' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('cpr')}>СЛР</button>
-      </div>
-      <div className="scene3d-hint">Зажмите и перемещайте для поворота · колесо мыши — масштаб</div>
+      {webglAvailable ? (
+        <>
+          <canvas ref={canvasRef} className="scene3d-canvas" aria-label="Объёмная интерактивная сцена симуляционного кабинета. Перетаскивайте для поворота камеры, используйте колесо мыши для масштаба." />
+          <div className="scene3d-label">WEBGL · ОБЪЁМНАЯ СЦЕНА</div>
+          <div className="scene3d-hotspots">
+            <button type="button" className={selected === 'patient' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('patient')}>Пациент</button>
+            <button type="button" className={selected === 'aed' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('aed')}>АНД</button>
+            <button type="button" className={selected === 'cpr' ? 'scene3d-hotspot active' : 'scene3d-hotspot'} onClick={() => onSelect('cpr')}>СЛР</button>
+          </div>
+          <div className="scene3d-hint">Зажмите и перемещайте для поворота · колесо мыши — масштаб</div>
+        </>
+      ) : (
+        <div className="scene2d-fallback">
+          <div className="fallback-wall"><span>SIMULATION LAB</span><b>01</b></div>
+          <div className="fallback-monitor"><i>〰〰〰</i><small>ECG · SpO₂</small></div>
+          <div className="fallback-aed">АНД <strong>♥</strong></div>
+          <div className="fallback-bed"><div className="fallback-patient"><i /><b /><span /><em /></div></div>
+          <p>Упрощённый режим сцены: 3D-графика недоступна на этом устройстве</p>
+          <div className="scene3d-hotspots">
+            <button type="button" className="scene3d-hotspot" onClick={() => onSelect('patient')}>Пациент</button>
+            <button type="button" className="scene3d-hotspot" onClick={() => onSelect('aed')}>АНД</button>
+            <button type="button" className="scene3d-hotspot" onClick={() => onSelect('cpr')}>СЛР</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
