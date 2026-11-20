@@ -43,3 +43,27 @@
 .fallback-aed strong{display:block;color:#d85a5a;font-size:20px;text-align:center}
 .scene2d-fallback>p{position:absolute;left:15px;bottom:13px;margin:0;padding:7px 9px;border-radius:6px;background:#ffffffd9;color:#597789;font-size:8px}
 @media(max-width:480px){.scene3d-hotspots{top:9px;right:8px;gap:3px}.scene3d-hotspot{padding:6px 7px;font-size:8px}.scene3d-hint{font-size:7px;max-width:75%}}
+
+/* CPR practice interaction */
+.cpr-trainer{margin-top:12px;padding:13px;background:linear-gradient(155deg,#f5fafc,#edf4f7);border:1px solid #dce9ef;border-radius:10px}
+.cpr-trainer-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.cpr-trainer-head strong{display:block;font-size:11px;color:#29485a;margin-top:3px}
+.cpr-cycle-count{font-size:8px;font-weight:800;color:#267b9f;background:#e0f0f6;padding:6px 8px;border-radius:20px;white-space:nowrap}
+.cpr-progress-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0 5px;font-size:9px;color:#718596}
+.cpr-progress-row strong{font-size:10px;color:#34566a;font-variant-numeric:tabular-nums}
+.cpr-progress-track{height:6px;background:#dce7ec;border-radius:10px;overflow:hidden}
+.cpr-progress-track span{display:block;height:100%;background:linear-gradient(90deg,#2389b7,#47b6c5);border-radius:10px;transition:width .16s}
+.cpr-progress-track.breath-track span{background:linear-gradient(90deg,#269d79,#69c69a)}
+.cpr-action-button{width:100%;min-height:54px;margin-top:13px;border:0;border-radius:9px;color:#fff;font-size:10px;font-weight:900;letter-spacing:.4px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;box-shadow:0 5px 12px #2d71852b;transition:transform .12s,filter .12s}
+.cpr-action-button:active{transform:translateY(2px) scale(.99);filter:brightness(.94)}
+.cpr-action-button:disabled{opacity:.45;cursor:not-allowed}
+.compression-button{background:linear-gradient(105deg,#167da9,#1764a1)}
+.breath-button{background:linear-gradient(105deg,#188c70,#269f86)}
+.cpr-button-pulse{width:25px;height:25px;display:grid;place-items:center;border:1px solid #ffffff80;border-radius:50%;font-size:16px}
+.cpr-cadence{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 8px;margin-top:12px;padding:9px 10px;background:#fff;border:1px solid #e4edf1;border-radius:8px}
+.cpr-cadence span{font-size:8px;color:#8294a2}
+.cpr-cadence strong{grid-column:2;grid-row:1/3;font-size:17px;color:#2c617b;font-variant-numeric:tabular-nums}
+.cpr-cadence small{font-size:8px;color:#8798a5}
+.cpr-guidance,.cpr-limitation{font-size:8px;line-height:1.45;margin:9px 1px 0;color:#647f90}
+.cpr-limitation{color:#9a7a43}
+.cpr-reset{display:block;margin:10px auto 0;border:0;background:transparent;color:#7f909c;font-size:8px;text-decoration:underline;cursor:pointer}
