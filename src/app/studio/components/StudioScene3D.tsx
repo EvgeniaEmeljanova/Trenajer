@@ -185,7 +185,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);
         return buffer;
       };
-      const meshes: { mesh:Mesh; p:WebGLBuffer; n:WebGLBuffer; count:number; shape:'cube'|'sphere' }[] = [];
+      const meshes: { mesh:Mesh; p:WebGLBuffer; n:WebGLBuffer; count:number; shape:'cube'|'sphere'|'cylinder' }[] = [];
       const add=(mesh:Mesh, shape:'cube'|'sphere'|'cylinder'='cube')=>{
         const data=shape==='cube'?cube:shape==='sphere'?sphere:cylinder;
         meshes.push({mesh,p:createBuffer(data.p),n:createBuffer(data.n),count:data.p.length/3,shape});
