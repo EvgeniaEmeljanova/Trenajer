@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import './studio.css';
 import StudioSceneLoader from './components/StudioSceneLoader';
 
@@ -34,6 +34,53 @@ export default function AkkredikStudioPage() {
   const [station, setStation] = useState('bls');
   const [selectedAction, setSelectedAction] = useState('patient');
   const [started, setStarted] = useState(false);
+  const [compressionCount, setCompressionCount] = useState(0);
+  const [breathCount, setBreathCount] = useState(0);
+  const [cprPhase, setCprPhase] = useState<'compressions' | 'breaths'>('compressions');
+  const [cadence, setCadence] = useState<number | null>(null);
+  const [completedCycles, setCompletedCycles] = useState(0);
+  const compressionTimes = useRef<number[]>([]);
+
+  function registerCompression() {
+    if (cprPhase !== 'compressions' || compressionCount >= 30) return;
+    const now = Date.now();
+    const times = [...compressionTimes.current, now];
+    compressionTimes.current = times.slice(-6);
+    if (times.length >= 2) {
+      const recent = times.slice(1).map((time, index) => time - times[index]);
+      const averageInterval = recent.reduce((sum, value) => sum + value, 0) / recent.length;
+      if (averageInterval > 0) setCadence(Math.round(60000 / averageInterval));
+    }
+    const nextCount = compressionCount + 1;
+    setCompressionCount(nextCount);
+    if (nextCount === 30) {
+      setCprPhase('breaths');
+      setBreathCount(0);
+    }
+  }
+
+  function registerBreath() {
+    if (cprPhase !== 'breaths' || breathCount >= 2) return;
+    const nextCount = breathCount + 1;
+    setBreathCount(nextCount);
+    if (nextCount === 2) {
+      setCompletedCycles((count) => count + 1);
+      setCompressionCount(0);
+      setBreathCount(0);
+      setCprPhase('compressions');
+      setCadence(null);
+      compressionTimes.current = [];
+    }
+  }
+
+  function resetCprCycle() {
+    setCompressionCount(0);
+    setBreathCount(0);
+    setCprPhase('compressions');
+    setCadence(null);
+    setCompletedCycles(0);
+    compressionTimes.current = [];
+  }
 
   const activeStation = useMemo(
     () => stations[specialty].find((item) => item.id === station),
@@ -116,6 +163,35 @@ export default function AkkredikStudioPage() {
                 ))}
               </div>
               <div className="action-detail"><span className="detail-label">ВЫБРАННОЕ ДЕЙСТВИЕ</span><strong>{actions.find((item) => item.id === selectedAction)?.label ?? 'Управление сценой'}</strong><p>{mode === 'training' ? 'В режиме обучения будут доступны методические подсказки и разбор каждого шага.' : 'В экзаменационном режиме подсказки скрыты. Действия оцениваются по алгоритму станции.'}</p></div>
+              {selectedAction === 'cpr' && (
+                <section className="cpr-trainer" aria-label="Тренировка цикла сердечно-лёгочной реанимации">
+                  <div className="cpr-trainer-head">
+                    <div><span className="detail-label">ТЕКУЩИЙ ЦИКЛ 30:2</span><strong>{cprPhase === 'compressions' ? 'Компрессии грудной клетки' : 'Искусственное дыхание'}</strong></div>
+                    <span className="cpr-cycle-count">{completedCycles} циклов</span>
+                  </div>
+                  <div className="cpr-progress-row"><span>Компрессии</span><strong>{compressionCount}/30</strong></div>
+                  <div className="cpr-progress-track"><span style={{ width: (compressionCount / 30 * 100) + '%' }} /></div>
+                  <div className="cpr-progress-row"><span>Вдохи</span><strong>{breathCount}/2</strong></div>
+                  <div className="cpr-progress-track breath-track"><span style={{ width: (breathCount / 2 * 100) + '%' }} /></div>
+                  {cprPhase === 'compressions' ? (
+                    <button type="button" className="cpr-action-button compression-button" onClick={registerCompression} disabled={compressionCount >= 30}>
+                      <span className="cpr-button-pulse">↓</span> ОДНА КОМПРЕССИЯ
+                    </button>
+                  ) : (
+                    <button type="button" className="cpr-action-button breath-button" onClick={registerBreath} disabled={breathCount >= 2}>
+                      <span className="cpr-button-pulse">↗</span> ВЫПОЛНИТЬ ВДОХ {breathCount + 1}
+                    </button>
+                  )}
+                  <div className="cpr-cadence">
+                    <span>Текущий темп</span>
+                    <strong>{cadence === null ? '—' : cadence + '/мин'}</strong>
+                    <small>{cadence === null ? 'Выполните несколько нажатий для оценки темпа' : cadence >= 100 && cadence <= 120 ? 'В ориентире 100–120 в минуту' : 'Ориентир: 100–120 в минуту'}</small>
+                  </div>
+                  {mode === 'training' && <p className="cpr-guidance">{cprPhase === 'compressions' ? 'Выполняйте нажатия по одному, с полным отпусканием грудной клетки между ними.' : 'Выполните два отдельных вдоха. После второго начнётся следующий цикл.'}</p>}
+                  <p className="cpr-limitation">Глубина 5–6 см в этой версии визуально не измеряется: для объективной оценки нужен датчик манекена.</p>
+                  <button type="button" className="cpr-reset" onClick={resetCprCycle}>Сбросить цикл</button>
+                </section>
+              )}
               <button type="button" className="start-button" onClick={() => setStarted(true)} disabled={!activeStation?.available}>{started ? 'Сценарий подготовлен' : 'Начать сценарий'} <span>→</span></button>
               <p className="panel-footnote">{started ? 'Это демонстрационный интерфейс. Клиническая логика будет подключена следующим этапом.' : 'Перед началом ознакомьтесь с вводной и правилами станции.'}</p>
             </aside>
