@@ -39,7 +39,7 @@ export const ROOM_SPEC = {
     { id: 'manikin_choking_vest', label: 'Тренажёр-жилет для удаления инородного тела', position: [-1.45, 0.13, 1.05], size: [0.45, 0.25, 0.95], interactive: true, zone: 'student' },
 
     { id: 'phone', label: 'Мобильный телефон', position: [0.15, 0.035, 0.92], size: [0.08, 0.02, 0.16], interactive: true, zone: 'student' },
-    { id: 'aed', label: 'Учебный АНД', position: [-0.6, 0.16, 1.55], size: [0.35, 0.25, 0.25], interactive: true, zone: 'student' },
+    { id: 'aed', label: 'Учебный АНД', position: [0.95, 0.48, 0.88], size: [0.42, 0.25, 0.32], interactive: true, zone: 'student' },
     { id: 'antiseptic_stand', label: 'Подставка с антисептиком и салфетками', position: [1.35, 0.28, -1.45], size: [0.35, 0.55, 0.3], interactive: true, zone: 'student' },
 
     { id: 'apk_desk', label: 'Стол члена АПК', position: [2.0, 0.75, -0.8], size: [1.2, 0.75, 0.6], rotationY: 90, zone: 'apk' },
