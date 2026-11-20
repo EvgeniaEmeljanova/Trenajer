@@ -27,13 +27,17 @@ uniform vec3 uColor;
 varying vec3 vNormal;
 void main() {
   vec3 n = normalize(vNormal);
-  vec3 light = normalize(vec3(-0.45, 0.85, 0.65));
+  vec3 light = normalize(vec3(-0.45, 0.88, 0.62));
   vec3 fill = normalize(vec3(0.55, 0.25, -0.45));
+  vec3 viewDir = normalize(vec3(0.0, 0.38, 0.92));
+  vec3 halfDir = normalize(light + viewDir);
   float diffuse = max(dot(n, light), 0.0);
   float softFill = max(dot(n, fill), 0.0);
-  float highlight = pow(max(dot(reflect(-light, n), vec3(0.0, 0.45, 0.9)), 0.0), 22.0);
-  float shade = 0.34 + diffuse * 0.48 + softFill * 0.12;
-  vec3 litColor = uColor * shade + vec3(0.16, 0.19, 0.21) * highlight;
+  float specular = pow(max(dot(n, halfDir), 0.0), 34.0) * 0.2;
+  float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0) * 0.055;
+  float shade = 0.43 + diffuse * 0.43 + softFill * 0.12;
+  vec3 litColor = uColor * shade + vec3(0.72, 0.82, 0.88) * specular + vec3(0.24, 0.34, 0.4) * rim;
+  litColor = pow(max(litColor, vec3(0.0)), vec3(0.94));
   gl_FragColor = vec4(litColor, 1.0);
 }`;
 
@@ -89,6 +93,7 @@ function modelMatrix(mesh: Mesh) {
 }
 
 function cubeData() {
+  // Rounded, bevelled box geometry: softened edges replace the hard block-like silhouette.
   const faces = [
     [[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1],[0,0,1]],
     [[1,-1,-1],[-1,-1,-1],[-1,1,-1],[1,1,-1],[0,0,-1]],
@@ -98,9 +103,33 @@ function cubeData() {
     [[-1,-1,-1],[-1,-1,1],[-1,1,1],[-1,1,-1],[-1,0,0]],
   ];
   const p:number[]=[]; const n:number[]=[];
-  for (const f of faces) {
-    const ids=[0,1,2,0,2,3];
-    for (const id of ids) { p.push(...f[id]); n.push(...f[4]); }
+  const segments=4, bevel=0.14;
+  const rounded=(point:number[],faceNormal:number[])=>{
+    const core=point.map(v=>Math.max(-1+bevel,Math.min(1-bevel,v)));
+    const delta=point.map((v,i)=>v-core[i]);
+    const length=Math.hypot(...delta);
+    const normal=length>1e-6?delta.map(v=>v/length):faceNormal;
+    return {position:core.map((v,i)=>v+normal[i]*bevel),normal};
+  };
+  const mix=(a:number[],b:number[],t:number)=>a.map((v,i)=>v+(b[i]-v)*t);
+  for(const face of faces){
+    const [a,b,c,d,faceNormal]=face as number[][]; 
+    const grid:number[][][]=[];
+    for(let y=0;y<=segments;y++){
+      const row:number[][]=[];
+      for(let x=0;x<=segments;x++){
+        const top=mix(a,b,x/segments),bottom=mix(d,c,x/segments);
+        row.push(mix(top,bottom,y/segments));
+      }
+      grid.push(row);
+    }
+    for(let y=0;y<segments;y++)for(let x=0;x<segments;x++){
+      const vertices=[grid[y][x],grid[y][x+1],grid[y+1][x+1],grid[y][x],grid[y+1][x+1],grid[y+1][x]];
+      for(const vertex of vertices){
+        const roundedVertex=rounded(vertex,faceNormal);
+        p.push(...roundedVertex.position);n.push(...roundedVertex.normal);
+      }
+    }
   }
   return {p,n};
 }
@@ -211,6 +240,11 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       // Floor mats.
       addBox('mat_patient',[0.25,0.55,0.67],0.015);
       addBox('mat_rescuer',[0.33,0.57,0.68],0.015);
+      // Subtle contact shadows ground the mannequin and equipment in the room.
+      addSphere([-0.6,0.039,0.12],[0.31,0.004,0.9],[0.59,0.64,0.68]);
+      addSphere([0.04,0.006,-0.34],[0.22,0.003,0.16],[0.62,0.67,0.7]);
+      addSphere([1.35,0.006,-1.45],[0.2,0.003,0.17],[0.62,0.67,0.7]);
+      addSphere([2.0,0.006,-0.8],[0.68,0.003,0.42],[0.62,0.67,0.7]);
       // Adult CPR training mannequin: anatomical segments, neutral molded face and articulated limbs.
       const mannequin=[0.78,0.61,0.45], mannequinLight=[0.9,0.75,0.61], mannequinShade=[0.62,0.43,0.33];
       const addLimb=(start:number[],end:number[],radius:number,color:number[])=>{
