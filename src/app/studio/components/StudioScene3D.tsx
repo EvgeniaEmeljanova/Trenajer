@@ -157,7 +157,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       { id: 'manikin_cpr', label: 'Манекен для СЛР', action: 'patient', position: [-0.6, 0.2, 0] },
       { id: 'manikin_choking_vest', label: 'Тренажёр-жилет', action: 'choking', position: [-1.45, 0.2, 1.05] },
       { id: 'phone', label: 'Телефон для вызова помощи', action: 'call', position: [0.15, 0.1, 0.92] },
-      { id: 'aed', label: 'Учебный АНД', action: 'aed', position: [0.95, 0.92, 0.88] },
+      { id: 'aed', label: 'Учебный АНД', action: 'aed', position: [0.04, 0.92, -0.34] },
       { id: 'antiseptic_stand', label: 'Подставка с антисептиком', action: 'antiseptic', position: [1.35, 0.5, -1.45] },
     ];
     let lastNearby = '';
@@ -256,33 +256,28 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       add({position:[-1.45,0.23,1.05],scale:[0.22,0.13,0.46],color:[0.85,0.55,0.16]},'sphere');
       // Phone, AED, antiseptic station and APK desk.
       addBox('phone',dark,0.02);
-      // AED trainer placed beside the patient's upper torso, within reach without covering the CPR chest.
-      const aedX=0.22, aedZ=-0.24, aedY=0.60;
-      addCylinder([aedX,0.25,aedZ],0.025,0.5,metal);
-      add({position:[aedX,0.045,aedZ],scale:[0.27,0.035,0.22],color:dark});
-      addSphere([aedX-0.18,0.055,aedZ+0.14],[0.045,0.045,0.045],dark);
-      addSphere([aedX+0.18,0.055,aedZ+0.14],[0.045,0.045,0.045],dark);
-      addBox('aed',white,0.12);
-      // High-contrast front panel, display and large tactile buttons.
-      add({position:[aedX,aedY,aedZ-0.166],scale:[0.145,0.092,0.009],color:dark});
-      add({position:[aedX-0.035,aedY+0.018,aedZ-0.177],scale:[0.075,0.047,0.004],color:[0.08,0.32,0.37]});
-      add({position:[aedX-0.035,aedY+0.02,aedZ-0.181],scale:[0.052,0.002,0.002],color:[0.2,0.92,0.76]});
-      add({position:[aedX-0.035,aedY-0.006,aedZ-0.181],scale:[0.062,0.002,0.002],color:[0.72,0.9,0.88]});
-      add({position:[aedX+0.07,aedY+0.035,aedZ-0.178],scale:[0.025,0.012,0.004],color:green});
-      add({position:[aedX+0.07,aedY+0.005,aedZ-0.178],scale:[0.025,0.012,0.004],color:amber});
-      addSphere([aedX-0.105,aedY-0.075,aedZ-0.18],[0.032,0.032,0.018],green);
-      addSphere([aedX+0.035,aedY-0.075,aedZ-0.18],[0.038,0.038,0.02],[0.86,0.16,0.12]);
-      addSphere([aedX+0.13,aedY-0.075,aedZ-0.18],[0.022,0.022,0.016],amber);
-      add({position:[aedX,aedY+0.135,aedZ-0.02],scale:[0.09,0.012,0.045],color:[0.12,0.62,0.43]});
-      // Two electrode pads rest on the trolley shelf; leads remain visible.
-      add({position:[aedX+0.31,0.12,aedZ-0.03],scale:[0.078,0.012,0.05],color:white});
-      add({position:[aedX+0.31,0.12,aedZ+0.13],scale:[0.078,0.012,0.05],color:white});
-      add({position:[aedX+0.31,0.135,aedZ-0.03],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
-      add({position:[aedX+0.31,0.135,aedZ+0.13],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
-      addLimb([aedX+0.12,0.49,aedZ-0.12],[aedX+0.25,0.31,aedZ-0.06],0.012,dark);
-      addLimb([aedX+0.25,0.31,aedZ-0.06],[aedX+0.30,0.16,aedZ-0.03],0.012,dark);
-      addLimb([aedX+0.12,0.49,aedZ-0.12],[aedX+0.25,0.31,aedZ+0.10],0.012,dark);
-      addLimb([aedX+0.25,0.31,aedZ+0.10],[aedX+0.30,0.16,aedZ+0.13],0.012,dark);
+      // Compact AED trainer placed directly on the floor beside the patient's upper chest — no trolley or stand.
+      const aedX=0.04, aedZ=-0.34, aedY=0.20;
+      addBox('aed',white,0);
+      // Front face and readable training display.
+      add({position:[aedX,aedY,aedZ-0.116],scale:[0.112,0.062,0.008],color:dark});
+      add({position:[aedX-0.027,aedY+0.012,aedZ-0.126],scale:[0.056,0.031,0.004],color:[0.08,0.32,0.37]});
+      add({position:[aedX-0.027,aedY+0.014,aedZ-0.13],scale:[0.04,0.002,0.002],color:[0.2,0.92,0.76]});
+      add({position:[aedX-0.027,aedY-0.006,aedZ-0.13],scale:[0.045,0.002,0.002],color:[0.72,0.9,0.88]});
+      add({position:[aedX+0.055,aedY+0.022,aedZ-0.126],scale:[0.018,0.009,0.004],color:green});
+      add({position:[aedX+0.055,aedY,aedZ-0.126],scale:[0.018,0.009,0.004],color:amber});
+      addSphere([aedX-0.065,aedY-0.047,aedZ-0.13],[0.022,0.022,0.012],green);
+      addSphere([aedX+0.02,aedY-0.047,aedZ-0.13],[0.027,0.027,0.014],[0.86,0.16,0.12]);
+      addSphere([aedX+0.085,aedY-0.047,aedZ-0.13],[0.016,0.016,0.01],amber);
+      // Two electrode pads placed beside the device, with short visible leads.
+      add({position:[aedX+0.22,0.025,aedZ-0.02],scale:[0.065,0.012,0.045],color:white});
+      add({position:[aedX+0.22,0.025,aedZ+0.12],scale:[0.065,0.012,0.045],color:white});
+      add({position:[aedX+0.22,0.04,aedZ-0.02],scale:[0.04,0.005,0.025],color:[0.16,0.7,0.66]});
+      add({position:[aedX+0.22,0.04,aedZ+0.12],scale:[0.04,0.005,0.025],color:[0.16,0.7,0.66]});
+      addLimb([aedX+0.07,0.17,aedZ-0.10],[aedX+0.15,0.09,aedZ-0.04],0.008,dark);
+      addLimb([aedX+0.15,0.09,aedZ-0.04],[aedX+0.20,0.04,aedZ-0.02],0.008,dark);
+      addLimb([aedX+0.07,0.17,aedZ-0.10],[aedX+0.15,0.09,aedZ+0.10],0.008,dark);
+      addLimb([aedX+0.15,0.09,aedZ+0.10],[aedX+0.20,0.04,aedZ+0.12],0.008,dark);
       // Cable coils and the trolley's rounded metal uprights.
       addCylinder([1.35,0.25,-1.45],0.025,0.42,metal);
       addCylinder([1.22,0.1,-1.45],0.018,0.18,dark);
@@ -391,14 +386,14 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         const blocked=obstacles.some(o=>Math.hypot(nextX-o.x,nextZ-o.z)<o.r);
         if(!blocked){player.x=Math.max(-2.25,Math.min(2.25,nextX));player.z=Math.max(-2.25,Math.min(2.25,nextZ));}
         let nearest: typeof targets[number] | null = null;
-        let nearestDistance=1.9;
+        let nearestDistance=2.2;
         const view=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
         for(const target of targets){
           const dx=target.position[0]-player.x,dy=target.position[1]-player.y,dz=target.position[2]-player.z;
           const distance=Math.hypot(dx,dy,dz);
           if(distance>nearestDistance)continue;
           const dot=(dx*view[0]+dy*view[1]+dz*view[2])/Math.max(distance,0.001);
-          if(dot>0.48){nearest=target;nearestDistance=distance;}
+          if(dot>0.28){nearest=target;nearestDistance=distance;}
         }
         nearestRef.current=nearest;
         const nextLabel=nearest?.label ?? '';
