@@ -231,12 +231,35 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       const addSphere = (position:number[], scale:number[], color:number[]) =>
         add({position,scale,color},'sphere');
       // Room shell: 5 x 5 x 3 metres. North is -Z, south is +Z.
-      add({position:[0,-0.08,0],scale:[2.5,0.08,2.5],color:[0.78,0.76,0.72]});
-      add({position:[0,1.5,-2.5],scale:[2.5,1.5,0.05],color:[0.92,0.94,0.94]});
+      const floor=[0.78,0.76,0.72], wall=[0.92,0.94,0.94], wallSide=[0.86,0.9,0.92], ceiling=[0.97,0.97,0.95];
+      add({position:[0,-0.08,0],scale:[2.5,0.08,2.5],color:floor});
+      add({position:[0,1.5,-2.5],scale:[2.5,1.5,0.05],color:wall});
       add({position:[0,1.5,2.5],scale:[2.5,1.5,0.05],color:[0.91,0.93,0.94]});
-      add({position:[-2.5,1.5,0],scale:[0.05,1.5,2.5],color:[0.86,0.9,0.92]});
-      add({position:[2.5,1.5,0],scale:[0.05,1.5,2.5],color:[0.86,0.9,0.92]});
-      add({position:[0,3,0],scale:[2.5,0.05,2.5],color:[0.97,0.97,0.95]});
+      add({position:[-2.5,1.5,0],scale:[0.05,1.5,2.5],color:wallSide});
+      add({position:[2.5,1.5,0],scale:[0.05,1.5,2.5],color:wallSide});
+      add({position:[0,3,0],scale:[2.5,0.05,2.5],color:ceiling});
+      // Architectural finish: restrained floor joints, skirting and wall protection strips.
+      const grout=[0.69,0.69,0.66], trim=[0.72,0.8,0.83], trimLight=[0.82,0.88,0.9];
+      for(let x=-2;x<=2;x+=1){
+        add({position:[x,0.003,0],scale:[0.006,0.002,2.43],color:grout});
+      }
+      for(let z=-2;z<=2;z+=1){
+        add({position:[0,0.003,z],scale:[2.43,0.002,0.006],color:grout});
+      }
+      add({position:[0,0.13,-2.435],scale:[2.44,0.13,0.018],color:trim});
+      add({position:[0,0.13,2.435],scale:[2.44,0.13,0.018],color:trim});
+      add({position:[-2.435,0.13,0],scale:[0.018,0.13,2.44],color:trim});
+      add({position:[2.435,0.13,0],scale:[0.018,0.13,2.44],color:trim});
+      // Horizontal protective wall rail and a narrow contrasting wall band.
+      add({position:[0,0.88,-2.438],scale:[2.42,0.018,0.012],color:trimLight});
+      add({position:[-2.438,0.88,0],scale:[0.012,0.018,2.42],color:trimLight});
+      add({position:[2.438,0.88,0],scale:[0.012,0.018,2.42],color:trimLight});
+      // A slim wall-mounted clinical utility rail with evenly spaced connection plates.
+      add({position:[1.45,1.18,-2.43],scale:[0.78,0.035,0.025],color:metal});
+      for(let x=0;x<4;x++){
+        add({position:[1.0+x*0.3,1.18,-2.405],scale:[0.075,0.075,0.012],color:white});
+        add({position:[1.0+x*0.3,1.18,-2.388],scale:[0.025,0.025,0.006],color:x%2===0?green:blue});
+      }
       // Floor mats.
       addBox('mat_patient',[0.25,0.55,0.67],0.015);
       addBox('mat_rescuer',[0.33,0.57,0.68],0.015);
@@ -336,10 +359,17 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       addBox('door',[0.48,0.57,0.62]);
       add({position:[-2.44,1.6,0],scale:[0.025,0.23,0.35],color:dark});
       add({position:[-2.41,2.0,0.9],scale:[0.025,0.12,0.12],color:white});
-      // Soft ceiling fixtures.
+      // Recessed LED ceiling panels with layered diffusers and slim frames.
       for (const x of [-1.4,1.4]) for (const z of [-1.35,1.35]) {
-        add({position:[x,2.88,z],scale:[0.42,0.025,0.28],color:[1,0.98,0.88]});
+        add({position:[x,2.91,z],scale:[0.48,0.018,0.34],color:trim});
+        add({position:[x,2.885,z],scale:[0.43,0.012,0.29],color:[1,0.99,0.94]});
+        add({position:[x,2.872,z],scale:[0.36,0.004,0.22],color:[1,1,0.98]});
       }
+      // Ceiling perimeter cove: a soft architectural detail, not an extra room object.
+      add({position:[0,2.91,-2.38],scale:[2.35,0.018,0.025],color:trimLight});
+      add({position:[0,2.91,2.38],scale:[2.35,0.018,0.025],color:trimLight});
+      add({position:[-2.38,2.91,0],scale:[0.025,0.018,2.35],color:trimLight});
+      add({position:[2.38,2.91,0],scale:[0.025,0.018,2.35],color:trimLight});
 
       const positionLoc=gl.getAttribLocation(program,'aPosition');
       const normalLoc=gl.getAttribLocation(program,'aNormal');
