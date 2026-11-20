@@ -309,6 +309,36 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       addLimb([-0.51,0.17,0.72],[-0.5,0.15,1.12],0.085,mannequin);
       addLimb([-0.5,0.15,1.12],[-0.5,0.13,1.48],0.065,mannequinLight);
       addSphere([-0.5,0.13,1.58],[0.085,0.065,0.15],mannequin);
+      // More continuous molded anatomy: deltoids, elbows, palms and individual fingers.
+      addSphere([-0.82,0.205,-0.31],[0.095,0.09,0.12],mannequinLight);
+      addSphere([-0.38,0.205,-0.31],[0.095,0.09,0.12],mannequinLight);
+      addSphere([-1.02,0.18,-0.18],[0.067,0.067,0.07],mannequin);
+      addSphere([-0.18,0.18,-0.18],[0.067,0.067,0.07],mannequin);
+      addSphere([-1.12,0.145,0.11],[0.073,0.035,0.095],mannequinLight);
+      addSphere([-0.08,0.145,0.11],[0.073,0.035,0.095],mannequinLight);
+      for(let finger=0;finger<4;finger++){
+        const offset=(finger-1.5)*0.027;
+        addLimb([-1.14+offset,0.14,0.15],[-1.16+offset,0.12,0.23],0.012,mannequinLight);
+        addLimb([-0.06+offset,0.14,0.15],[-0.04+offset,0.12,0.23],0.012,mannequinLight);
+      }
+      addLimb([-1.07,0.145,0.12],[-1.02,0.12,0.19],0.014,mannequin);
+      addLimb([-0.13,0.145,0.12],[-0.18,0.12,0.19],0.014,mannequin);
+      // Molded clavicles and a gentle rib-cage contour around the CPR contact area.
+      addLimb([-0.79,0.275,-0.36],[-0.61,0.29,-0.31],0.018,mannequinShade);
+      addLimb([-0.59,0.29,-0.31],[-0.41,0.275,-0.36],0.018,mannequinShade);
+      addSphere([-0.6,0.115,0.34],[0.145,0.045,0.13],mannequinLight);
+      addSphere([-0.69,0.115,0.76],[0.095,0.075,0.11],mannequin);
+      addSphere([-0.51,0.115,0.76],[0.095,0.075,0.11],mannequin);
+      // Defined knee joints and softly shaped feet with toe caps.
+      addSphere([-0.7,0.145,1.12],[0.073,0.07,0.08],mannequin);
+      addSphere([-0.5,0.145,1.12],[0.073,0.07,0.08],mannequin);
+      addSphere([-0.7,0.12,1.66],[0.078,0.045,0.075],mannequinLight);
+      addSphere([-0.5,0.12,1.66],[0.078,0.045,0.075],mannequinLight);
+      // Subtle facial shaping: brow ridge, cheeks and chin on the neutral training face.
+      addSphere([-0.6,0.19,-0.82],[0.09,0.035,0.055],mannequinLight);
+      addSphere([-0.67,0.235,-0.83],[0.045,0.018,0.025],mannequinShade);
+      addSphere([-0.53,0.235,-0.83],[0.045,0.018,0.025],mannequinShade);
+      addSphere([-0.6,0.18,-0.79],[0.07,0.035,0.045],mannequin);
       // Choking-response training vest / manikin beside the CPR mat.
       add({position:[-1.45,0.23,1.05],scale:[0.22,0.13,0.46],color:[0.85,0.55,0.16]},'sphere');
       // Phone, AED, antiseptic station and APK desk.
