@@ -500,9 +500,24 @@ export default function Home() {
     if (!holdSuccess) setTimerChallenge(0);
   };
 
+  const checkBlsActionOrder = (id: string) => {
+    if (!isBlsScenario) return true;
+    const repeatableCompletedAction = actionsRef.current[id] &&
+      ['compressions', 'compressions_repeat', 'breaths'].includes(id);
+    if (repeatableCompletedAction) return true;
+
+    const expectedAction = currentOrder.find((actionId) => !actionsRef.current[actionId]);
+    if (id === expectedAction) return true;
+
+    const expectedLabel = ALL_ACTIONS.find((action) => action.id === expectedAction)?.label || 'следующий обязательный этап';
+    setPatientResponse(`Нарушена последовательность. Сначала выполните: ${expectedLabel}.`);
+    return false;
+  };
+
   const handleActionClick = (id: string) => {
     const repeatableBlsAction = isBlsScenario && ['compressions', 'compressions_repeat', 'breaths'].includes(id);
     if (actions[id] && !repeatableBlsAction) return;
+    if (!checkBlsActionOrder(id)) return;
 
     if (APK_MESSAGES[id]) {
       setPatientResponse(APK_MESSAGES[id]);
@@ -817,7 +832,10 @@ export default function Home() {
   }
 
   if (stage === 'finished') {
-    const isPassed = score >= 70;
+    const isBlsSequenceCorrect = !isBlsScenario ||
+      (sequence.length === currentOrder.length &&
+       currentOrder.every((actionId, index) => sequence[index] === actionId));
+    const isPassed = score >= 70 && isBlsSequenceCorrect;
     
     return (
       <div className={`min-h-screen p-4 md:p-8 flex flex-col items-center justify-start overflow-y-auto ${isPassed ? 'bg-green-50' : 'bg-red-50'}`}>
@@ -827,6 +845,11 @@ export default function Home() {
             <p className="text-gray-500">Ситуация: {SCENARIO_TITLES[scenario]}</p>
             <h2 className={`text-6xl font-bold mt-4 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{score}%</h2>
             <p className={`text-xl font-bold mt-2 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{isPassed ? 'ЭКЗАМЕН СДАН' : 'ЭКЗАМЕН НЕ СДАН'}</p>
+            {isBlsScenario && !isBlsSequenceCorrect && (
+              <p className="mt-3 text-sm font-medium text-red-700">
+                Нарушена последовательность действий или пропущен обязательный этап. Для сдачи BLS необходимо выполнить все этапы в установленном порядке.
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             {currentChecklist.map((item: any, index: number) => {
@@ -1023,8 +1046,9 @@ export default function Home() {
             key={spot.id} 
             onClick={() => {
               if (spot.id === 'aed') {
+                if (isBlsScenario && !checkBlsActionOrder('aed')) return;
                 if (isBlsScenario && !blsAedAvailable) {
-                  setPatientResponse('АНД в данный момент Вам недоступен. Продолжайте СЛР.');
+                  setPatientResponse('АНД пока недоступен. Продолжайте СЛР до двух минут, чередуя 30 компрессий и 2 вдоха.');
                   return;
                 }
                 setAedOpen(true);
