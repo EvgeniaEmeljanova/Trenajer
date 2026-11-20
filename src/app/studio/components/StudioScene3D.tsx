@@ -211,38 +211,70 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       // Floor mats.
       addBox('mat_patient',[0.25,0.55,0.67],0.015);
       addBox('mat_rescuer',[0.33,0.57,0.68],0.015);
-      // Adult CPR mannequin: head to north (-Z), feet to south (+Z).
-      addSphere([-0.6,0.25,-0.73],[0.19,0.13,0.2],skin);
-      addSphere([-0.6,0.24,-0.58],[0.09,0.08,0.1],[0.9,0.68,0.54]);
-      addSphere([-0.6,0.23,-0.49],[0.055,0.045,0.08],skin);
-      addSphere([-0.69,0.29,-0.79],[0.025,0.018,0.018],dark);
-      addSphere([-0.51,0.29,-0.79],[0.025,0.018,0.018],dark);
-      addSphere([-0.6,0.2,-0.42],[0.09,0.09,0.12],skin);
-      const chestMesh = addSphere([-0.6,0.23,-0.25],[0.22,0.13,0.43],scrubs);
+      // Adult CPR training mannequin: anatomical segments, neutral molded face and articulated limbs.
+      const mannequin=[0.78,0.61,0.45], mannequinLight=[0.9,0.75,0.61], mannequinShade=[0.62,0.43,0.33];
+      const addLimb=(start:number[],end:number[],radius:number,color:number[])=>{
+        const mid=start.map((v,i)=>(v+end[i])/2);
+        const dx=end[0]-start[0], dy=end[1]-start[1], dz=end[2]-start[2];
+        const length=Math.hypot(dx,dy,dz);
+        const rotation=Math.abs(dx)>Math.abs(dz) ? [0,0,Math.PI/2] : [Math.PI/2,0,0];
+        add({position:mid,scale:[radius,length/2,radius],color,rotation},'cylinder');
+        addSphere(start,[radius,radius,radius],color);
+        addSphere(end,[radius,radius,radius],color);
+      };
+      // Head, ears, neck and facial relief.
+      addSphere([-0.6,0.25,-0.73],[0.18,0.125,0.2],mannequin);
+      addSphere([-0.6,0.255,-0.79],[0.125,0.075,0.105],mannequinLight);
+      addSphere([-0.6,0.205,-0.64],[0.075,0.06,0.075],mannequinShade);
+      addSphere([-0.78,0.245,-0.73],[0.035,0.05,0.045],mannequin);
+      addSphere([-0.42,0.245,-0.73],[0.035,0.05,0.045],mannequin);
+      addSphere([-0.66,0.27,-0.855],[0.018,0.014,0.012],dark);
+      addSphere([-0.54,0.27,-0.855],[0.018,0.014,0.012],dark);
+      addSphere([-0.6,0.245,-0.835],[0.025,0.025,0.022],mannequinShade);
+      addSphere([-0.6,0.215,-0.82],[0.045,0.012,0.018],mannequinShade);
+      // Neck and upper torso; chest remains a dedicated animated mesh for CPR.
+      addCylinder([-0.6,0.22,-0.49],0.085,0.16,mannequin);
+      addSphere([-0.6,0.205,-0.36],[0.245,0.105,0.22],mannequin);
+      const chestMesh = addSphere([-0.6,0.23,-0.22],[0.225,0.13,0.34],mannequinLight);
       const chestBaseScale = [...chestMesh.scale];
-      addSphere([-0.6,0.22,0.23],[0.2,0.12,0.25],scrubs);
-      addSphere([-0.6,0.2,0.73],[0.13,0.1,0.19],blue);
-      addSphere([-0.83,0.2,-0.16],[0.09,0.08,0.42],skin);
-      addSphere([-0.37,0.2,-0.16],[0.09,0.08,0.42],skin);
-      addSphere([-0.83,0.2,0.25],[0.075,0.07,0.12],skin);
-      addSphere([-0.37,0.2,0.25],[0.075,0.07,0.12],skin);
+      addSphere([-0.6,0.2,0.18],[0.19,0.105,0.22],mannequin);
+      addSphere([-0.6,0.19,0.55],[0.17,0.105,0.18],mannequin);
+      // Shoulder joints and arms, slightly angled away from the torso.
+      addLimb([-0.79,0.205,-0.34],[-1.02,0.19,-0.18],0.075,mannequin);
+      addLimb([-1.02,0.19,-0.18],[-1.12,0.16,0.08],0.062,mannequinLight);
+      addLimb([-0.41,0.205,-0.34],[-0.18,0.19,-0.18],0.075,mannequin);
+      addLimb([-0.18,0.19,-0.18],[-0.08,0.16,0.08],0.062,mannequinLight);
+      // Pelvis, separated thighs, lower legs and molded feet.
+      addSphere([-0.6,0.18,0.68],[0.205,0.105,0.19],mannequinShade);
+      addLimb([-0.69,0.17,0.72],[-0.7,0.15,1.12],0.085,mannequin);
+      addLimb([-0.7,0.15,1.12],[-0.7,0.13,1.48],0.065,mannequinLight);
+      addSphere([-0.7,0.13,1.58],[0.085,0.065,0.15],mannequin);
+      addLimb([-0.51,0.17,0.72],[-0.5,0.15,1.12],0.085,mannequin);
+      addLimb([-0.5,0.15,1.12],[-0.5,0.13,1.48],0.065,mannequinLight);
+      addSphere([-0.5,0.13,1.58],[0.085,0.065,0.15],mannequin);
       // Choking-response training vest / manikin beside the CPR mat.
       add({position:[-1.45,0.23,1.05],scale:[0.22,0.13,0.46],color:[0.85,0.55,0.16]},'sphere');
       // Phone, AED, antiseptic station and APK desk.
       addBox('phone',dark,0.02);
-      // AED training unit: soft-edged visual layers, display, status lights, controls and electrode pads.
+      // AED trainer: recognizable case, recessed screen, controls, pad icons and cable details.
       addBox('aed',white,0.12);
-      add({position:[-0.6,0.292,1.55],scale:[0.125,0.012,0.082],color:[0.035,0.12,0.17]});
-      add({position:[-0.6,0.307,1.55],scale:[0.105,0.004,0.062],color:[0.16,0.62,0.68]});
-      addSphere([-0.48,0.305,1.47],[0.025,0.012,0.025],green);
-      addSphere([-0.48,0.305,1.55],[0.025,0.012,0.025],amber);
-      addSphere([-0.48,0.305,1.63],[0.025,0.012,0.025],[0.82,0.18,0.16]);
-      add({position:[-0.72,0.298,1.47],scale:[0.035,0.008,0.035],color:dark});
-      addSphere([-0.72,0.31,1.47],[0.022,0.012,0.022],amber);
-      add({position:[-0.52,0.145,1.77],scale:[0.075,0.008,0.045],color:white});
-      add({position:[-0.68,0.145,1.77],scale:[0.075,0.008,0.045],color:white});
-      add({position:[-0.52,0.158,1.77],scale:[0.045,0.006,0.025],color:[0.16,0.7,0.66]});
-      add({position:[-0.68,0.158,1.77],scale:[0.045,0.006,0.025],color:[0.16,0.7,0.66]});
+      add({position:[-0.6,0.292,1.55],scale:[0.132,0.014,0.09],color:[0.025,0.09,0.13]});
+      add({position:[-0.6,0.309,1.55],scale:[0.112,0.005,0.07],color:[0.12,0.55,0.62]});
+      add({position:[-0.6,0.314,1.55],scale:[0.078,0.002,0.004],color:[0.72,0.9,0.88]});
+      add({position:[-0.6,0.314,1.57],scale:[0.052,0.002,0.003],color:[0.72,0.9,0.88]});
+      addSphere([-0.48,0.305,1.47],[0.026,0.014,0.026],green);
+      addSphere([-0.48,0.305,1.55],[0.026,0.014,0.026],amber);
+      addSphere([-0.48,0.305,1.63],[0.026,0.014,0.026],[0.82,0.18,0.16]);
+      add({position:[-0.72,0.298,1.47],scale:[0.04,0.01,0.04],color:dark});
+      addSphere([-0.72,0.312,1.47],[0.025,0.014,0.025],amber);
+      add({position:[-0.6,0.285,1.4],scale:[0.055,0.009,0.025],color:[0.12,0.62,0.43]});
+      // Electrode pads are visible beside the case; their leads run toward the unit.
+      add({position:[-0.52,0.145,1.77],scale:[0.078,0.012,0.05],color:white});
+      add({position:[-0.68,0.145,1.77],scale:[0.078,0.012,0.05],color:white});
+      add({position:[-0.52,0.16,1.77],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
+      add({position:[-0.68,0.16,1.77],scale:[0.048,0.006,0.028],color:[0.16,0.7,0.66]});
+      addCylinder([-0.46,0.12,1.68],0.009,0.28,dark);
+      addCylinder([-0.74,0.12,1.68],0.009,0.28,dark);
       // Cable coils and the trolley's rounded metal uprights.
       addCylinder([1.35,0.25,-1.45],0.025,0.42,metal);
       addCylinder([1.22,0.1,-1.45],0.018,0.18,dark);
