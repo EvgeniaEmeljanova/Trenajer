@@ -469,10 +469,11 @@ export default function Home() {
   };
 
   const toggleAction = (id: string) => {
-    if (actions[id]) return;
-    actionsRef.current = { ...actionsRef.current, [id]: true };
-    setActions((prev) => ({ ...prev, [id]: true }));
-    setSequence((prev) => [...prev, id]);
+    if (!actions[id]) {
+      actionsRef.current = { ...actionsRef.current, [id]: true };
+      setActions((prev) => ({ ...prev, [id]: true }));
+      setSequence((prev) => [...prev, id]);
+    }
     setChallenge(null);
   };
 
@@ -500,7 +501,8 @@ export default function Home() {
   };
 
   const handleActionClick = (id: string) => {
-    if (actions[id]) return;
+    const repeatableBlsAction = isBlsScenario && ['compressions', 'compressions_repeat', 'breaths'].includes(id);
+    if (actions[id] && !repeatableBlsAction) return;
 
     if (APK_MESSAGES[id]) {
       setPatientResponse(APK_MESSAGES[id]);
@@ -725,8 +727,7 @@ export default function Home() {
         setChallenge(null);
         const completedId = challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions';
         toggleAction(completedId);
-        if (isBlsScenario && completedId === 'compressions_repeat') {
-          setBlsCompressionElapsed(0);
+        if (isBlsScenario) {
           setBlsCompressionRunning(true);
         }
       }, 500);
