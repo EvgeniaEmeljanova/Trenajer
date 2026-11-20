@@ -66,7 +66,7 @@ function tube(start: [number, number, number], end: [number, number, number], ra
   }
   for (let k = 0; k < rings; k++) for (let j = 0; j < segments; j++) {
     const a = k * (segments + 1) + j, b = a + segments + 1;
-    indices.push(a, b, b + 1, a, b + 1, a + 1);
+    indices.push(a, a + 1, b + 1, a, b + 1, b);
   }
   return finish(vertices, indices);
 }
@@ -136,6 +136,19 @@ export function buildAdultCprManikin(): ManikinPart[] {
   add(ellipsoid(0.022, 0.034, 0.024), [-0.6, 0.238, -0.574], [1, 1, 1], seam);
   add(tube([-0.642, 0.218, -0.585], [-0.6, 0.211, -0.577], 0.006, 0.004, 10), [0, 0, 0], [1, 1, 1], seam);
   add(tube([-0.6, 0.211, -0.577], [-0.558, 0.218, -0.585], 0.004, 0.006, 10), [0, 0, 0], [1, 1, 1], seam);
+  // More recognizable molded training face: ears, closed lids, nose and airway opening.
+  add(ellipsoid(0.026, 0.052, 0.064), [-0.748, 0.252, -0.73], [1, 1, 1], plastic);
+  add(ellipsoid(0.026, 0.052, 0.064), [-0.452, 0.252, -0.73], [1, 1, 1], plastic);
+  add(ellipsoid(0.012, 0.027, 0.035), [-0.754, 0.252, -0.73], [1, 1, 1], seam);
+  add(ellipsoid(0.012, 0.027, 0.035), [-0.446, 0.252, -0.73], [1, 1, 1], seam);
+  add(tube([-0.69, 0.278, -0.598], [-0.64, 0.282, -0.588], 0.005, 0.005, 12), [0, 0, 0], [1, 1, 1], seam);
+  add(tube([-0.56, 0.282, -0.588], [-0.51, 0.278, -0.598], 0.005, 0.005, 12), [0, 0, 0], [1, 1, 1], seam);
+  add(ellipsoid(0.03, 0.035, 0.026), [-0.6, 0.242, -0.568], [1, 1, 1], chestPlastic);
+  add(ellipsoid(0.009, 0.006, 0.008), [-0.619, 0.229, -0.565], [1, 1, 1], dark);
+  add(ellipsoid(0.009, 0.006, 0.008), [-0.581, 0.229, -0.565], [1, 1, 1], dark);
+  add(ellipsoid(0.042, 0.016, 0.009), [-0.6, 0.204, -0.572], [1, 1, 1], dark);
+  add(tube([-0.65, 0.195, -0.57], [-0.6, 0.19, -0.568], 0.004, 0.004, 10), [0, 0, 0], [1, 1, 1], seam);
+  add(tube([-0.6, 0.19, -0.568], [-0.55, 0.195, -0.57], 0.004, 0.004, 10), [0, 0, 0], [1, 1, 1], seam);
 
   // Neck, shoulder transitions and smooth tapered arms.
   add(tube([-0.6, 0.22, -0.56], [-0.6, 0.22, -0.43], 0.075, 0.09), [-0, 0, 0], [1, 1, 1], plastic);
@@ -164,5 +177,32 @@ export function buildAdultCprManikin(): ManikinPart[] {
   // Subtle molded shoulder/collar seams and a lower chest reference line.
   add(tube([-0.79, 0.285, -0.38], [-0.6, 0.302, -0.32], 0.009, 0.009, 16), [0, 0, 0], [1, 1, 1], seam);
   add(tube([-0.6, 0.302, -0.32], [-0.41, 0.285, -0.38], 0.009, 0.009, 16), [0, 0, 0], [1, 1, 1], seam);
+  // Fine molded landmarks on the compression panel, kept low-contrast like real matte plastic.
+  add(tube([-0.6, 0.357, -0.37], [-0.6, 0.359, -0.13], 0.0045, 0.0045, 12), [0, 0, 0], [1, 1, 1], seam);
+  add(tube([-0.78, 0.345, -0.39], [-0.69, 0.357, -0.35], 0.005, 0.004, 12), [0, 0, 0], [1, 1, 1], seam);
+  add(tube([-0.69, 0.357, -0.35], [-0.6, 0.36, -0.34], 0.004, 0.004, 12), [0, 0, 0], [1, 1, 1], seam);
+  add(tube([-0.6, 0.36, -0.34], [-0.51, 0.357, -0.35], 0.004, 0.004, 12), [0, 0, 0], [1, 1, 1], seam);
+  add(tube([-0.51, 0.357, -0.35], [-0.42, 0.345, -0.39], 0.005, 0.004, 12), [0, 0, 0], [1, 1, 1], seam);
+  // Short curved seams suggest a molded torso shell rather than a segmented toy figure.
+  add(tube([-0.79, 0.285, -0.22], [-0.72, 0.31, -0.17], 0.004, 0.004, 12), [0, 0, 0], [1, 1, 1], seam);
+  add(tube([-0.72, 0.31, -0.17], [-0.6, 0.318, -0.15], 0.004, 0.004, 12), [0, 0, 0], [1, 1, 1], seam);
+  add(tube([-0.6, 0.318, -0.15], [-0.48, 0.31, -0.17], 0.004, 0.004, 12), [0, 0, 0], [1, 1, 1], seam);
+  add(tube([-0.48, 0.31, -0.17], [-0.41, 0.285, -0.22], 0.004, 0.004, 12), [0, 0, 0], [1, 1, 1], seam);
+
+  // Scale the complete body to a realistic adult training-mannequin length (~1.85 m).
+  // Transform normals with the inverse scale so the highlights remain smooth.
+  const lengthScale = 0.72;
+  for (const part of parts) {
+    part.position[2] *= lengthScale;
+    part.scale[2] *= lengthScale;
+    const p = part.geometry.p;
+    const n = part.geometry.n;
+    for (let i = 2; i < p.length; i += 3) p[i] *= lengthScale;
+    for (let i = 2; i < n.length; i += 3) n[i] /= lengthScale;
+    for (let i = 0; i < n.length; i += 3) {
+      const l = Math.hypot(n[i], n[i + 1], n[i + 2]) || 1;
+      n[i] /= l; n[i + 1] /= l; n[i + 2] /= l;
+    }
+  }
   return parts;
 }
