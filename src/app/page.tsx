@@ -569,6 +569,11 @@ export default function Home() {
     }
 
     if (id === 'compressions' || id === 'compressions_repeat') {
+      // После завершения АНД второй двухминутный таймер запускается
+      // при возобновлении компрессий.
+      if (isBlsScenario && blsSecondCycle && !blsRosc) {
+        setBlsCompressionRunning(true);
+      }
       setChallenge(id === 'compressions' ? 'cpr' : 'cpr_repeat');
       setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
@@ -1058,7 +1063,7 @@ export default function Home() {
         </div>
       )}
 
-      {isBlsScenario && <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-40 rounded-lg bg-black/80 px-4 py-2 text-xs text-center text-white">{blsRosc ? 'Признаки жизни восстановились' : blsAedAvailable ? (blsSecondCycle ? 'Продолжайте СЛР: второй цикл' : 'АНД доступен') : blsCompressionRunning ? `СЛР: ${Math.floor(blsCompressionElapsed / 60)}:${String(blsCompressionElapsed % 60).padStart(2, '0')} — АНД пока недоступен` : 'Начните СЛР'}</div>}
+      {isBlsScenario && <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-40 rounded-lg bg-black/80 px-4 py-2 text-xs text-center text-white">{blsRosc ? 'Признаки жизни восстановились' : blsSecondCycle ? (blsCompressionRunning ? `Второй цикл СЛР: ${Math.floor(blsCompressionElapsed / 60)}:${String(blsCompressionElapsed % 60).padStart(2, '0')}` : 'Возобновите СЛР: второй цикл') : blsAedAvailable ? 'АНД доступен' : blsCompressionRunning ? `СЛР: ${Math.floor(blsCompressionElapsed / 60)}:${String(blsCompressionElapsed % 60).padStart(2, '0')} — АНД пока недоступен` : 'Начните СЛР'}</div>}
 
       <div className="relative w-full max-w-[1200px] mx-auto">
         <img src="/room.jpg" alt="Комната" className="w-full h-auto object-contain" />
