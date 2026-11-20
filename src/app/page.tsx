@@ -425,7 +425,7 @@ export default function Home() {
       const scenarios = station.scenarios;
       const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
       setScenario(randomScenario);
-      setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null);
+      actionsRef.current = {}; setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null);
       setTimeLeft(510); setScore(0); setIsArrest(false);
       isFinishing.current = false; hasSpokenMinuteWarning.current = false;
       setStage('briefing');
