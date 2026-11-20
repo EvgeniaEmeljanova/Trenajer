@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ROOM_SPEC } from '../scene/room-spec';
+import { buildAdultCprManikin } from '../scene/manikin-geometry';
 
 type Props = {
   selected: string;
@@ -214,7 +215,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);
         return buffer;
       };
-      const meshes: { mesh:Mesh; p:WebGLBuffer; n:WebGLBuffer; count:number; shape:'cube'|'sphere'|'cylinder' }[] = [];
+      const meshes: { mesh:Mesh; p:WebGLBuffer; n:WebGLBuffer; count:number; shape:'cube'|'sphere'|'cylinder'|'custom' }[] = [];
       const add=(mesh:Mesh, shape:'cube'|'sphere'|'cylinder'='cube')=>{
         const data=shape==='cube'?cube:shape==='sphere'?sphere:cylinder;
         meshes.push({mesh,p:createBuffer(data.p),n:createBuffer(data.n),count:data.p.length/3,shape});
@@ -230,6 +231,11 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         add({position,scale:[radius,height/2,radius],color},'cylinder');
       const addSphere = (position:number[], scale:number[], color:number[]) =>
         add({position,scale,color},'sphere');
+      const addCustomGeometry = (geometry:{p:number[];n:number[]}, position:number[], scale:number[], color:number[]) => {
+        const mesh = { position, scale, color };
+        meshes.push({ mesh, p:createBuffer(geometry.p), n:createBuffer(geometry.n), count:geometry.p.length/3, shape:'custom' });
+        return mesh;
+      };
       // Room shell: 5 x 5 x 3 metres. North is -Z, south is +Z.
       const floor=[0.78,0.76,0.72], wall=[0.92,0.94,0.94], wallSide=[0.86,0.9,0.92], ceiling=[0.97,0.97,0.95];
       add({position:[0,-0.08,0],scale:[2.5,0.08,2.5],color:floor});
@@ -268,8 +274,7 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
       addSphere([0.04,0.006,-0.34],[0.22,0.003,0.16],[0.62,0.67,0.7]);
       addSphere([1.35,0.006,-1.45],[0.2,0.003,0.17],[0.62,0.67,0.7]);
       addSphere([2.0,0.006,-0.8],[0.68,0.003,0.42],[0.62,0.67,0.7]);
-      // Adult CPR training mannequin: anatomical segments, neutral molded face and articulated limbs.
-      const mannequin=[0.78,0.61,0.45], mannequinLight=[0.9,0.75,0.61], mannequinShade=[0.62,0.43,0.33];
+      // Original smooth-surface adult CPR manikin. No stack of primitive body parts.
       const addLimb=(start:number[],end:number[],radius:number,color:number[])=>{
         const mid=start.map((v,i)=>(v+end[i])/2);
         const dx=end[0]-start[0], dy=end[1]-start[1], dz=end[2]-start[2];
@@ -279,66 +284,14 @@ export default function StudioScene3D({ selected, onSelect }: Props) {
         addSphere(start,[radius,radius,radius],color);
         addSphere(end,[radius,radius,radius],color);
       };
-      // Head, ears, neck and facial relief.
-      addSphere([-0.6,0.25,-0.73],[0.18,0.125,0.2],mannequin);
-      addSphere([-0.6,0.255,-0.79],[0.125,0.075,0.105],mannequinLight);
-      addSphere([-0.6,0.205,-0.64],[0.075,0.06,0.075],mannequinShade);
-      addSphere([-0.78,0.245,-0.73],[0.035,0.05,0.045],mannequin);
-      addSphere([-0.42,0.245,-0.73],[0.035,0.05,0.045],mannequin);
-      addSphere([-0.66,0.27,-0.855],[0.018,0.014,0.012],dark);
-      addSphere([-0.54,0.27,-0.855],[0.018,0.014,0.012],dark);
-      addSphere([-0.6,0.245,-0.835],[0.025,0.025,0.022],mannequinShade);
-      addSphere([-0.6,0.215,-0.82],[0.045,0.012,0.018],mannequinShade);
-      // Neck and upper torso; chest remains a dedicated animated mesh for CPR.
-      addCylinder([-0.6,0.22,-0.49],0.085,0.16,mannequin);
-      addSphere([-0.6,0.205,-0.36],[0.245,0.105,0.22],mannequin);
-      const chestMesh = addSphere([-0.6,0.23,-0.22],[0.225,0.13,0.34],mannequinLight);
-      const chestBaseScale = [...chestMesh.scale];
-      addSphere([-0.6,0.2,0.18],[0.19,0.105,0.22],mannequin);
-      addSphere([-0.6,0.19,0.55],[0.17,0.105,0.18],mannequin);
-      // Shoulder joints and arms, slightly angled away from the torso.
-      addLimb([-0.79,0.205,-0.34],[-1.02,0.19,-0.18],0.075,mannequin);
-      addLimb([-1.02,0.19,-0.18],[-1.12,0.16,0.08],0.062,mannequinLight);
-      addLimb([-0.41,0.205,-0.34],[-0.18,0.19,-0.18],0.075,mannequin);
-      addLimb([-0.18,0.19,-0.18],[-0.08,0.16,0.08],0.062,mannequinLight);
-      // Pelvis, separated thighs, lower legs and molded feet.
-      addSphere([-0.6,0.18,0.68],[0.205,0.105,0.19],mannequinShade);
-      addLimb([-0.69,0.17,0.72],[-0.7,0.15,1.12],0.085,mannequin);
-      addLimb([-0.7,0.15,1.12],[-0.7,0.13,1.48],0.065,mannequinLight);
-      addSphere([-0.7,0.13,1.58],[0.085,0.065,0.15],mannequin);
-      addLimb([-0.51,0.17,0.72],[-0.5,0.15,1.12],0.085,mannequin);
-      addLimb([-0.5,0.15,1.12],[-0.5,0.13,1.48],0.065,mannequinLight);
-      addSphere([-0.5,0.13,1.58],[0.085,0.065,0.15],mannequin);
-      // More continuous molded anatomy: deltoids, elbows, palms and individual fingers.
-      addSphere([-0.82,0.205,-0.31],[0.095,0.09,0.12],mannequinLight);
-      addSphere([-0.38,0.205,-0.31],[0.095,0.09,0.12],mannequinLight);
-      addSphere([-1.02,0.18,-0.18],[0.067,0.067,0.07],mannequin);
-      addSphere([-0.18,0.18,-0.18],[0.067,0.067,0.07],mannequin);
-      addSphere([-1.12,0.145,0.11],[0.073,0.035,0.095],mannequinLight);
-      addSphere([-0.08,0.145,0.11],[0.073,0.035,0.095],mannequinLight);
-      for(let finger=0;finger<4;finger++){
-        const offset=(finger-1.5)*0.027;
-        addLimb([-1.14+offset,0.14,0.15],[-1.16+offset,0.12,0.23],0.012,mannequinLight);
-        addLimb([-0.06+offset,0.14,0.15],[-0.04+offset,0.12,0.23],0.012,mannequinLight);
+      const manikinParts = buildAdultCprManikin();
+      let chestMesh: Mesh | null = null;
+      for (const part of manikinParts) {
+        const mesh = addCustomGeometry(part.geometry, [...part.position], [...part.scale], [...part.color]);
+        if (part.role === 'chest') chestMesh = mesh;
       }
-      addLimb([-1.07,0.145,0.12],[-1.02,0.12,0.19],0.014,mannequin);
-      addLimb([-0.13,0.145,0.12],[-0.18,0.12,0.19],0.014,mannequin);
-      // Molded clavicles and a gentle rib-cage contour around the CPR contact area.
-      addLimb([-0.79,0.275,-0.36],[-0.61,0.29,-0.31],0.018,mannequinShade);
-      addLimb([-0.59,0.29,-0.31],[-0.41,0.275,-0.36],0.018,mannequinShade);
-      addSphere([-0.6,0.115,0.34],[0.145,0.045,0.13],mannequinLight);
-      addSphere([-0.69,0.115,0.76],[0.095,0.075,0.11],mannequin);
-      addSphere([-0.51,0.115,0.76],[0.095,0.075,0.11],mannequin);
-      // Defined knee joints and softly shaped feet with toe caps.
-      addSphere([-0.7,0.145,1.12],[0.073,0.07,0.08],mannequin);
-      addSphere([-0.5,0.145,1.12],[0.073,0.07,0.08],mannequin);
-      addSphere([-0.7,0.12,1.66],[0.078,0.045,0.075],mannequinLight);
-      addSphere([-0.5,0.12,1.66],[0.078,0.045,0.075],mannequinLight);
-      // Subtle facial shaping: brow ridge, cheeks and chin on the neutral training face.
-      addSphere([-0.6,0.19,-0.82],[0.09,0.035,0.055],mannequinLight);
-      addSphere([-0.67,0.235,-0.83],[0.045,0.018,0.025],mannequinShade);
-      addSphere([-0.53,0.235,-0.83],[0.045,0.018,0.025],mannequinShade);
-      addSphere([-0.6,0.18,-0.79],[0.07,0.035,0.045],mannequin);
+      if (!chestMesh) throw new Error('Не найдена подвижная грудная панель манекена');
+      const chestBaseScale = [...chestMesh.scale];
       // Choking-response training vest / manikin beside the CPR mat.
       add({position:[-1.45,0.23,1.05],scale:[0.22,0.13,0.46],color:[0.85,0.55,0.16]},'sphere');
       // Phone, AED, antiseptic station and APK desk.
