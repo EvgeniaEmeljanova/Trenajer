@@ -592,9 +592,6 @@ export default function Home() {
     if (id === 'compressions' || id === 'compressions_repeat') {
       // После завершения АНД второй двухминутный таймер запускается
       // при возобновлении компрессий.
-      if (isBlsScenario && blsSecondCycle && !blsRosc) {
-        setBlsCompressionRunning(true);
-      }
       setChallenge(id === 'compressions' ? 'cpr' : 'cpr_repeat');
       setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
       return;
@@ -654,9 +651,14 @@ export default function Home() {
       startHoldChallenge(id, 10);
       return;
     }
+    if (isBlsScenario && id === 'reassess_pulse') {
+      if (!needsRecoveryPosition || !blsRosc) return;
+      startHoldChallenge(id, 10);
+      return;
+    }
     if (isBlsScenario && id === 'recovery') {
       if (!needsRecoveryPosition || !blsRosc) return;
-      if (!actions['reassess_consciousness'] || !actions['reassess_breathing'] || !actions['reassess_pulse']) {
+      if (!actionsRef.current.reassess_consciousness || !actionsRef.current.reassess_breathing || !actionsRef.current.reassess_pulse) {
         setPatientResponse('Сначала повторно оцените сознание и дыхание пострадавшего.');
         return;
       }
@@ -1075,10 +1077,8 @@ export default function Home() {
       {(challenge === 'cpr' || challenge === 'cpr_repeat') && (
         <div className="absolute inset-0 bg-gray-900/95 flex flex-col items-center justify-center z-50 p-4">
           <h2 className="text-3xl font-bold mb-2 text-white">Компрессии</h2>
-          <p className="text-gray-400 mb-8">Нажимайте в ритме 100-120 в минуту</p>
           <div className={`mb-6 text-2xl font-bold ${cprFeedback === 'Отличный ритм!' ? 'text-green-400' : cprFeedback.includes('Слишком') ? 'text-red-500' : 'text-white'}`}>{cprFeedback}</div>
           <button onClick={handleCprClick} className="w-64 h-64 bg-red-600 rounded-full text-white text-7xl font-bold shadow-[0_0_80px_rgba(220,38,38,0.6)] active:scale-95 transition-transform flex items-center justify-center select-none">{cprCount}</button>
-          <p className="mt-8 text-white text-xl">Осталось: {30 - cprCount}</p>
         </div>
       )}
 
