@@ -898,9 +898,6 @@ export default function Home() {
             <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-sm">
               <button onClick={() => setActiveHotspot(null)} className="float-right font-bold">✕</button>
               <h3 className="text-xl font-bold mb-2">Действия</h3>
-              <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm font-medium">
-                💡 Подсказка: {currentOrder[sequence.length] ? ALL_ACTIONS.find(a => a.id === currentOrder[sequence.length])?.label : 'Все шаги выполнены!'}
-              </div>
               <div className="space-y-3 max-h-[50vh] overflow-y-auto">
                 {ALL_ACTIONS.map((action) => {
                   if (scenario !== 'BLS') {
