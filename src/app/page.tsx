@@ -223,7 +223,6 @@ export default function Home() {
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   
   const [mistakes, setMistakes] = useState<string[]>([]);
-  const [accredicMessage, setAccredicMessage] = useState<string | null>(null);
   const [patientResponse, setPatientResponse] = useState<string | null>(null);
 
   const [isArrest, setIsArrest] = useState(false);
@@ -423,8 +422,6 @@ export default function Home() {
 
     if (id === 'ecg') {
       toggleAction('ecg');
-      setAccredicMessage('ЭКГ снята. Пленка готова к интерпретации.');
-      setTimeout(() => setAccredicMessage(null), 2000);
       return;
     }
 
@@ -712,12 +709,6 @@ export default function Home() {
       <div className="absolute bottom-20 left-4 z-40 flex items-end pointer-events-none">
         <img src="/helper.png" alt="Аккредик" className="w-24 h-24 drop-shadow-2xl" />
         <div className="ml-2 mb-4 flex flex-col gap-2 items-start">
-          {accredicMessage && (
-            <div className="bg-white text-gray-800 p-3 rounded-2xl rounded-bl-none shadow-xl border-2 border-blue-500 max-w-xs relative">
-              <div className="absolute -left-2 bottom-2 w-4 h-4 bg-white border-b-2 border-l-2 border-blue-500 transform rotate-45"></div>
-              <p className="font-medium text-sm">{accredicMessage}</p>
-            </div>
-          )}
           {patientResponse && (
             <div className="bg-teal-50 text-teal-900 p-4 rounded-2xl shadow-xl border-2 border-teal-500 max-w-sm relative">
               <p className="font-bold text-xs text-teal-600 mb-1">Ответ пациента:</p>
