@@ -836,7 +836,19 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-2 text-white">Компрессии</h2>
           <p className="text-gray-400 mb-8">Нажимайте в ритме 100-120 в минуту</p>
           <div className={`mb-6 text-2xl font-bold ${cprFeedback === 'Отличный ритм!' ? 'text-green-400' : cprFeedback.includes('Слишком') ? 'text-red-500' : 'text-white'}`}>{cprFeedback}</div>
-          <button onClick={handleCprClick} className="w-64 h-64 bg-red-600 rounded-full text-white text-7xl font-bold shadow-[0_0_80px_rgba(220,38,38,0.6)] active:scale-95 transition-transform flex items-center justify-center select-none">{cprCount}</button>
+          <button onClick={handleCprClick} aria-label="Выполнить компрессию грудной клетки" className="relative w-64 h-64 rounded-[2rem] bg-gradient-to-br from-sky-500 to-blue-700 text-white shadow-[0_16px_50px_rgba(14,165,233,0.35)] ring-4 ring-sky-300/30 active:scale-95 active:translate-y-1 transition-transform flex flex-col items-center justify-center gap-1 select-none">
+            <svg viewBox="0 0 220 180" className="w-44 h-36 drop-shadow-lg" role="img" aria-label="Сложенные руки для компрессий">
+              <path d="M91 166 L91 112 Q91 101 102 101 L119 101 Q128 101 128 111 L128 166 Z" fill="#F4C7A1" stroke="#8B5E46" strokeWidth="3"/>
+              <path d="M129 166 L129 112 Q129 101 140 101 L157 101 Q166 101 166 111 L166 166 Z" fill="#EFBF98" stroke="#8B5E46" strokeWidth="3"/>
+              <path d="M48 93 Q42 82 53 74 L81 54 Q91 47 101 55 L113 64 Q122 70 132 63 L151 49 Q161 42 170 51 L181 62 Q190 72 180 81 L147 109 Q136 119 122 111 L109 103 Q101 98 93 105 L76 119 Q65 128 55 117 Z" fill="#F4C7A1" stroke="#8B5E46" strokeWidth="3" strokeLinejoin="round"/>
+              <path d="M39 76 Q29 67 38 56 L49 43 Q57 34 67 42 L91 60 Q99 66 93 76 L82 91 Q75 100 65 93 Z" fill="#F8D4B5" stroke="#8B5E46" strokeWidth="3"/>
+              <path d="M127 61 L151 40 Q160 32 169 41 L184 55 Q193 64 184 73 L161 94 Q151 103 142 93 Z" fill="#F8D4B5" stroke="#8B5E46" strokeWidth="3"/>
+              <path d="M89 80 Q107 91 126 79" fill="none" stroke="#C58E6B" strokeWidth="3" strokeLinecap="round"/>
+              <path d="M104 25 V43 M94 35 L104 45 L114 35" fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="text-sm font-bold tracking-wide">НАЖАТЬ</span>
+            <span className="absolute -top-3 -right-3 min-w-12 h-12 px-2 rounded-full bg-white text-blue-700 border-4 border-sky-500 flex items-center justify-center text-xl font-black shadow-lg">{cprCount}</span>
+          </button>
           <p className="mt-8 text-white text-xl">Осталось: {30 - cprCount}</p>
         </div>
       )}
