@@ -541,10 +541,6 @@ export default function Home() {
         setMistakes(prev => prev.includes('Преждевременная попытка использовать АНД') ? prev : [...prev, 'Преждевременная попытка использовать АНД']);
         return false;
       }
-      if (!actionsRef.current.compressions || !actionsRef.current.breaths) {
-        setMistakes(prev => prev.includes('Нарушена последовательность перед использованием АНД') ? prev : [...prev, 'Нарушена последовательность перед использованием АНД']);
-        return false;
-      }
       return true;
     }
 
@@ -899,8 +895,8 @@ export default function Home() {
   }
 
   if (stage === 'finished') {
-    const requiredBlsOrder = currentOrder.filter((actionId) => !['compressions_repeat', 'breaths'].includes(actionId));
-    const completedBlsOrder = sequence.filter((actionId) => !['compressions_repeat', 'breaths'].includes(actionId));
+    const requiredBlsOrder = currentOrder;
+    const completedBlsOrder = sequence;
     const isBlsSequenceCorrect = !isBlsScenario ||
       (completedBlsOrder.length === requiredBlsOrder.length &&
        requiredBlsOrder.every((actionId, index) => completedBlsOrder[index] === actionId));
