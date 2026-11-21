@@ -844,20 +844,7 @@ export default function Home() {
             onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleCprClick(); } }}
             className="cursor-pointer select-none touch-manipulation active:scale-95 transition-transform flex flex-col items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-sky-300 rounded-2xl"
           >
-            <svg viewBox="0 0 300 220" className="w-72 h-56 drop-shadow-[0_12px_18px_rgba(0,0,0,0.35)]" role="img" aria-label="Две руки, сложенные одна на другую, пальцы сцеплены в замок">
-              <defs>
-                <linearGradient id="skinA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#FFE0C2"/><stop offset="1" stopColor="#D99A70"/></linearGradient>
-                <linearGradient id="skinB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F7D1AD"/><stop offset="1" stopColor="#C9825C"/></linearGradient>
-              </defs>
-              <path d="M103 214 L103 151 Q103 139 115 136 L135 130 Q148 126 158 136 L174 151 L194 214 Z" fill="url(#skinA)" stroke="#9B6247" strokeWidth="3"/>
-              <path d="M196 214 L196 151 Q196 139 184 136 L164 130 Q151 126 141 136 L125 151 L106 214 Z" fill="url(#skinB)" stroke="#9B6247" strokeWidth="3"/>
-              <path d="M78 137 Q64 126 74 111 L95 79 Q103 66 117 74 L142 89 Q153 96 165 87 L184 72 Q198 62 209 75 L230 101 Q240 114 228 126 L193 158 Q180 169 164 158 L149 148 Q140 142 130 151 L111 166 Q96 177 84 163 Z" fill="url(#skinA)" stroke="#9B6247" strokeWidth="3" strokeLinejoin="round"/>
-              <path d="M89 103 L56 76 Q44 66 54 53 L66 38 Q76 26 89 36 L130 68 Q142 77 132 90 L119 106 Q108 119 95 109 Z" fill="url(#skinB)" stroke="#9B6247" strokeWidth="3"/>
-              <path d="M173 91 L211 58 Q224 47 236 59 L250 74 Q261 86 248 98 L209 133 Q196 144 184 131 L170 116 Q158 103 173 91 Z" fill="url(#skinA)" stroke="#9B6247" strokeWidth="3"/>
-              <path d="M105 72 Q123 82 139 98 M194 77 Q177 91 161 105" fill="none" stroke="#B97958" strokeWidth="4" strokeLinecap="round"/>
-              <path d="M126 91 Q139 105 151 111 Q165 117 178 103" fill="none" stroke="#9B6247" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M150 18 V47 M138 36 L150 49 L162 36" fill="none" stroke="#7DD3FC" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <img src="/cpr-hands-elbows.png" alt="Руки для выполнения компрессий: пальцы сцеплены в замок, предплечья и локти видны" className="w-[min(82vw,560px)] h-auto max-h-[48vh] object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.35)]" draggable={false} />
             <p className="mt-1 text-sm text-sky-200">Нажимайте на изображение рук в ритме 100–120 в минуту</p>
           </div>
           <p className="mt-5 text-white text-xl font-semibold">Компрессий выполнено: {cprCount} / 30</p>
