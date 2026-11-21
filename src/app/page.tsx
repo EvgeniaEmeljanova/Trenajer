@@ -726,7 +726,7 @@ export default function Home() {
     const missingDetails = [
       { key: 'address', prompt: 'Назовите точный адрес места происшествия.', pattern: /(?:адрес|улица|ул[.]?|проспект|пр-т|переулок|дом|д[.]?|корпус|квартира|кабинет|площадь|набережная)/i },
       { key: 'victims', prompt: 'Сколько пострадавших?', pattern: /(?:один|одна|1)[ ]*(?:пострадавш|человек|пациент)?/i },
-      { key: 'ageSex', prompt: 'Уточните пол и возраст пострадавшего.', pattern: /(?:(?:мужчин|женщин|мальчик|девочк|подросток)[^.!?]{0,30}(?:[0-9]{1,2}[ ]*лет|[0-9]{1,2}[- ]летн)|(?:[0-9]{1,2}[ ]*лет|[0-9]{1,2}[- ]летн)[^.!?]{0,30}(?:мужчин|женщин|мальчик|девочк|подросток))/i },
+      { key: 'ageSex', prompt: 'Уточните пол и возраст пострадавшего.', pattern: /(?:(?:мужчин|женщин|мальчик|девочк|подросток)[^.!?]{0,30}(?:[0-9]{1,2}[ ]*лет|[0-9]{1,2}[- ]летн|среднего возраста|средних лет)|(?:[0-9]{1,2}[ ]*лет|[0-9]{1,2}[- ]летн)[^.!?]{0,30}(?:мужчин|женщин|мальчик|девочк|подросток))/i },
       { key: 'event', prompt: 'Что произошло с пострадавшим?', pattern: /(?:подавил|инородн(?:ое тело|ым телом)|потерял сознани|без сознания|упал|обнаружил|лежит на полу)/i },
       { key: 'consciousness', prompt: 'Пострадавший находится без сознания?', pattern: /(?:без сознания|не реагирует|потерял сознание)/i },
       { key: 'breathing', prompt: 'Есть ли у пострадавшего дыхание?', pattern: /(?:не дышит|дыхания нет|нет дыхания)/i },
@@ -1148,7 +1148,7 @@ export default function Home() {
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   } else {
                     const chokingActions = ['choking', 'back_blows', 'heimlich'];
-                    if (activeHotspot === 'patient' && !['danger', 'danger_after_choking', 'consciousness', 'airway', 'breathing', 'pulse', 'compressions', 'compressions_repeat', 'breaths', 'recovery', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse', ...((scenario === 'BLS1' || scenario === 'BLS2') ? chokingActions : [])].includes(action.id)) return null;
+                    if (activeHotspot === 'patient' && !['danger', 'consciousness', 'airway', 'breathing', 'pulse', 'compressions', 'compressions_repeat', 'breaths', 'recovery', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse', ...((scenario === 'BLS1' || scenario === 'BLS2') ? [...chokingActions, 'danger_after_choking'] : [])].includes(action.id)) return null;
                     if (activeHotspot === 'patient' && ['recovery', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse'].includes(action.id) && (!needsRecoveryPosition || !blsRosc)) return null;
                     if (activeHotspot === 'patient' && action.id === 'aed') return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
