@@ -142,8 +142,8 @@ const PATIENT_DATA: Record<ScenarioType, any> = {
   HYPOGLYCEMIA: { initialVitals: { hr: 110, spo2: 95, bpSys: 120, bpDia: 70, rr: 18 }, responses: { consciousness: 'Открывает глаза', airway: 'Дыхательные пути проходимы', spo2: 'Сатурация 95-98%', respiratory_rate: '3 движения за 10 секунд', percussion: 'Слева и справа ясный', auscultation: 'Везикулярное дыхание', trachea: 'Вены в норме', pulse: '18 ударов за 10 секунд', bp: 'САД: 120, ДАД: 70', heart_ausc: 'Частые', cap_refill: 'Симптом исчезает через 2 секунды', skin: 'Кожа влажная, липкая', pupils: 'Зрачки одинаковые', glucose: '2,0 ммоль/л', muscle_tone: 'Тонус нормальный', abdomen: 'Живот без особенностей', ecg_interpret: 'На ЭКГ: синусовая тахикардия' } },
   HYPERGLYCEMIA: { initialVitals: { hr: 110, spo2: 95, bpSys: 120, bpDia: 70, rr: 18 }, responses: { consciousness: 'Открывает глаза', airway: 'Дыхательные пути проходимы', spo2: 'Сатурация 95-98%', respiratory_rate: '3 движения за 10 секунд', percussion: 'Слева и справа ясный', auscultation: 'Везикулярное дыхание', trachea: 'Вены в норме', pulse: '18 ударов за 10 секунд', bp: 'САД: 120, ДАД: 70', heart_ausc: 'Частые', cap_refill: 'Симптом исчезает через 2 секунды', skin: 'Кожа бледная, сухая', pupils: 'Зрачки одинаковые', glucose: '24 ммоль/л', muscle_tone: 'Тонус нормальный', abdomen: 'Живот без особенностей', ecg_interpret: 'На ЭКГ: синусовая тахикардия' } },
   BLS: { initialVitals: { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 }, responses: {} },
-  BLS1: { initialVitals: { hr: 110, spo2: 94, bpSys: 120, bpDia: 80, rr: 0 }, responses: { danger: 'Опасности нет!', choking: 'Пострадавший не может говорить.', danger_after_choking: 'Опасности нет!', consciousness: 'Пациент не реагирует.', breathing: 'Дыхания нет!', pulse: 'Пульса нет!' } },
-  BLS2: { initialVitals: { hr: 110, spo2: 94, bpSys: 120, bpDia: 80, rr: 0 }, responses: { danger: 'Опасности нет!', choking: 'Пострадавший не может говорить.', danger_after_choking: 'Опасности нет!', consciousness: 'Пациент не реагирует.', breathing: 'Дыхания нет!', pulse: 'Пульса нет!' } },
+  BLS1: { initialVitals: { hr: 110, spo2: 94, bpSys: 120, bpDia: 80, rr: 0 }, responses: { danger: 'Опасности нет!', choking: 'Пострадавший не может говорить.', consciousness: 'Пациент не реагирует.', breathing: 'Дыхания нет!', pulse: 'Пульса нет!' } },
+  BLS2: { initialVitals: { hr: 110, spo2: 94, bpSys: 120, bpDia: 80, rr: 0 }, responses: { danger: 'Опасности нет!', choking: 'Пострадавший не может говорить.', consciousness: 'Пациент не реагирует.', breathing: 'Дыхания нет!', pulse: 'Пульса нет!' } },
   BLS3: { initialVitals: { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 }, responses: { danger: 'Опасности нет!', consciousness: 'Пациент не реагирует.', breathing: 'Дыхания нет!', pulse: 'Пульса нет!', reassess_consciousness: 'Пациент не реагирует.', reassess_breathing: 'Дыхание есть!', reassess_pulse: 'Пульс есть!' } },
   BLS4: { initialVitals: { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 }, responses: { danger: 'Опасности нет!', consciousness: 'Пациент не реагирует.', breathing: 'Дыхания нет!', pulse: 'Пульса нет!', reassess_consciousness: 'Пациент не реагирует.', reassess_breathing: 'Дыхание есть!', reassess_pulse: 'Пульс есть!' } }
 };
@@ -192,7 +192,6 @@ const ALL_ACTIONS = [
   { id: 'verbalize', label: 'Комментировать действия вслух' }, { id: 'compressions', label: 'Компрессии (30 раз)' }, { id: 'breaths', label: 'ИВЛ (2 вдоха)' }, 
   { id: 'aed', label: 'Работа с АНД' }, 
   { id: 'compressions_repeat', label: 'Продолжить СЛР (компрессии)' },
-  { id: 'danger_after_choking', label: 'Повторно убедиться в отсутствии опасности' },
   { id: 'reassess_pulse', label: 'Повторно оценить пульс (10 сек)' }
 ];
 
@@ -210,7 +209,6 @@ const CHECKLIST_BLS = [
   { id: 'choking', text: 'Оценил признаки удушья' },
   { id: 'back_blows', text: 'Выполнил 5 ударов между лопатками' },
   { id: 'heimlich', text: 'Выполнил 5 абдоминальных толчков' },
-  { id: 'danger_after_choking', text: 'Повторно убедился в отсутствии опасности' },
   { id: 'consciousness', text: 'Оценил сознание' },
   { id: 'airway', text: 'Открыл дыхательные пути' },
   { id: 'breathing', text: 'Оценил дыхание' },
@@ -251,8 +249,8 @@ const SCENARIO_DATA: Record<ScenarioType, { order: string[], checklist: any[] }>
   HYPOGLYCEMIA: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'medication', 'call'], checklist: CHECKLIST_HYPOGLYCEMIA },
   HYPERGLYCEMIA: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'infusion', 'call'], checklist: CHECKLIST_HYPERGLYCEMIA },
   BLS: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'recovery'], checklist: CHECKLIST_BLS },
-  BLS1: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'danger_after_choking', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
-  BLS2: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'danger_after_choking', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
+  BLS1: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
+  BLS2: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
   BLS3: { order: ['danger', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
   BLS4: { order: ['danger', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
 };
@@ -1168,7 +1166,7 @@ export default function Home() {
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
                   } else {
                     const chokingActions = ['choking', 'back_blows', 'heimlich'];
-                    if (activeHotspot === 'patient' && !['danger', 'consciousness', 'airway', 'breathing', 'pulse', 'compressions', 'compressions_repeat', 'breaths', 'recovery', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse', ...((scenario === 'BLS1' || scenario === 'BLS2') ? [...chokingActions, 'danger_after_choking'] : [])].includes(action.id)) return null;
+                    if (activeHotspot === 'patient' && !['danger', 'consciousness', 'airway', 'breathing', 'pulse', 'compressions', 'compressions_repeat', 'breaths', 'recovery', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse', ...((scenario === 'BLS1' || scenario === 'BLS2') ? [...chokingActions] : [])].includes(action.id)) return null;
                     if (activeHotspot === 'patient' && ['recovery', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse'].includes(action.id) && (!needsRecoveryPosition || !blsRosc)) return null;
                     if (activeHotspot === 'patient' && action.id === 'aed') return null;
                     if (activeHotspot === 'phone' && action.id !== 'call') return null;
