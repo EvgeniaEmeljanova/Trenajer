@@ -547,7 +547,12 @@ export default function Home() {
     const expectedAction = currentOrder.find(actionId => !actionsRef.current[actionId]);
     const repeatableCycleAction = ['compressions_repeat', 'breaths'].includes(id) && actionsRef.current.compressions && !blsRosc;
     if (id !== expectedAction && !repeatableCycleAction) {
-      setMistakes(prev => prev.includes(`Нарушена последовательность: ${id}`) ? prev : [...prev, `Нарушена последовательность: ${id}`]);
+      const actionLabel = currentChecklist.find((item: any) => item.id === id)?.text || id;
+      const expectedLabel = expectedAction
+        ? (currentChecklist.find((item: any) => item.id === expectedAction)?.text || expectedAction)
+        : 'последовательность уже завершена';
+      const detail = `Нарушена последовательность: «${actionLabel}» выполнено раньше обязательного этапа «${expectedLabel}».`;
+      setMistakes(prev => prev.includes(detail) ? prev : [...prev, detail]);
     }
     // В экзамене система не подсказывает следующий шаг и не останавливает студента.
     return true;
@@ -921,9 +926,22 @@ export default function Home() {
             <h2 className={`text-6xl font-bold mt-4 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{score}%</h2>
             <p className={`text-xl font-bold mt-2 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{isPassed ? 'ЭКЗАМЕН СДАН' : 'ЭКЗАМЕН НЕ СДАН'}</p>
             {isBlsScenario && !isBlsSequenceCorrect && (
-              <p className="mt-3 text-sm font-medium text-red-700">
-                Нарушена последовательность действий или пропущен обязательный этап. Для сдачи BLS необходимо выполнить все этапы в установленном порядке.
-              </p>
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-left">
+                <p className="text-sm font-bold text-red-800">Нарушения последовательности действий</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700">
+                  {mistakes.filter(message => message.startsWith('Нарушена последовательность:')).map((message, index) => (
+                    <li key={index}>{message}</li>
+                  ))}
+                  {currentOrder.filter(actionId => !sequence.includes(actionId)).map((actionId, index) => {
+                    const label = currentChecklist.find((item: any) => item.id === actionId)?.text || actionId;
+                    return <li key={`missing-${actionId}-${index}`}>Не выполнен обязательный этап: «{label}».</li>;
+                  })}
+                  {mistakes.some(message => message.includes('Преждевременная попытка использовать АНД')) && (
+                    <li>АНД пытались использовать до того, как он стал доступен по сценарию.</li>
+                  )}
+                </ul>
+                <p className="mt-3 text-xs text-red-700">Отметки «да/нет» в чек-листе показывают факт выполнения действия; нарушения порядка перечислены отдельно.</p>
+              </div>
             )}
           </div>
           <div className="space-y-2">
