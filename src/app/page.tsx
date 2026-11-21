@@ -747,12 +747,6 @@ export default function Home() {
 
             <p className="text-center mb-4 text-white font-medium">Что вы видите на данной ЭКГ?</p>
 
-            {ecgFeedback && (
-              <div className={`p-3 rounded-lg mb-4 text-center font-bold ${ecgFeedback.includes('Верно') ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                {ecgFeedback}
-              </div>
-            )}
-
             <div className="space-y-2">
               <button 
                 onClick={() => handleEcgAnswer(true)} 
@@ -835,7 +829,6 @@ export default function Home() {
         <div className="absolute inset-0 bg-gray-900/95 flex flex-col items-center justify-center z-50 p-4">
           <h2 className="text-3xl font-bold mb-2 text-white">Компрессии</h2>
           <p className="text-gray-400 mb-8">Нажимайте в ритме 100-120 в минуту</p>
-          <div className={`mb-6 text-2xl font-bold ${cprFeedback === 'Отличный ритм!' ? 'text-green-400' : cprFeedback.includes('Слишком') ? 'text-red-500' : 'text-white'}`}>{cprFeedback}</div>
           <div
             role="button"
             tabIndex={0}
