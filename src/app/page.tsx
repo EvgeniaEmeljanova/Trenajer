@@ -249,10 +249,10 @@ const SCENARIO_DATA: Record<ScenarioType, { order: string[], checklist: any[] }>
   HYPOGLYCEMIA: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'medication', 'call'], checklist: CHECKLIST_HYPOGLYCEMIA },
   HYPERGLYCEMIA: { order: ['consciousness', 'gloves', 'airway', 'spo2', 'glucose', 'venous', 'infusion', 'call'], checklist: CHECKLIST_HYPERGLYCEMIA },
   BLS: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'recovery'], checklist: CHECKLIST_BLS },
-  BLS1: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
-  BLS2: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
-  BLS3: { order: ['danger', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
-  BLS4: { order: ['danger', 'consciousness', 'airway', 'breathing', 'pulse', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'reassess_consciousness', 'reassess_breathing', 'reassess_pulse', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
+  BLS1: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
+  BLS2: { order: ['danger', 'choking', 'back_blows', 'heimlich', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat'], checklist: CHECKLIST_BLS_CHOKING },
+  BLS3: { order: ['danger', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'reassess_consciousness', 'reassess_breathing', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
+  BLS4: { order: ['danger', 'consciousness', 'airway', 'breathing', 'call', 'compressions', 'breaths', 'aed', 'compressions_repeat', 'reassess_consciousness', 'reassess_breathing', 'recovery'], checklist: CHECKLIST_BLS_ARREST },
 };
 
 const HOTSPOTS = [
@@ -495,7 +495,11 @@ export default function Home() {
     if (!actionsRef.current[id]) {
       actionsRef.current = { ...actionsRef.current, [id]: true };
       setActions((prev) => ({ ...prev, [id]: true }));
-      setSequence((prev) => prev.includes(id) ? prev : [...prev, id]);
+      // В BLS в последовательность попадают только обязательные этапы сценария.
+      // Дополнительные действия, например оценка пульса, не должны нарушать порядок.
+      if (!isBlsScenario || currentOrder.includes(id)) {
+        setSequence((prev) => prev.includes(id) ? prev : [...prev, id]);
+      }
     }
     setChallenge(null);
   };
@@ -559,7 +563,8 @@ export default function Home() {
   const handleActionClick = (id: string) => {
     const repeatableBlsAction = isBlsScenario && ['compressions', 'compressions_repeat', 'breaths'].includes(id);
     if (actions[id] && !repeatableBlsAction) return;
-    if (!checkBlsActionOrder(id)) return;
+    const optionalBlsAssessment = isBlsScenario && ['pulse', 'reassess_pulse'].includes(id);
+    if (!optionalBlsAssessment && !checkBlsActionOrder(id)) return;
 
     if (APK_MESSAGES[id]) {
       setPatientResponse(APK_MESSAGES[id]);
