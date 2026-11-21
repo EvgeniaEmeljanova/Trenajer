@@ -562,7 +562,10 @@ export default function Home() {
       setPatientResponse(APK_MESSAGES[id]);
     } else {
       const responseText = PATIENT_DATA[scenario]?.responses?.[id];
-      if (responseText) setPatientResponse(responseText);
+      if (responseText) {
+        setPatientResponse(responseText);
+        if (isBlsScenario) playAudio(responseText);
+      }
     }
 
     if (id === 'ecg') {
@@ -616,16 +619,19 @@ export default function Home() {
     }
     if (isBlsScenario && id === 'choking') {
       setPatientResponse('Пострадавший не может говорить.');
+      playAudio('Пострадавший не может говорить.');
       toggleAction(id);
       return;
     }
     if (isBlsScenario && id === 'back_blows') {
       setPatientResponse('Удалить инородное тело из дыхательных путей пострадавшего не удалось!');
+      playAudio('Удалить инородное тело из дыхательных путей пострадавшего не удалось!');
       toggleAction(id);
       return;
     }
     if (isBlsScenario && id === 'heimlich') {
       setPatientResponse('Инородное тело удалено. Пациент находится на полу. Окажите ему помощь.');
+      playAudio('Инородное тело удалено. Пациент находится на полу. Окажите ему помощь.');
       setIsArrest(true);
       setVitals({ hr: 0, spo2: 0, bpSys: 0, bpDia: 0, rr: 0 });
       toggleAction(id);
@@ -659,6 +665,7 @@ export default function Home() {
         return;
       }
       setPatientResponse('Испытание завершено. Ожидайте голосовой команды, чтобы покинуть станцию.');
+      playAudio('Испытание завершено. Ожидайте голосовой команды, чтобы покинуть станцию.');
       toggleAction(id);
       setTimeout(() => finishScenario(), 1800);
       return;
@@ -668,6 +675,7 @@ export default function Home() {
       setSmpInput('');
       setCallSuccess(false);
       setChatHistory([{ sender: 'dispatcher', text: SMP_SCRIPT[0].dispatcher }]);
+      playAudio(SMP_SCRIPT[0].dispatcher);
       return;
     }
     
@@ -720,7 +728,7 @@ export default function Home() {
       .toLowerCase();
 
     const missingDetails = [
-      { key: 'address', prompt: 'Назовите точный адрес места происшествия.', pattern: /(?:адрес|улица|ул[.]?|проспект|пр-т|переулок|дом|д[.]?|корпус|квартира|кабинет|площадь|набережная)/i },
+      { key: 'address', prompt: 'Назовите точный адрес места происшествия.', pattern: /(?:улица|ул[.]?|проспект|пр-т|переулок|дом|д[.]?|корпус|квартира|кабинет|площадь|набережная|адрес[ :,-]+(?!неизвестен|не знаю|не помню|не указан)[а-яёa-z0-9])/i },
       { key: 'victims', prompt: 'Сколько пострадавших?', pattern: /(?:один|одна|1)[ ]*(?:пострадавш|человек|пациент)?/i },
       { key: 'ageSex', prompt: 'Уточните пол и возраст пострадавшего.', pattern: /(?:(?:мужчин|женщин|мальчик|девочк|подросток)[^.!?]{0,30}(?:[0-9]{1,2}[ ]*лет|[0-9]{1,2}[- ]летн|среднего возраста|средних лет)|(?:[0-9]{1,2}[ ]*лет|[0-9]{1,2}[- ]летн)[^.!?]{0,30}(?:мужчин|женщин|мальчик|девочк|подросток))/i },
       { key: 'event', prompt: 'Что произошло с пострадавшим?', pattern: /(?:подавил|инородн(?:ое тело|ым телом)|потерял сознани|без сознания|упал|обнаружил|лежит на полу)/i },
@@ -733,10 +741,12 @@ export default function Home() {
     setSmpInput('');
     if (missing) {
       setChatHistory([...newHistory, { sender: 'dispatcher' as const, text: missing.prompt }]);
+      playAudio(missing.prompt);
       return;
     }
 
     setChatHistory([...newHistory, { sender: 'dispatcher' as const, text: 'Вызов принят!' }]);
+    playAudio('Вызов принят!');
     setCallSuccess(true);
     setTimeout(() => {
       setPhoneModal(false);
