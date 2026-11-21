@@ -836,19 +836,31 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-2 text-white">Компрессии</h2>
           <p className="text-gray-400 mb-8">Нажимайте в ритме 100-120 в минуту</p>
           <div className={`mb-6 text-2xl font-bold ${cprFeedback === 'Отличный ритм!' ? 'text-green-400' : cprFeedback.includes('Слишком') ? 'text-red-500' : 'text-white'}`}>{cprFeedback}</div>
-          <button onClick={handleCprClick} aria-label="Выполнить компрессию грудной клетки" className="relative w-64 h-64 rounded-[2rem] bg-gradient-to-br from-sky-500 to-blue-700 text-white shadow-[0_16px_50px_rgba(14,165,233,0.35)] ring-4 ring-sky-300/30 active:scale-95 active:translate-y-1 transition-transform flex flex-col items-center justify-center gap-1 select-none">
-            <svg viewBox="0 0 220 180" className="w-44 h-36 drop-shadow-lg" role="img" aria-label="Сложенные руки для компрессий">
-              <path d="M91 166 L91 112 Q91 101 102 101 L119 101 Q128 101 128 111 L128 166 Z" fill="#F4C7A1" stroke="#8B5E46" strokeWidth="3"/>
-              <path d="M129 166 L129 112 Q129 101 140 101 L157 101 Q166 101 166 111 L166 166 Z" fill="#EFBF98" stroke="#8B5E46" strokeWidth="3"/>
-              <path d="M48 93 Q42 82 53 74 L81 54 Q91 47 101 55 L113 64 Q122 70 132 63 L151 49 Q161 42 170 51 L181 62 Q190 72 180 81 L147 109 Q136 119 122 111 L109 103 Q101 98 93 105 L76 119 Q65 128 55 117 Z" fill="#F4C7A1" stroke="#8B5E46" strokeWidth="3" strokeLinejoin="round"/>
-              <path d="M39 76 Q29 67 38 56 L49 43 Q57 34 67 42 L91 60 Q99 66 93 76 L82 91 Q75 100 65 93 Z" fill="#F8D4B5" stroke="#8B5E46" strokeWidth="3"/>
-              <path d="M127 61 L151 40 Q160 32 169 41 L184 55 Q193 64 184 73 L161 94 Q151 103 142 93 Z" fill="#F8D4B5" stroke="#8B5E46" strokeWidth="3"/>
-              <path d="M89 80 Q107 91 126 79" fill="none" stroke="#C58E6B" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M104 25 V43 M94 35 L104 45 L114 35" fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Нажать на грудную клетку: выполнить компрессию"
+            onClick={handleCprClick}
+            onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleCprClick(); } }}
+            className="cursor-pointer select-none touch-manipulation active:scale-95 transition-transform flex flex-col items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-sky-300 rounded-2xl"
+          >
+            <svg viewBox="0 0 300 220" className="w-72 h-56 drop-shadow-[0_12px_18px_rgba(0,0,0,0.35)]" role="img" aria-label="Две руки, сложенные одна на другую, пальцы сцеплены в замок">
+              <defs>
+                <linearGradient id="skinA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#FFE0C2"/><stop offset="1" stopColor="#D99A70"/></linearGradient>
+                <linearGradient id="skinB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F7D1AD"/><stop offset="1" stopColor="#C9825C"/></linearGradient>
+              </defs>
+              <path d="M103 214 L103 151 Q103 139 115 136 L135 130 Q148 126 158 136 L174 151 L194 214 Z" fill="url(#skinA)" stroke="#9B6247" strokeWidth="3"/>
+              <path d="M196 214 L196 151 Q196 139 184 136 L164 130 Q151 126 141 136 L125 151 L106 214 Z" fill="url(#skinB)" stroke="#9B6247" strokeWidth="3"/>
+              <path d="M78 137 Q64 126 74 111 L95 79 Q103 66 117 74 L142 89 Q153 96 165 87 L184 72 Q198 62 209 75 L230 101 Q240 114 228 126 L193 158 Q180 169 164 158 L149 148 Q140 142 130 151 L111 166 Q96 177 84 163 Z" fill="url(#skinA)" stroke="#9B6247" strokeWidth="3" strokeLinejoin="round"/>
+              <path d="M89 103 L56 76 Q44 66 54 53 L66 38 Q76 26 89 36 L130 68 Q142 77 132 90 L119 106 Q108 119 95 109 Z" fill="url(#skinB)" stroke="#9B6247" strokeWidth="3"/>
+              <path d="M173 91 L211 58 Q224 47 236 59 L250 74 Q261 86 248 98 L209 133 Q196 144 184 131 L170 116 Q158 103 173 91 Z" fill="url(#skinA)" stroke="#9B6247" strokeWidth="3"/>
+              <path d="M105 72 Q123 82 139 98 M194 77 Q177 91 161 105" fill="none" stroke="#B97958" strokeWidth="4" strokeLinecap="round"/>
+              <path d="M126 91 Q139 105 151 111 Q165 117 178 103" fill="none" stroke="#9B6247" strokeWidth="3" strokeLinecap="round"/>
+              <path d="M150 18 V47 M138 36 L150 49 L162 36" fill="none" stroke="#7DD3FC" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="text-sm font-bold tracking-wide">НАЖАТЬ</span>
-            <span className="absolute -top-3 -right-3 min-w-12 h-12 px-2 rounded-full bg-white text-blue-700 border-4 border-sky-500 flex items-center justify-center text-xl font-black shadow-lg">{cprCount}</span>
-          </button>
+            <p className="mt-1 text-sm text-sky-200">Нажимайте на изображение рук в ритме 100–120 в минуту</p>
+          </div>
+          <p className="mt-5 text-white text-xl font-semibold">Компрессий выполнено: {cprCount} / 30</p>
           <p className="mt-8 text-white text-xl">Осталось: {30 - cprCount}</p>
         </div>
       )}
