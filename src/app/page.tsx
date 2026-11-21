@@ -704,13 +704,6 @@ export default function Home() {
   return (
     <div className={`min-h-screen bg-gray-900 text-white overflow-hidden relative ${timeLeft < 60 || isArrest ? 'animate-pulse ring-8 ring-red-600 ring-inset' : ''}`}>
       
-      <div className="absolute top-4 right-4 bg-black/80 border border-gray-600 p-3 rounded-xl z-40 font-mono text-sm shadow-xl w-48">
-        <div className="flex items-center gap-2 mb-1"><span className={isArrest ? 'text-gray-500' : 'text-red-500 animate-pulse'}>❤️</span><span>ЧСС: {vitals.hr} {isArrest ? '' : 'уд/мин'}</span></div>
-        <div className="flex items-center gap-2 mb-1"><span className={isArrest ? 'text-gray-500' : 'text-blue-400'}>🫁</span><span>SpO2: {vitals.spo2}%</span></div>
-        <div className="flex items-center gap-2"><span className={isArrest ? 'text-gray-500' : 'text-green-400'}>🩸</span><span>АД: {vitals.bpSys}/{vitals.bpDia}</span></div>
-        {isArrest && <div className="text-red-500 font-bold text-center mt-2 animate-pulse text-xs">АСИСТОЛИЯ</div>}
-      </div>
-
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
         <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 ? 'text-red-500' : 'text-green-400'}`}>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
