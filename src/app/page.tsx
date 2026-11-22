@@ -264,9 +264,11 @@ const HOTSPOTS = [
 ];
 
 type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'finished';
+type RunMode = 'training' | 'exam';
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>('menu');
+  const [runMode, setRunMode] = useState<RunMode>('training');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [actions, setActions] = useState<Record<string, boolean>>({});
@@ -291,6 +293,7 @@ export default function Home() {
   const [cprCount, setCprCount] = useState(0);
   const [cprFeedback, setCprFeedback] = useState('');
   const lastCprTime = useRef<number>(0);
+  const cprIntervals = useRef<number[]>([]);
   
   const [aedOpen, setAedOpen] = useState(false);
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'no_shock' | 'success'>('idle');
@@ -448,6 +451,7 @@ export default function Home() {
   }, [actions, isArrest]);
 
   const showAkkredikHint = () => {
+    if (runMode !== 'training') return;
     if (!isBlsScenario) { setAkkredikHint('Подсказки для этой станции пока готовятся. Сейчас я могу помогать на станции базовой СЛР.'); return; }
     const nextAction = currentOrder.find(actionId => !actionsRef.current[actionId]);
     if (!nextAction) { setAkkredikHint('Основные этапы алгоритма выполнены. Проверь, не осталось ли незавершённых действий или повторной оценки состояния.'); return; }
@@ -645,7 +649,7 @@ export default function Home() {
       // После завершения АНД второй двухминутный таймер запускается
       // при возобновлении компрессий.
       setChallenge(id === 'compressions' ? 'cpr' : 'cpr_repeat');
-      setCprCount(0); setCprFeedback(''); lastCprTime.current = 0;
+      setCprCount(0); setCprFeedback(''); lastCprTime.current = 0; cprIntervals.current = [];
       return;
     }
     if (id === 'cap_refill') {
@@ -900,38 +904,47 @@ export default function Home() {
     if (isBlsScenario && !blsCompressionRunning && !blsRosc) {
       setBlsCompressionRunning(true);
     }
+
     const now = Date.now();
-    let feedback = '';
-    if (lastCprTime.current !== 0) {
-      const interval = now - lastCprTime.current;
-      if (interval < 400) {
-        feedback = 'Слишком быстро!';
-        if (!mistakes.includes('Неправильный ритм компрессий (слишком быстро)')) {
-          setMistakes(prev => [...prev, 'Неправильный ритм компрессий (слишком быстро)']);
-        }
-      } else if (interval > 750) {
-        feedback = 'Слишком медленно!';
-        if (!mistakes.includes('Неправильный ритм компрессий (слишком медленно)')) {
-          setMistakes(prev => [...prev, 'Неправильный ритм компрессий (слишком медленно)']);
-        }
+    const interval = lastCprTime.current === 0 ? null : now - lastCprTime.current;
+    let feedback = 'Начали: поддерживай равномерный темп.';
+
+    if (interval !== null) {
+      cprIntervals.current = [...cprIntervals.current, interval];
+      if (interval < 500) {
+        feedback = 'Слишком быстро — немного замедлись.';
+      } else if (interval > 600) {
+        feedback = 'Слишком медленно — немного ускорься.';
       } else {
-        feedback = 'Отличный ритм!';
+        feedback = 'Ритм в норме — продолжай.';
       }
-    } else {
-      feedback = 'Начали!';
     }
+
     lastCprTime.current = now;
     setCprFeedback(feedback);
+
     setCprCount(prev => {
       const next = prev + 1;
-      if (next >= 30) setTimeout(() => {
-        setChallenge(null);
-        const completedId = challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions';
-        toggleAction(completedId);
-        if (isBlsScenario) {
-          setBlsCompressionRunning(true);
+      if (next >= 30) {
+        const intervals = cprIntervals.current;
+        const goodIntervals = intervals.filter(value => value >= 500 && value <= 600).length;
+        const ratePercent = intervals.length ? Math.round((goodIntervals / intervals.length) * 100) : 0;
+        const rateSummary = `Серия завершена: ${ratePercent}% интервалов соответствуют целевому ритму 100–120 компрессий в минуту.`;
+        setCprFeedback(rateSummary);
+        if (ratePercent < 80) {
+          const detail = `Частота компрессий: ${ratePercent}% интервалов в целевом диапазоне; порог — 80%.`;
+          setMistakes(current => current.includes(detail) ? current : [...current, detail]);
         }
-      }, 500);
+
+        setTimeout(() => {
+          setChallenge(null);
+          const completedId = challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions';
+          toggleAction(completedId);
+          if (isBlsScenario) {
+            setBlsCompressionRunning(true);
+          }
+        }, 1500);
+      }
       return next;
     });
   };
@@ -998,6 +1011,14 @@ export default function Home() {
           <div className="space-y-4 text-lg text-gray-200 leading-relaxed">
             <p>Вы — врач своей специальности. Медицинский брат/сестра вызвал/а Вас на помощь.</p>
             <p>Перед Вами пациент <strong>45 лет</strong>.</p>
+          </div>
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-gray-300 mb-2">Режим прохождения</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => { setRunMode('training'); setAkkredikHint(null); }} className={`rounded-xl border-2 px-4 py-3 font-bold transition ${runMode === 'training' ? 'border-blue-400 bg-blue-600 text-white' : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-blue-400'}`}>Обучение</button>
+              <button onClick={() => { setRunMode('exam'); setAkkredikHint(null); }} className={`rounded-xl border-2 px-4 py-3 font-bold transition ${runMode === 'exam' ? 'border-amber-400 bg-amber-600 text-white' : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-amber-400'}`}>Экзамен</button>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">В обучении доступны подсказки и обратная связь по ритму. В экзамене подсказки и оценка действий во время выполнения скрыты.</p>
           </div>
           <div className="flex gap-4 mt-8">
             <button onClick={() => setStage('station_select')} className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 rounded-xl shadow-lg transition">Назад</button>
@@ -1095,14 +1116,14 @@ export default function Home() {
               <button onClick={() => setPatientResponse(null)} className="absolute top-1 right-2 text-teal-400 hover:text-teal-700 text-xs">✕</button>
             </div>
           )}
-          {akkredikHint && (
+          {runMode === 'training' && akkredikHint && (
             <div className="bg-amber-50 text-amber-950 p-4 rounded-2xl shadow-xl border-2 border-amber-400 w-full relative">
               <p className="font-bold text-xs text-amber-700 mb-1">Подсказка Аккредика:</p>
               <p className="text-sm font-medium pr-4">{akkredikHint}</p>
               <button onClick={() => setAkkredikHint(null)} className="absolute top-1 right-2 text-amber-600 hover:text-amber-900 text-xs" aria-label="Закрыть подсказку">✕</button>
             </div>
           )}
-          <button onClick={showAkkredikHint} className="pointer-events-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl shadow-lg border border-blue-400 transition">Подсказка</button>
+          {runMode === 'training' && <button onClick={showAkkredikHint} className="pointer-events-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl shadow-lg border border-blue-400 transition">Подсказка</button>}
         </div>
       </div>
 
@@ -1215,6 +1236,7 @@ export default function Home() {
             <img src="/cpr-hands-elbows.png" alt="Руки для выполнения компрессий: пальцы сцеплены в замок, предплечья и локти видны" className="w-[min(82vw,560px)] h-auto max-h-[48vh] object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.35)]" draggable={false} />
           </div>
           <p className="mt-5 text-white text-xl font-semibold">Компрессий выполнено: {cprCount} / 30</p>
+          {runMode === 'training' && cprFeedback && <p aria-live="polite" className="mt-3 rounded-xl bg-slate-800 px-5 py-3 text-center text-lg font-bold text-sky-200">{cprFeedback}</p>}
         </div>
       )}
 
