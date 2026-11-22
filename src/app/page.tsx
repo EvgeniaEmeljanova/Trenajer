@@ -256,7 +256,7 @@ const SCENARIO_DATA: Record<ScenarioType, { order: string[], checklist: any[] }>
 };
 
 const HOTSPOTS = [
-  { id: 'patient', x: 42, y: 25, w: 16, h: 30, label: 'Пациент' },
+  { id: 'patient', x: 41, y: 34, w: 18, h: 58, label: 'Пациент' },
   { id: 'crash_cart', x: 28, y: 25, w: 12, h: 20, label: 'Укладка' },
   { id: 'monitor', x: 60, y: 15, w: 10, h: 18, label: 'Монитор' },
   { id: 'phone', x: 75, y: 20, w: 8, h: 10, label: 'Телефон' },
@@ -296,7 +296,7 @@ export default function Home() {
   const [aedTimer, setAedTimer] = useState(0);
   const [aedPowered, setAedPowered] = useState(false);
   const [aedPadsPlaced, setAedPadsPlaced] = useState([false, false]);
-  const [aedPadPositions, setAedPadPositions] = useState([{ x: 87, y: 76 }, { x: 87, y: 89 }]);
+  const [aedPadPositions, setAedPadPositions] = useState([{ x: 88, y: 76 }, { x: 88, y: 89 }]);
   const [aedDraggingPad, setAedDraggingPad] = useState<number | null>(null);
   const [aedAnalysisUntouched, setAedAnalysisUntouched] = useState(true);
   const [aedShockUntouched, setAedShockUntouched] = useState(true);
@@ -750,15 +750,15 @@ export default function Home() {
     const rect = aedSceneRef.current.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
-    const target = index === 0 ? { x: 46, y: 35 } : { x: 54, y: 44 };
-    const correctlyPlaced = Math.abs(x - target.x) <= 6 && Math.abs(y - target.y) <= 7;
+    const target = index === 0 ? { x: 46, y: 47 } : { x: 53, y: 56 };
+    const correctlyPlaced = Math.abs(x - target.x) <= 5 && Math.abs(y - target.y) <= 6;
     if (correctlyPlaced) {
       setAedPadPositions(prev => prev.map((position, padIndex) => padIndex === index ? target : position));
       const nextPadsPlaced = aedPadsPlaced.map((placed, padIndex) => padIndex === index ? true : placed);
       setAedPadsPlaced(nextPadsPlaced);
       if (nextPadsPlaced.every(Boolean)) recordAedCriterion('aed_pads_correct', true);
     } else {
-      const starts = [{ x: 87, y: 76 }, { x: 87, y: 89 }];
+      const starts = [{ x: 88, y: 76 }, { x: 88, y: 89 }];
       setAedPadPositions(prev => prev.map((position, padIndex) => padIndex === index ? starts[index] : position));
     }
     setAedDraggingPad(null);
@@ -1207,8 +1207,8 @@ export default function Home() {
               <img src="/room.jpg" alt="Манекен пациента для размещения электродов АНД" className="block w-full h-auto" draggable={false} />
               {aedPowered && aedState === 'idle' && (
                 <>
-                  <div className="absolute rounded-full border-2 border-dashed border-yellow-300/90 bg-yellow-300/10" style={{ left: '40%', top: '27%', width: '12%', height: '16%' }} />
-                  <div className="absolute rounded-full border-2 border-dashed border-yellow-300/90 bg-yellow-300/10" style={{ left: '48%', top: '36%', width: '12%', height: '16%' }} />
+                  <div className="absolute rounded-full border-2 border-dashed border-yellow-300/90 bg-yellow-300/10" style={{ left: '41%', top: '42%', width: '10%', height: '12%' }} />
+                  <div className="absolute rounded-full border-2 border-dashed border-yellow-300/90 bg-yellow-300/10" style={{ left: '48%', top: '51%', width: '10%', height: '12%' }} />
                   {aedPadPositions.map((position, index) => !aedPadsPlaced[index] && (
                     <button
                       key={index}
@@ -1222,7 +1222,7 @@ export default function Home() {
                     </button>
                   ))}
                   {aedPadsPlaced.map((placed, index) => placed && (
-                    <div key={index} className="absolute z-10 w-[9%] min-w-12 aspect-[3/4] rounded-lg border-2 border-white bg-yellow-400 text-gray-900 text-[10px] md:text-xs font-black shadow-xl flex items-center justify-center" style={{ left: `${index === 0 ? 46 : 54}%`, top: `${index === 0 ? 35 : 44}%`, transform: 'translate(-50%, -50%)' }}>
+                    <div key={index} className="absolute z-10 w-[9%] min-w-12 aspect-[3/4] rounded-lg border-2 border-white bg-yellow-400 text-gray-900 text-[10px] md:text-xs font-black shadow-xl flex items-center justify-center" style={{ left: `${index === 0 ? 46 : 53}%`, top: `${index === 0 ? 47 : 56}%`, transform: 'translate(-50%, -50%)' }}>
                       ЭЛЕКТРОД {index + 1}
                     </div>
                   ))}
@@ -1234,7 +1234,7 @@ export default function Home() {
                   aria-label="Прикоснуться к пациенту"
                   onClick={handleAedPatientTouch}
                   className="absolute z-30 border-2 border-transparent hover:border-red-500/80"
-                  style={{ left: '42%', top: '25%', width: '16%', height: '30%' }}
+                  style={{ left: '41%', top: '34%', width: '18%', height: '58%' }}
                 />
               )}
             </div>
