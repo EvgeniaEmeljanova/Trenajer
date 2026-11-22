@@ -291,6 +291,7 @@ export default function Home() {
   const holdInterval = useRef<NodeJS.Timeout | null>(null);
   
   const [cprCount, setCprCount] = useState(0);
+  const cprCountRef = useRef(0);
   const [cprFeedback, setCprFeedback] = useState('');
   const lastCprTime = useRef<number>(0);
   const cprIntervals = useRef<number[]>([]);
@@ -650,7 +651,7 @@ export default function Home() {
       // После завершения АНД второй двухминутный таймер запускается
       // при возобновлении компрессий.
       setChallenge(id === 'compressions' ? 'cpr' : 'cpr_repeat');
-      setCprCount(0); setCprFeedback(''); lastCprTime.current = 0; cprIntervals.current = []; cprFinished.current = false;
+      setCprCount(0); cprCountRef.current = 0; setCprFeedback(''); lastCprTime.current = 0; cprIntervals.current = []; cprFinished.current = false;
       return;
     }
     if (id === 'cap_refill') {
@@ -925,33 +926,36 @@ export default function Home() {
     lastCprTime.current = now;
     setCprFeedback(feedback);
 
-    setCprCount(prev => {
-      const next = prev + 1;
-      if (next >= 30) {
-        cprFinished.current = true;
-        const intervals = cprIntervals.current;
-        const goodIntervals = intervals.filter(value => value >= 500 && value <= 600).length;
-        const allIntervalsCorrect = intervals.length === 29 && goodIntervals === 29;
-        const rateSummary = allIntervalsCorrect
-          ? 'Все 30 нажатий выполнены в правильном ритме 100–120 компрессий в минуту.'
-          : `Ритм нарушен: правильных интервалов ${goodIntervals} из 29. Для зачёта все 29 интервалов должны соответствовать ритму 100–120 компрессий в минуту.`;
-        setCprFeedback(rateSummary);
-        if (!allIntervalsCorrect) {
-          const detail = `Частота компрессий: правильных интервалов ${goodIntervals} из 29; требуется 29 из 29.`;
-          setMistakes(current => current.includes(detail) ? current : [...current, detail]);
-        }
+    // Счётчик в ref блокирует 31-е и последующие нажатия синхронно,
+    // не дожидаясь асинхронного обновления React state.
+    const next = cprCountRef.current + 1;
+    if (next > 30 || cprFinished.current) return;
+    cprCountRef.current = next;
+    setCprCount(next);
 
-        setTimeout(() => {
-          setChallenge(null);
-          const completedId = challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions';
-          toggleAction(completedId);
-          if (isBlsScenario) {
-            setBlsCompressionRunning(true);
-          }
-        }, 1500);
+    if (next === 30) {
+      cprFinished.current = true;
+      const intervals = cprIntervals.current;
+      const goodIntervals = intervals.filter(value => value >= 500 && value <= 600).length;
+      const allIntervalsCorrect = intervals.length === 29 && goodIntervals === 29;
+      const rateSummary = allIntervalsCorrect
+        ? 'Все 30 нажатий выполнены в правильном ритме 100–120 компрессий в минуту.'
+        : `Ритм нарушен: правильных интервалов ${goodIntervals} из 29. Для зачёта все 29 интервалов должны соответствовать ритму 100–120 компрессий в минуту.`;
+      setCprFeedback(rateSummary);
+      if (!allIntervalsCorrect) {
+        const detail = `Частота компрессий: правильных интервалов ${goodIntervals} из 29; требуется 29 из 29.`;
+        setMistakes(current => current.includes(detail) ? current : [...current, detail]);
       }
-      return next;
-    });
+
+      setTimeout(() => {
+        setChallenge(null);
+        const completedId = challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions';
+        toggleAction(completedId);
+        if (isBlsScenario) {
+          setBlsCompressionRunning(true);
+        }
+      }, 1500);
+    }
   };
 
   useEffect(() => {
@@ -1235,7 +1239,7 @@ export default function Home() {
             tabIndex={0}
             aria-label="Нажать на грудную клетку: выполнить компрессию"
             onClick={handleCprClick}
-            onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleCprClick(); } }}
+            onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); handleCprClick(); } }}
             className="cursor-pointer select-none touch-manipulation active:scale-95 transition-transform flex flex-col items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-sky-300 rounded-2xl"
           >
             <img src="/cpr-hands-elbows.png" alt="Руки для выполнения компрессий: пальцы сцеплены в замок, предплечья и локти видны" className="w-[min(82vw,560px)] h-auto max-h-[48vh] object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.35)]" draggable={false} />
