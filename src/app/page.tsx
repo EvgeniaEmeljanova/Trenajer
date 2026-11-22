@@ -1018,7 +1018,7 @@ export default function Home() {
               <button onClick={() => { setRunMode('training'); setAkkredikHint(null); }} className={`rounded-xl border-2 px-4 py-3 font-bold transition ${runMode === 'training' ? 'border-blue-400 bg-blue-600 text-white' : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-blue-400'}`}>Обучение</button>
               <button onClick={() => { setRunMode('exam'); setAkkredikHint(null); }} className={`rounded-xl border-2 px-4 py-3 font-bold transition ${runMode === 'exam' ? 'border-amber-400 bg-amber-600 text-white' : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-amber-400'}`}>Экзамен</button>
             </div>
-            <p className="text-xs text-gray-400 mt-2">В обучении доступны подсказки и обратная связь по ритму. В экзамене подсказки и оценка действий во время выполнения скрыты.</p>
+            <p className="text-xs text-gray-400 mt-2">В обучении доступны подсказки и обратная связь по ритму компрессий. В экзамене они скрыты.</p>
           </div>
           <div className="flex gap-4 mt-8">
             <button onClick={() => setStage('station_select')} className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 rounded-xl shadow-lg transition">Назад</button>
