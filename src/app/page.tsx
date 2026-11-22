@@ -928,11 +928,13 @@ export default function Home() {
       if (next >= 30) {
         const intervals = cprIntervals.current;
         const goodIntervals = intervals.filter(value => value >= 500 && value <= 600).length;
-        const ratePercent = intervals.length ? Math.round((goodIntervals / intervals.length) * 100) : 0;
-        const rateSummary = `Серия завершена: ${ratePercent}% интервалов соответствуют целевому ритму 100–120 компрессий в минуту.`;
+        const allIntervalsCorrect = intervals.length === 29 && goodIntervals === 29;
+        const rateSummary = allIntervalsCorrect
+          ? 'Все 30 нажатий выполнены в правильном ритме 100–120 компрессий в минуту.'
+          : `Ритм нарушен: правильных интервалов ${goodIntervals} из 29. Для зачёта все 29 интервалов должны соответствовать ритму 100–120 компрессий в минуту.`;
         setCprFeedback(rateSummary);
-        if (ratePercent < 80) {
-          const detail = `Частота компрессий: ${ratePercent}% интервалов в целевом диапазоне; порог — 80%.`;
+        if (!allIntervalsCorrect) {
+          const detail = `Частота компрессий: правильных интервалов ${goodIntervals} из 29; требуется 29 из 29.`;
           setMistakes(current => current.includes(detail) ? current : [...current, detail]);
         }
 
