@@ -294,6 +294,7 @@ export default function Home() {
   const [cprFeedback, setCprFeedback] = useState('');
   const lastCprTime = useRef<number>(0);
   const cprIntervals = useRef<number[]>([]);
+  const cprFinished = useRef(false);
   
   const [aedOpen, setAedOpen] = useState(false);
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'no_shock' | 'success'>('idle');
@@ -649,7 +650,7 @@ export default function Home() {
       // После завершения АНД второй двухминутный таймер запускается
       // при возобновлении компрессий.
       setChallenge(id === 'compressions' ? 'cpr' : 'cpr_repeat');
-      setCprCount(0); setCprFeedback(''); lastCprTime.current = 0; cprIntervals.current = [];
+      setCprCount(0); setCprFeedback(''); lastCprTime.current = 0; cprIntervals.current = []; cprFinished.current = false;
       return;
     }
     if (id === 'cap_refill') {
@@ -901,6 +902,7 @@ export default function Home() {
   };
 
   const handleCprClick = () => {
+    if (cprFinished.current) return;
     if (isBlsScenario && !blsCompressionRunning && !blsRosc) {
       setBlsCompressionRunning(true);
     }
@@ -926,6 +928,7 @@ export default function Home() {
     setCprCount(prev => {
       const next = prev + 1;
       if (next >= 30) {
+        cprFinished.current = true;
         const intervals = cprIntervals.current;
         const goodIntervals = intervals.filter(value => value >= 500 && value <= 600).length;
         const allIntervalsCorrect = intervals.length === 29 && goodIntervals === 29;
@@ -1237,7 +1240,7 @@ export default function Home() {
           >
             <img src="/cpr-hands-elbows.png" alt="Руки для выполнения компрессий: пальцы сцеплены в замок, предплечья и локти видны" className="w-[min(82vw,560px)] h-auto max-h-[48vh] object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.35)]" draggable={false} />
           </div>
-          <p className="mt-5 text-white text-xl font-semibold">Компрессий выполнено: {cprCount} / 30</p>
+          {runMode === 'training' && <p className="mt-5 text-white text-xl font-semibold">Компрессий выполнено: {cprCount} / 30</p>}
           {runMode === 'training' && cprFeedback && <p aria-live="polite" className="mt-3 rounded-xl bg-slate-800 px-5 py-3 text-center text-lg font-bold text-sky-200">{cprFeedback}</p>}
         </div>
       )}
