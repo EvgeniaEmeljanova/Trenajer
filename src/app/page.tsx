@@ -1104,7 +1104,7 @@ export default function Home() {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-900 text-white overflow-hidden relative ${timeLeft < 60 || isArrest ? 'animate-pulse ring-8 ring-red-600 ring-inset' : ''}`}>
+    <div className="min-h-screen bg-gray-900 text-white overflow-hidden relative">
       
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 px-8 py-2 rounded-full backdrop-blur-md z-40 flex items-center gap-6 shadow-lg">
         <span className={`text-2xl font-mono font-bold tracking-widest ${timeLeft < 60 && !isBlsScenario ? 'text-red-500' : 'text-green-400'}`}>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
