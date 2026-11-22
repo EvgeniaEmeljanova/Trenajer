@@ -289,6 +289,10 @@ export default function Home() {
   const [timerChallenge, setTimerChallenge] = useState(0);
   const [holdSuccess, setHoldSuccess] = useState(false);
   const holdInterval = useRef<NodeJS.Timeout | null>(null);
+  const [clothingAssessment, setClothingAssessment] = useState<{ actionId: string; opened: boolean; secondsLeft: number } | null>(null);
+  const clothingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clothingStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clothingSecondsRef = useRef(10);
   
   const [cprCount, setCprCount] = useState(0);
   const cprCountRef = useRef(0);
@@ -491,6 +495,9 @@ export default function Home() {
         : station.id as ScenarioType;
       setScenario(selectedScenario);
       actionsRef.current = {}; setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null); setAkkredikHint(null);
+      if (clothingTimerRef.current) clearInterval(clothingTimerRef.current);
+      if (clothingStartTimeoutRef.current) clearTimeout(clothingStartTimeoutRef.current);
+      setClothingAssessment(null);
       setTimeLeft(510); setScore(0); setIsArrest(false); setBlsCompressionElapsed(0);
       setBlsCompressionRunning(false); setBlsAedAvailable(false); setBlsSecondCycle(false); setBlsRosc(false);
       isFinishing.current = false; hasSpokenMinuteWarning.current = false;
@@ -500,6 +507,9 @@ export default function Home() {
       const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
       setScenario(randomScenario);
       actionsRef.current = {}; setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null); setAkkredikHint(null);
+      if (clothingTimerRef.current) clearInterval(clothingTimerRef.current);
+      if (clothingStartTimeoutRef.current) clearTimeout(clothingStartTimeoutRef.current);
+      setClothingAssessment(null);
       setTimeLeft(510); setScore(0); setIsArrest(false);
       isFinishing.current = false; hasSpokenMinuteWarning.current = false;
       setStage('briefing');
@@ -573,10 +583,47 @@ export default function Home() {
     }, 1000);
   };
 
+  const startClothingAssessment = (actionId: string) => {
+    if (clothingTimerRef.current) clearInterval(clothingTimerRef.current);
+    if (clothingStartTimeoutRef.current) clearTimeout(clothingStartTimeoutRef.current);
+    setActiveHotspot(null);
+    clothingSecondsRef.current = 10;
+    setClothingAssessment({ actionId, opened: false, secondsLeft: 10 });
+  };
+
+  const openClothingForAssessment = () => {
+    if (!clothingAssessment || clothingAssessment.opened) return;
+    const actionId = clothingAssessment.actionId;
+    clothingSecondsRef.current = 10;
+    setClothingAssessment({ actionId, opened: true, secondsLeft: 10 });
+
+    // Даем изображению плавно раскрыться, затем отсчитываем 10 секунд наблюдения.
+    clothingStartTimeoutRef.current = setTimeout(() => {
+      clothingTimerRef.current = setInterval(() => {
+        clothingSecondsRef.current -= 1;
+        const secondsLeft = clothingSecondsRef.current;
+        setClothingAssessment((current) => current ? { ...current, secondsLeft } : null);
+        if (secondsLeft <= 0) {
+          if (clothingTimerRef.current) clearInterval(clothingTimerRef.current);
+          clothingTimerRef.current = null;
+          setClothingAssessment(null);
+          toggleAction(actionId);
+        }
+      }, 1000);
+    }, 700);
+  };
+
   const stopHoldChallenge = () => {
     if (holdInterval.current) clearInterval(holdInterval.current);
     if (!holdSuccess) setTimerChallenge(0);
   };
+
+  useEffect(() => {
+    return () => {
+      if (clothingTimerRef.current) clearInterval(clothingTimerRef.current);
+      if (clothingStartTimeoutRef.current) clearTimeout(clothingStartTimeoutRef.current);
+    };
+  }, []);
 
   const checkBlsActionOrder = (id: string) => {
     if (!isBlsScenario) return true;
@@ -658,8 +705,12 @@ export default function Home() {
       startHoldChallenge('cap_refill', 5);
       return;
     }
-    if (id === 'pulse' || id === 'respiratory_rate' || id === 'breathing') {
+    if (id === 'pulse') {
       startHoldChallenge(id, 10);
+      return;
+    }
+    if (id === 'respiratory_rate' || id === 'breathing') {
+      startClothingAssessment(id);
       return;
     }
     if (id === 'medication') {
@@ -704,7 +755,7 @@ export default function Home() {
     }
     if (isBlsScenario && id === 'reassess_breathing') {
       if (!needsRecoveryPosition || !blsRosc) return;
-      startHoldChallenge(id, 10);
+      startClothingAssessment(id);
       return;
     }
     if (isBlsScenario && id === 'reassess_pulse') {
@@ -1190,6 +1241,37 @@ export default function Home() {
               {holdSuccess ? 'Выполнено!' : timerChallenge > 0 ? `Удерживайте: ${timerChallenge}...` : 'Удерживайте'}
             </button>
             {holdSuccess && <button onClick={() => { toggleAction(challenge); setChallenge(null); }} className="mt-4 text-blue-600 font-bold">Продолжить</button>}
+          </div>
+        </div>
+      )}
+
+      {clothingAssessment && (
+        <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-[60] p-4">
+          <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl">
+            <button
+              type="button"
+              onClick={openClothingForAssessment}
+              aria-label="Область грудной клетки пациента"
+              className="relative block w-full cursor-pointer overflow-hidden rounded-2xl focus:outline-none"
+            >
+              <img
+                src="/patient_clothes_closed.png"
+                alt="Пациент"
+                draggable={false}
+                className={`block w-full h-auto object-contain transition-opacity duration-700 ${clothingAssessment.opened ? 'opacity-0' : 'opacity-100'}`}
+              />
+              <img
+                src="/patient_clothes_open.png"
+                alt="Пациент с открытой грудной клеткой"
+                draggable={false}
+                className={`absolute inset-0 block w-full h-full object-contain transition-opacity duration-700 ${clothingAssessment.opened ? 'opacity-100' : 'opacity-0'}`}
+              />
+            </button>
+            {runMode === 'training' && clothingAssessment.opened && (
+              <div className="absolute top-3 right-3 rounded-full bg-black/75 px-4 py-2 text-xl font-bold text-white tabular-nums">
+                {clothingAssessment.secondsLeft}
+              </div>
+            )}
           </div>
         </div>
       )}
