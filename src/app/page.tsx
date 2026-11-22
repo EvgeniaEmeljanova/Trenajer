@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, PointerEvent } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -294,6 +294,13 @@ export default function Home() {
   const [aedOpen, setAedOpen] = useState(false);
   const [aedState, setAedState] = useState<'idle' | 'analyzing' | 'shock' | 'no_shock' | 'success'>('idle');
   const [aedTimer, setAedTimer] = useState(0);
+  const [aedPowered, setAedPowered] = useState(false);
+  const [aedPadsPlaced, setAedPadsPlaced] = useState([false, false]);
+  const [aedPadPositions, setAedPadPositions] = useState([{ x: 87, y: 76 }, { x: 87, y: 89 }]);
+  const [aedDraggingPad, setAedDraggingPad] = useState<number | null>(null);
+  const [aedAnalysisUntouched, setAedAnalysisUntouched] = useState(true);
+  const [aedShockUntouched, setAedShockUntouched] = useState(true);
+  const aedSceneRef = useRef<HTMLDivElement | null>(null);
   const [blsCompressionElapsed, setBlsCompressionElapsed] = useState(0);
   const [blsCompressionRunning, setBlsCompressionRunning] = useState(false);
   const [blsAedAvailable, setBlsAedAvailable] = useState(false);
@@ -372,7 +379,11 @@ export default function Home() {
         setAedTimer(prev => prev - 1);
       }, 1000);
     } else if (aedState === 'analyzing' && aedTimer === 0) {
-      setAedState(isBlsScenario && !isBlsShockable ? 'no_shock' : 'shock');
+      const result = isBlsScenario && !isBlsShockable ? 'no_shock' : 'shock';
+      setAedState(result);
+      setAedShockUntouched(true);
+      if (result === 'shock') playAudio('Разряд показан. Не прикасайтесь к пострадавшему. Нажмите кнопку разряд.');
+      else playAudio('Разряд не показан. Немедленно продолжайте СЛР.');
     }
     return () => clearTimeout(timer);
   }, [aedState, aedTimer, isBlsScenario, isBlsShockable]);
@@ -388,6 +399,15 @@ export default function Home() {
     setBlsAedAvailable(false);
     setBlsSecondCycle(false);
     setBlsRosc(false);
+    setAedOpen(false);
+    setAedState('idle');
+    setAedTimer(0);
+    setAedPowered(false);
+    setAedPadsPlaced([false, false]);
+    setAedPadPositions([{ x: 87, y: 76 }, { x: 87, y: 89 }]);
+    setAedDraggingPad(null);
+    setAedAnalysisUntouched(true);
+    setAedShockUntouched(true);
   }, [scenario]);
 
   useEffect(() => {
@@ -704,6 +724,61 @@ export default function Home() {
     }
   };
 
+  const recordAedCriterion = (id: string, value: boolean) => {
+    actionsRef.current = { ...actionsRef.current, [id]: value };
+    setActions(prev => ({ ...prev, [id]: value }));
+  };
+
+  const startAedPadDrag = (index: number, event: PointerEvent<HTMLButtonElement>) => {
+    if (!aedPowered || aedState !== 'idle' || aedPadsPlaced[index]) return;
+    event.preventDefault();
+    setAedDraggingPad(index);
+    aedSceneRef.current?.setPointerCapture(event.pointerId);
+  };
+
+  const moveAedPad = (event: PointerEvent<HTMLDivElement>) => {
+    if (aedDraggingPad === null || !aedSceneRef.current) return;
+    const rect = aedSceneRef.current.getBoundingClientRect();
+    const x = Math.max(3, Math.min(97, ((event.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(3, Math.min(97, ((event.clientY - rect.top) / rect.height) * 100));
+    setAedPadPositions(prev => prev.map((position, index) => index === aedDraggingPad ? { x, y } : position));
+  };
+
+  const endAedPadDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (aedDraggingPad === null || !aedSceneRef.current) return;
+    const index = aedDraggingPad;
+    const rect = aedSceneRef.current.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    const target = index === 0 ? { x: 46, y: 35 } : { x: 54, y: 44 };
+    const correctlyPlaced = Math.abs(x - target.x) <= 6 && Math.abs(y - target.y) <= 7;
+    if (correctlyPlaced) {
+      setAedPadPositions(prev => prev.map((position, padIndex) => padIndex === index ? target : position));
+      setAedPadsPlaced(prev => {
+        const next = prev.map((placed, padIndex) => padIndex === index ? true : placed);
+        if (next.every(Boolean)) recordAedCriterion('aed_pads_correct', true);
+        return next;
+      });
+    } else {
+      const starts = [{ x: 87, y: 76 }, { x: 87, y: 89 }];
+      setAedPadPositions(prev => prev.map((position, padIndex) => padIndex === index ? starts[index] : position));
+    }
+    setAedDraggingPad(null);
+  };
+
+  const handleAedPatientTouch = () => {
+    if (aedState === 'analyzing') {
+      setAedAnalysisUntouched(false);
+      recordAedCriterion('aed_analysis_no_touch', false);
+      setMistakes(prev => prev.includes('Прикасался к пострадавшему во время анализа АНД') ? prev : [...prev, 'Прикасался к пострадавшему во время анализа АНД']);
+    }
+    if (aedState === 'shock') {
+      setAedShockUntouched(false);
+      recordAedCriterion('aed_shock_no_touch', false);
+      setMistakes(prev => prev.includes('Прикасался к пострадавшему в момент нанесения разряда') ? prev : [...prev, 'Прикасался к пострадавшему в момент нанесения разряда']);
+    }
+  };
+
   const completeAedUse = () => {
     setAedState('success');
     toggleAction('aed');
@@ -717,7 +792,10 @@ export default function Home() {
   };
 
   const handleAedShock = () => {
-    if (aedState === 'shock') completeAedUse();
+    if (aedState === 'shock') {
+      recordAedCriterion('aed_shock_pressed', true);
+      completeAedUse();
+    }
   };
 
   const handleAedNoShock = () => {
@@ -1108,21 +1186,106 @@ export default function Home() {
       )}
 
       {aedOpen && (
-        <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 border-4 border-gray-600 rounded-3xl p-8 w-full max-w-md flex flex-col items-center">
-            <div className="w-full bg-black text-green-400 text-center p-6 rounded-lg mb-6 min-h-[120px] flex flex-col justify-center">
-              {aedState === 'idle' && <span className="text-xl">АНД ГОТОВ</span>}
-              {aedState === 'analyzing' && <span className="text-2xl animate-pulse">АНАЛИЗ... {aedTimer}</span>}
-              {aedState === 'shock' && <span className="text-2xl text-red-500 font-bold animate-pulse">РАЗРЯД ПОКАЗАН</span>}
+        <div className="absolute inset-0 bg-black/95 flex items-center justify-center z-50 p-3 overflow-y-auto">
+          <div className="bg-gray-800 border-2 border-gray-600 rounded-2xl p-4 md:p-6 w-full max-w-5xl flex flex-col items-center my-auto">
+            <div className="w-full bg-black text-green-400 text-center p-4 rounded-lg mb-4 min-h-[76px] flex flex-col justify-center">
+              {!aedPowered && <span className="text-xl font-bold">АНД ВЫКЛЮЧЕН</span>}
+              {aedPowered && aedState === 'idle' && <span className="text-xl font-bold">ПОДГОТОВЬТЕ ЭЛЕКТРОДЫ</span>}
+              {aedState === 'analyzing' && <span className="text-2xl animate-pulse">АНАЛИЗ РИТМА... {aedTimer}</span>}
+              {aedState === 'shock' && <span className="text-2xl text-red-400 font-bold animate-pulse">РАЗРЯД ПОКАЗАН</span>}
               {aedState === 'no_shock' && <span className="text-xl text-yellow-300 font-bold">РАЗРЯД НЕ ПОКАЗАН</span>}
-              {aedState === 'success' && <span className="text-2xl text-green-500">ГОТОВО</span>}
+              {aedState === 'success' && <span className="text-2xl text-green-400 font-bold">ГОТОВО</span>}
             </div>
-            <div className="grid grid-cols-2 gap-4 w-full">
-              <button onClick={() => { if (aedState === 'idle') { setAedState('analyzing'); setAedTimer(3); } }} disabled={aedState !== 'idle'} className="bg-blue-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Анализ</button>
-              <button onClick={handleAedShock} disabled={aedState !== 'shock'} className="bg-red-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl">Разряд</button>
-              {aedState === 'no_shock' && <button onClick={handleAedNoShock} className="col-span-2 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl">Продолжить СЛР без разряда</button>}
+
+            <div
+              ref={aedSceneRef}
+              onPointerMove={moveAedPad}
+              onPointerUp={endAedPadDrag}
+              onPointerCancel={endAedPadDrag}
+              className="relative w-full max-w-4xl select-none touch-none rounded-xl overflow-hidden border border-gray-600"
+            >
+              <img src="/room.jpg" alt="Манекен пациента для размещения электродов АНД" className="block w-full h-auto" draggable={false} />
+              {aedPowered && aedState === 'idle' && (
+                <>
+                  <div className="absolute rounded-full border-2 border-dashed border-yellow-300/90 bg-yellow-300/10" style={{ left: '40%', top: '27%', width: '12%', height: '16%' }} />
+                  <div className="absolute rounded-full border-2 border-dashed border-yellow-300/90 bg-yellow-300/10" style={{ left: '48%', top: '36%', width: '12%', height: '16%' }} />
+                  {aedPadPositions.map((position, index) => !aedPadsPlaced[index] && (
+                    <button
+                      key={index}
+                      type="button"
+                      onPointerDown={(event) => startAedPadDrag(index, event)}
+                      className="absolute z-20 w-[9%] min-w-12 aspect-[3/4] rounded-lg border-2 border-white bg-yellow-400 text-gray-900 text-[10px] md:text-xs font-black shadow-xl cursor-grab active:cursor-grabbing flex items-center justify-center"
+                      style={{ left: `${position.x}%`, top: `${position.y}%`, transform: 'translate(-50%, -50%)' }}
+                      aria-label={`Переместить электрод ${index + 1}`}
+                    >
+                      ЭЛЕКТРОД {index + 1}
+                    </button>
+                  ))}
+                  {aedPadsPlaced.map((placed, index) => placed && (
+                    <div key={index} className="absolute z-10 w-[9%] min-w-12 aspect-[3/4] rounded-lg border-2 border-white bg-yellow-400 text-gray-900 text-[10px] md:text-xs font-black shadow-xl flex items-center justify-center" style={{ left: `${index === 0 ? 46 : 54}%`, top: `${index === 0 ? 35 : 44}%`, transform: 'translate(-50%, -50%)' }}>
+                      ЭЛЕКТРОД {index + 1}
+                    </div>
+                  ))}
+                </>
+              )}
+              {(aedState === 'analyzing' || aedState === 'shock') && (
+                <button
+                  type="button"
+                  aria-label="Прикоснуться к пациенту"
+                  onClick={handleAedPatientTouch}
+                  className="absolute z-30 border-2 border-transparent hover:border-red-500/80"
+                  style={{ left: '42%', top: '25%', width: '16%', height: '30%' }}
+                />
+              )}
             </div>
-            <button onClick={() => setAedOpen(false)} className="mt-6 text-gray-400 underline">Закрыть</button>
+
+            {!aedPowered && (
+              <button
+                onClick={() => {
+                  setAedPowered(true);
+                  recordAedCriterion('aed_power_on', true);
+                  playAudio('Подключите электроды к грудной клетке пострадавшего.');
+                }}
+                className="mt-4 w-full max-w-md bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl"
+              >
+                Включить АНД
+              </button>
+            )}
+
+            {aedPowered && aedState === 'idle' && (
+              <div className="w-full max-w-2xl mt-3 flex flex-col items-center gap-3">
+                <p className="text-sm text-gray-200 text-center">Перетащите оба электрода на отмеченные участки грудной клетки.</p>
+                <p className="text-xs text-gray-400">Размещено электродов: {aedPadsPlaced.filter(Boolean).length} / 2</p>
+                <button
+                  onClick={() => {
+                    if (aedPadsPlaced.every(Boolean)) {
+                      setAedState('analyzing');
+                      setAedTimer(3);
+                      setAedAnalysisUntouched(true);
+                      recordAedCriterion('aed_analysis_no_touch', true);
+                      playAudio('Не прикасайтесь к пострадавшему. Идет анализ сердечного ритма.');
+                    }
+                  }}
+                  disabled={!aedPadsPlaced.every(Boolean)}
+                  className="w-full max-w-md bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-bold py-3 rounded-xl"
+                >
+                  Начать анализ
+                </button>
+              </div>
+            )}
+
+            {aedState === 'analyzing' && <p className="mt-3 text-yellow-200 text-center font-semibold">Не прикасайтесь к пострадавшему во время анализа.</p>}
+            {aedState === 'shock' && (
+              <div className="mt-3 w-full max-w-md flex flex-col gap-3">
+                <p className="text-red-200 text-center font-semibold">Не прикасайтесь к пострадавшему. Выполните разряд по команде АНД.</p>
+                <button onClick={handleAedShock} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl">Разряд</button>
+              </div>
+            )}
+            {aedState === 'no_shock' && (
+              <button onClick={handleAedNoShock} className="mt-3 w-full max-w-md bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl">Продолжить СЛР без разряда</button>
+            )}
+            {aedState === 'success' && <p className="mt-3 text-green-300 text-center font-semibold">Немедленно возобновите СЛР.</p>}
+            {aedState === 'success' && <button onClick={() => setAedOpen(false)} className="mt-2 text-gray-300 underline">Закрыть</button>}
           </div>
         </div>
       )}
