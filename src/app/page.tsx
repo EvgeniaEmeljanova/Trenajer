@@ -754,11 +754,9 @@ export default function Home() {
     const correctlyPlaced = Math.abs(x - target.x) <= 6 && Math.abs(y - target.y) <= 7;
     if (correctlyPlaced) {
       setAedPadPositions(prev => prev.map((position, padIndex) => padIndex === index ? target : position));
-      setAedPadsPlaced(prev => {
-        const next = prev.map((placed, padIndex) => padIndex === index ? true : placed);
-        if (next.every(Boolean)) recordAedCriterion('aed_pads_correct', true);
-        return next;
-      });
+      const nextPadsPlaced = aedPadsPlaced.map((placed, padIndex) => padIndex === index ? true : placed);
+      setAedPadsPlaced(nextPadsPlaced);
+      if (nextPadsPlaced.every(Boolean)) recordAedCriterion('aed_pads_correct', true);
     } else {
       const starts = [{ x: 87, y: 76 }, { x: 87, y: 89 }];
       setAedPadPositions(prev => prev.map((position, padIndex) => padIndex === index ? starts[index] : position));
@@ -781,7 +779,9 @@ export default function Home() {
 
   const completeAedUse = () => {
     setAedState('success');
-    toggleAction('aed');
+    const aedProcedureWasSafe = aedAnalysisUntouched && (!isBlsShockable || aedShockUntouched);
+    if (aedProcedureWasSafe) toggleAction('aed');
+    else recordAedCriterion('aed', false);
     if (isBlsScenario) {
       setBlsSecondCycle(true);
       setBlsCompressionElapsed(0);
