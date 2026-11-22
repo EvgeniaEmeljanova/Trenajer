@@ -278,6 +278,7 @@ export default function Home() {
   
   const [mistakes, setMistakes] = useState<string[]>([]);
   const [patientResponse, setPatientResponse] = useState<string | null>(null);
+  const [akkredikHint, setAkkredikHint] = useState<string | null>(null);
 
   const [isArrest, setIsArrest] = useState(false);
   const [vitals, setVitals] = useState<{ hr: number; spo2: number; bpSys: number; bpDia: number; rr?: number }>({ hr: 110, spo2: 88, bpSys: 90, bpDia: 40 });
@@ -446,6 +447,30 @@ export default function Home() {
     if (actions['oxygen'] && !isArrest) setVitals(prev => ({ ...prev, spo2: 98 }));
   }, [actions, isArrest]);
 
+  const showAkkredikHint = () => {
+    if (!isBlsScenario) { setAkkredikHint('Подсказки для этой станции пока готовятся. Сейчас я могу помогать на станции базовой СЛР.'); return; }
+    const nextAction = currentOrder.find(actionId => !actionsRef.current[actionId]);
+    if (!nextAction) { setAkkredikHint('Основные этапы алгоритма выполнены. Проверь, не осталось ли незавершённых действий или повторной оценки состояния.'); return; }
+    const hints: Record<string, string> = {
+      danger: 'Начни с безопасности: оцени место происшествия и убедись, что тебе и пострадавшему ничего не угрожает.',
+      choking: 'Оцени, может ли пострадавший говорить и эффективно откашливаться. Это помогает определить тяжесть нарушения проходимости дыхательных путей.',
+      back_blows: 'При тяжёлой обструкции у взрослого предусмотрены пять ударов между лопатками. После каждого удара оцени, не устранена ли обструкция.',
+      heimlich: 'Если пять ударов между лопатками не помогли, переходи к пяти абдоминальным толчкам. После каждого толчка оцени результат.',
+      consciousness: 'Оцени сознание: обратись к пострадавшему и проверь реакцию.',
+      airway: 'Для оценки дыхания обеспечь проходимость дыхательных путей: запрокинь голову и подними подбородок.',
+      breathing: 'Оцени дыхание не более 10 секунд: смотри на движения грудной клетки, слушай и ощущай выдох.',
+      call: 'Организуй вызов скорой помощи. Сообщи диспетчеру адрес, что произошло, состояние пострадавшего и что помощь уже оказывается.',
+      compressions: 'Начни компрессии в центре грудной клетки. Следи за положением рук, глубиной, частотой и полным расправлением грудной клетки.',
+      breaths: 'После 30 компрессий выполни два вдоха с защитной маской или плёнкой. Каждый вдох — до видимого подъёма грудной клетки.',
+      aed: blsAedAvailable ? 'АНД доступен. Включи устройство и следуй его голосовым командам: размести электроды и дождись анализа.' : 'Продолжай СЛР. По условиям этого сценария АНД станет доступен после предусмотренного периода компрессий.',
+      compressions_repeat: 'После завершения работы с АНД сразу возобнови компрессии и продолжай СЛР.',
+      reassess_consciousness: 'После появления признаков восстановления повторно оцени сознание пострадавшего.',
+      reassess_breathing: 'Повторно оцени дыхание в течение 10 секунд.',
+      recovery: 'Если сознание отсутствует, но нормальное дыхание восстановилось, выполни действия для придания устойчивого бокового положения согласно алгоритму станции.'
+    };
+    const label = currentChecklist.find((item: any) => item.id === nextAction)?.text || nextAction;
+    setAkkredikHint(hints[nextAction] || ('Сейчас этап «' + label + '». Вспомни последовательность и критерии выполнения этого действия, затем выполни его на тренажёре.'));
+  };
   const handleSelectSpecialty = (specId: string) => {
     setSelectedSpecialty(specId);
     setStage('station_select');
@@ -459,7 +484,7 @@ export default function Home() {
         ? (['BLS1', 'BLS2', 'BLS3', 'BLS4'][Math.floor(Math.random() * 4)] as ScenarioType)
         : station.id as ScenarioType;
       setScenario(selectedScenario);
-      actionsRef.current = {}; setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null);
+      actionsRef.current = {}; setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null); setAkkredikHint(null);
       setTimeLeft(510); setScore(0); setIsArrest(false); setBlsCompressionElapsed(0);
       setBlsCompressionRunning(false); setBlsAedAvailable(false); setBlsSecondCycle(false); setBlsRosc(false);
       isFinishing.current = false; hasSpokenMinuteWarning.current = false;
@@ -468,7 +493,7 @@ export default function Home() {
       const scenarios = station.scenarios;
       const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
       setScenario(randomScenario);
-      actionsRef.current = {}; setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null);
+      actionsRef.current = {}; setActions({}); setSequence([]); setMistakes([]); setPatientResponse(null); setAkkredikHint(null);
       setTimeLeft(510); setScore(0); setIsArrest(false);
       isFinishing.current = false; hasSpokenMinuteWarning.current = false;
       setStage('briefing');
@@ -1060,16 +1085,24 @@ export default function Home() {
         <button onClick={finishScenario} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition text-sm font-semibold">Завершить</button>
       </div>
 
-      <div className="absolute bottom-20 left-4 z-40 flex items-end pointer-events-none">
+      <div className="absolute bottom-20 left-4 z-40 flex items-end">
         <img src="/helper.png" alt="Аккредик" className="w-24 h-24 drop-shadow-2xl" />
-        <div className="ml-2 mb-4 flex flex-col gap-2 items-start">
+        <div className="ml-2 mb-4 flex flex-col gap-2 items-start max-w-sm">
           {patientResponse && (
-            <div className="bg-teal-50 text-teal-900 p-4 rounded-2xl shadow-xl border-2 border-teal-500 max-w-sm relative">
+            <div className="bg-teal-50 text-teal-900 p-4 rounded-2xl shadow-xl border-2 border-teal-500 w-full relative">
               <p className="font-bold text-xs text-teal-600 mb-1">Ответ пациента:</p>
               <p className="text-sm font-medium">{patientResponse}</p>
               <button onClick={() => setPatientResponse(null)} className="absolute top-1 right-2 text-teal-400 hover:text-teal-700 text-xs">✕</button>
             </div>
           )}
+          {akkredikHint && (
+            <div className="bg-amber-50 text-amber-950 p-4 rounded-2xl shadow-xl border-2 border-amber-400 w-full relative">
+              <p className="font-bold text-xs text-amber-700 mb-1">Подсказка Аккредика:</p>
+              <p className="text-sm font-medium pr-4">{akkredikHint}</p>
+              <button onClick={() => setAkkredikHint(null)} className="absolute top-1 right-2 text-amber-600 hover:text-amber-900 text-xs" aria-label="Закрыть подсказку">✕</button>
+            </div>
+          )}
+          <button onClick={showAkkredikHint} className="pointer-events-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl shadow-lg border border-blue-400 transition">Подсказка</button>
         </div>
       </div>
 
