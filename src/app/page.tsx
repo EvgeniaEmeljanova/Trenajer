@@ -535,7 +535,8 @@ export default function Home() {
 
     const completedItems = currentChecklist.filter((item: any) => actionsRef.current[item.id]).length;
     const totalItems = currentChecklist.length;
-    let calculatedScore = Math.round((completedItems / totalItems) * 100);
+    // Не округляем результат вверх: отображаем целую часть фактического процента.
+    let calculatedScore = totalItems > 0 ? Math.floor((completedItems / totalItems) * 100) : 0;
     
     calculatedScore = Math.max(0, calculatedScore - penalty);
     
@@ -1000,8 +1001,12 @@ export default function Home() {
 
       setTimeout(() => {
         setChallenge(null);
-        const completedId = challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions';
-        toggleAction(completedId);
+        // Критерий компрессий засчитывается только при правильном ритме
+        // на всех 29 интервалах между 30 нажатиями.
+        if (allIntervalsCorrect) {
+          const completedId = challenge === 'cpr_repeat' ? 'compressions_repeat' : 'compressions';
+          toggleAction(completedId);
+        }
         if (isBlsScenario) {
           setBlsCompressionRunning(true);
         }
