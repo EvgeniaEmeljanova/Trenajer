@@ -216,7 +216,6 @@ const CHECKLIST_BLS = [
   { id: 'call', text: 'Вызов СМП' },
   { id: 'compressions', text: 'Компрессии (30 раз)' },
   { id: 'breaths', text: 'Сделал 2 вдоха' },
-  { id: 'airway_hand_forehead', text: 'Ладонь одной руки положил на лоб пострадавшего', number: 29 },
   { id: 'aed', text: 'Работа с АНД' },
   { id: 'compressions_repeat', text: 'Возобновил СЛР после АНД' },
   { id: 'recovery', text: 'Устойчивое боковое положение' }
@@ -231,7 +230,6 @@ const CHECKLIST_BLS_ARREST = [
   { id: 'call', text: 'Вызов СМП' },
   { id: 'compressions', text: 'Компрессии (30 раз)' },
   { id: 'breaths', text: 'Сделал 2 вдоха' },
-  { id: 'airway_hand_forehead', text: 'Ладонь одной руки положил на лоб пострадавшего', number: 24 },
   { id: 'aed', text: 'Работа с АНД' },
   { id: 'compressions_repeat', text: 'Возобновил СЛР после АНД' },
   { id: 'reassess_consciousness', text: 'Повторно оценил сознание' },
@@ -279,12 +277,6 @@ export default function Home() {
   const [timeLeft, setTimeLeft] = useState(510);
   const [score, setScore] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
-  const [airwayModalOpen, setAirwayModalOpen] = useState(false);
-  const [airwayHandPosition, setAirwayHandPosition] = useState({ x: 3, y: 50 });
-  const [airwayDragMessage, setAirwayDragMessage] = useState('Перетащите руку на лоб пострадавшего.');
-  const airwayStageRef = useRef<HTMLDivElement | null>(null);
-  const airwayDragOffset = useRef({ x: 0, y: 0 });
-  const airwayPointerActive = useRef(false);
   
   const [mistakes, setMistakes] = useState<string[]>([]);
   const [patientResponse, setPatientResponse] = useState<string | null>(null);
@@ -717,12 +709,6 @@ export default function Home() {
       startHoldChallenge(id, 10);
       return;
     }
-    if (isBlsScenario && id === 'breaths') {
-      setAirwayHandPosition({ x: 3, y: 50 });
-      setAirwayDragMessage('Перетащите руку на лоб пострадавшего.');
-      setAirwayModalOpen(true);
-      return;
-    }
     if (id === 'respiratory_rate' || id === 'breathing') {
       startClothingAssessment(id);
       return;
@@ -1153,7 +1139,7 @@ export default function Home() {
               return (
                 <div key={item.id + index} className={`flex items-center justify-between p-3 rounded-lg border ${isDone ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                   <div className="flex items-center gap-3">
-                    <span className="text-gray-400 text-sm font-mono w-6">{item.number ?? index + 1}.</span>
+      
                     <span className={`text-sm ${isDone ? 'text-gray-800 font-medium' : 'text-red-700'}`}>{item.text}</span>
                   </div>
                   <div className="flex items-center gap-4 text-sm font-bold min-w-[80px] justify-end">
@@ -1259,65 +1245,6 @@ export default function Home() {
         </div>
       )}
 
-
-      {airwayModalOpen && (
-        <div className="absolute inset-0 z-[70] bg-slate-950/95 flex items-center justify-center p-3 md:p-6">
-          <div className="w-full max-w-5xl">
-            <div className="mb-3 flex items-center justify-between gap-3 text-white">
-              <div>
-                <h3 className="text-lg md:text-xl font-bold">Положение руки на лбу</h3>
-                <p className="text-sm text-slate-300">{airwayDragMessage}</p>
-              </div>
-              <button type="button" onClick={() => setAirwayModalOpen(false)} className="rounded-lg bg-white/10 px-4 py-2 text-sm hover:bg-white/20">Закрыть</button>
-            </div>
-            <div
-              ref={airwayStageRef}
-              className="relative mx-auto w-full overflow-hidden rounded-xl bg-slate-800 select-none"
-              style={{ aspectRatio: '16 / 9', touchAction: 'none' }}
-              onPointerDown={(event) => {
-                const target = event.target as HTMLElement;
-                if (target.dataset.airwayHand !== 'true' || !airwayStageRef.current) return;
-                const rect = airwayStageRef.current.getBoundingClientRect();
-                airwayDragOffset.current = {
-                  x: event.clientX - rect.left - (airwayHandPosition.x / 100) * rect.width,
-                  y: event.clientY - rect.top - (airwayHandPosition.y / 100) * rect.height
-                };
-                airwayPointerActive.current = true;
-                event.currentTarget.setPointerCapture(event.pointerId);
-              }}
-              onPointerMove={(event) => {
-                if (!airwayPointerActive.current || !airwayStageRef.current) return;
-                const rect = airwayStageRef.current.getBoundingClientRect();
-                const x = ((event.clientX - rect.left - airwayDragOffset.current.x) / rect.width) * 100;
-                const y = ((event.clientY - rect.top - airwayDragOffset.current.y) / rect.height) * 100;
-                setAirwayHandPosition({ x: Math.max(0, Math.min(52, x)), y: Math.max(0, Math.min(65, y)) });
-              }}
-              onPointerUp={() => {
-                if (!airwayPointerActive.current) return;
-                airwayPointerActive.current = false;
-                const centerX = airwayHandPosition.x + 24;
-                const centerY = airwayHandPosition.y + 16;
-                if (centerX >= 34 && centerX <= 66 && centerY >= 7 && centerY <= 36) {
-                  if (!actionsRef.current.airway_hand_forehead) {
-                    actionsRef.current = { ...actionsRef.current, airway_hand_forehead: true };
-                    setActions((prev) => ({ ...prev, airway_hand_forehead: true }));
-                  }
-                  setAirwayDragMessage('Верно. Критерий «ладонь одной руки на лбу» засчитан.');
-                  setAirwayModalOpen(false);
-                } else {
-                  setAirwayHandPosition({ x: 3, y: 50 });
-                  setAirwayDragMessage('Рука расположена неверно. Попробуйте ещё раз.');
-                }
-              }}
-              onPointerCancel={() => { airwayPointerActive.current = false; setAirwayHandPosition({ x: 3, y: 50 }); }}
-            >
-              <img src="/patient_face_closeup.png" alt="Лицо пациента" draggable={false} className="absolute inset-0 h-full w-full object-cover pointer-events-none" />
-              <img src="/airway_hand_forehead.png" alt="Перемещаемая рука" data-airway-hand="true" draggable={false} className="absolute z-10 h-auto max-w-none cursor-grab active:cursor-grabbing" style={{ left: `${airwayHandPosition.x}%`, top: `${airwayHandPosition.y}%`, width: '48%', touchAction: 'none' }} />
-            </div>
-            <p className="mt-3 text-center text-xs text-slate-400">Засчитывается только правильное положение руки. Остальные действия ИВЛ этим упражнением не отмечаются.</p>
-          </div>
-        </div>
-      )}
 
       {clothingAssessment && (
         <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-[60] p-4">
