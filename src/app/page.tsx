@@ -293,7 +293,7 @@ export default function Home() {
   const holdInterval = useRef<NodeJS.Timeout | null>(null);
   const [clothingAssessment, setClothingAssessment] = useState<{ actionId: string; opened: boolean; secondsLeft: number } | null>(null);
   const [foreheadHandOpen, setForeheadHandOpen] = useState(false);
-  const [foreheadHandPosition, setForeheadHandPosition] = useState({ x: 72, y: 68 });
+  const [foreheadHandPosition, setForeheadHandPosition] = useState({ x: 39, y: 58 });
   const [foreheadHandDragging, setForeheadHandDragging] = useState(false);
   const foreheadSceneRef = useRef<HTMLDivElement | null>(null);
 
@@ -703,7 +703,7 @@ export default function Home() {
     }
 
     if (isBlsScenario && id === 'breaths') {
-      setForeheadHandPosition({ x: 72, y: 68 });
+      setForeheadHandPosition({ x: 39, y: 58 });
       setForeheadHandOpen(true);
       return;
     }
@@ -1266,20 +1266,20 @@ export default function Home() {
 
       {foreheadHandOpen && (
         <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/85 p-3">
-          <div className="w-full max-w-3xl rounded-2xl bg-white p-4 text-gray-800 shadow-2xl">
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-3 text-gray-800 shadow-2xl sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="text-lg font-bold">Положите ладонь на лоб пострадавшего</h3>
               <button type="button" onClick={() => { setForeheadHandOpen(false); setForeheadHandDragging(false); }} className="rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-100">Закрыть</button>
             </div>
             <div
               ref={foreheadSceneRef}
-              className="relative mx-auto w-full max-w-2xl touch-none overflow-hidden rounded-xl bg-slate-100"
+              className="relative mx-auto w-fit max-w-full touch-none overflow-hidden rounded-xl bg-slate-100"
               onPointerMove={(event) => {
                 if (!foreheadHandDragging || !foreheadSceneRef.current) return;
                 const rect = foreheadSceneRef.current.getBoundingClientRect();
                 setForeheadHandPosition({
-                  x: Math.max(0, Math.min(88, ((event.clientX - rect.left) / rect.width) * 100 - 10)),
-                  y: Math.max(0, Math.min(82, ((event.clientY - rect.top) / rect.height) * 100 - 9))
+                  x: Math.max(0, Math.min(78, ((event.clientX - rect.left) / rect.width) * 100 - 11)),
+                  y: Math.max(0, Math.min(78, ((event.clientY - rect.top) / rect.height) * 100 - 11))
                 });
               }}
               onPointerUp={(event) => {
@@ -1299,13 +1299,13 @@ export default function Home() {
               }}
               onPointerCancel={() => { setForeheadHandDragging(false); setForeheadHandPosition({ x: 72, y: 68 }); }}
             >
-              <img src="/patient_face_closeup.png" alt="Лицо пострадавшего" draggable={false} className="block h-auto w-full select-none" />
+              <img src="/patient_face_closeup.png" alt="Лицо пострадавшего" draggable={false} className="mx-auto block h-auto max-h-[54vh] w-auto max-w-full select-none object-contain" />
               <img
                 src="/airway_hand_forehead.png"
                 alt="Перемещаемая рука"
                 draggable={false}
-                onPointerDown={(event) => { event.preventDefault(); setForeheadHandDragging(true); event.currentTarget.setPointerCapture(event.pointerId); }}
-                className="absolute z-10 w-[42%] cursor-grab touch-none select-none active:cursor-grabbing"
+                onPointerDown={(event) => { event.preventDefault(); setForeheadHandDragging(true); foreheadSceneRef.current?.setPointerCapture(event.pointerId); }}
+                className="absolute z-10 w-[22%] max-w-[150px] cursor-grab touch-none select-none active:cursor-grabbing"
                 style={{ left: `${foreheadHandPosition.x}%`, top: `${foreheadHandPosition.y}%` }}
               />
             </div>
