@@ -295,6 +295,7 @@ export default function Home() {
   const [foreheadHandOpen, setForeheadHandOpen] = useState(false);
   const [foreheadHandPosition, setForeheadHandPosition] = useState({ x: 39, y: 58 });
   const [foreheadHandDragging, setForeheadHandDragging] = useState(false);
+  const [foreheadHandPlaced, setForeheadHandPlaced] = useState(false);
   const foreheadSceneRef = useRef<HTMLDivElement | null>(null);
 
   const clothingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -704,6 +705,7 @@ export default function Home() {
 
     if (isBlsScenario && id === 'breaths') {
       setForeheadHandPosition({ x: 39, y: 58 });
+      setForeheadHandPlaced(false);
       setForeheadHandOpen(true);
       return;
     }
@@ -1269,13 +1271,13 @@ export default function Home() {
           <div className="max-h-[96vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-3 text-gray-800 shadow-2xl sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="text-lg font-bold">Положите ладонь на лоб пострадавшего</h3>
-              <button type="button" onClick={() => { setForeheadHandOpen(false); setForeheadHandDragging(false); }} className="rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-100">Закрыть</button>
+              <button type="button" onClick={() => { setForeheadHandOpen(false); setForeheadHandDragging(false); setForeheadHandPlaced(false); }} className="rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-100">Закрыть</button>
             </div>
             <div
               ref={foreheadSceneRef}
               className="relative mx-auto w-fit max-w-full touch-none overflow-visible rounded-xl bg-slate-100"
               onPointerMove={(event) => {
-                if (!foreheadHandDragging || !foreheadSceneRef.current) return;
+                if (!foreheadHandDragging || foreheadHandPlaced || !foreheadSceneRef.current) return;
                 const rect = foreheadSceneRef.current.getBoundingClientRect();
                 setForeheadHandPosition({
                   x: Math.max(-12, Math.min(92, ((event.clientX - rect.left) / rect.width) * 100 - 11)),
@@ -1289,9 +1291,9 @@ export default function Home() {
                 const y = ((event.clientY - rect.top) / rect.height) * 100;
                 setForeheadHandDragging(false);
                 if (x >= 34 && x <= 67 && y >= 5 && y <= 39) {
-                  setForeheadHandOpen(false);
+                  setForeheadHandPlaced(true);
                   toggleAction('forehead_hand');
-                  setPatientResponse('Правильно: ладонь одной руки расположена на лбу пострадавшего.');
+                  setPatientResponse('Правильно: ладонь одной руки расположена на лбу пострадавшего. Рука остаётся на месте.');
                 } else {
                   setForeheadHandPosition({ x: 39, y: 58 });
                   setPatientResponse('Рука расположена неправильно. Попробуйте ещё раз.');
@@ -1304,12 +1306,12 @@ export default function Home() {
                 src="/airway_hand_forehead.png"
                 alt="Перемещаемая рука"
                 draggable={false}
-                onPointerDown={(event) => { event.preventDefault(); setForeheadHandDragging(true); foreheadSceneRef.current?.setPointerCapture(event.pointerId); }}
+                onPointerDown={(event) => { event.preventDefault(); if (foreheadHandPlaced) return; setForeheadHandDragging(true); foreheadSceneRef.current?.setPointerCapture(event.pointerId); }}
                 className="absolute z-10 w-[28%] max-w-[210px] cursor-grab touch-none select-none active:cursor-grabbing"
                 style={{ left: `${foreheadHandPosition.x}%`, top: `${foreheadHandPosition.y}%` }}
               />
             </div>
-            <p className="mt-3 text-center text-sm text-gray-600">Перетащите изображение руки на область лба пациента.</p>
+            <p className="mt-3 text-center text-sm text-gray-600">{foreheadHandPlaced ? "Правильно! Рука осталась на месте. Можно закрыть окно." : "Перетащите изображение руки на область лба пациента."}</p>
           </div>
         </div>
       )}
