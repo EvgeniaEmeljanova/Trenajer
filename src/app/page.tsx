@@ -1293,7 +1293,7 @@ export default function Home() {
                 if (x >= 34 && x <= 67 && y >= 5 && y <= 39) {
                   setForeheadHandPlaced(true);
                   toggleAction('forehead_hand');
-                  setPatientResponse('Правильно: ладонь одной руки расположена на лбу пострадавшего. Рука остаётся на месте.');
+                  setPatientResponse('Правильно: ладонь одной руки расположена на лбу пострадавшего.');
                 } else {
                   setForeheadHandPosition({ x: 39, y: 58 });
                   setPatientResponse('Рука расположена неправильно. Попробуйте ещё раз.');
