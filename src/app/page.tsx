@@ -1307,7 +1307,7 @@ export default function Home() {
                 alt="Перемещаемая рука"
                 draggable={false}
                 onPointerDown={(event) => { event.preventDefault(); if (foreheadHandPlaced) return; setForeheadHandDragging(true); foreheadSceneRef.current?.setPointerCapture(event.pointerId); }}
-                className="absolute z-10 w-[44%] max-w-[340px] cursor-grab touch-none select-none active:cursor-grabbing"
+                className="absolute z-10 w-[40%] max-w-[300px] cursor-grab touch-none select-none active:cursor-grabbing"
                 style={{ left: `${foreheadHandPosition.x}%`, top: `${foreheadHandPosition.y}%` }}
               />
             </div>
