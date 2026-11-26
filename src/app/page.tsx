@@ -215,6 +215,8 @@ const CHECKLIST_BLS = [
   { id: 'pulse', text: 'Оценил пульс' },
   { id: 'call', text: 'Вызов СМП' },
   { id: 'compressions', text: 'Компрессии (30 раз)' },
+  { id: 'forehead_hand', text: 'Положил ладонь одной руки на лоб пострадавшего' },
+  { id: 'forehead_hand', text: 'Положил ладонь одной руки на лоб пострадавшего' },
   { id: 'breaths', text: 'Сделал 2 вдоха' },
   { id: 'aed', text: 'Работа с АНД' },
   { id: 'compressions_repeat', text: 'Возобновил СЛР после АНД' },
@@ -290,6 +292,11 @@ export default function Home() {
   const [holdSuccess, setHoldSuccess] = useState(false);
   const holdInterval = useRef<NodeJS.Timeout | null>(null);
   const [clothingAssessment, setClothingAssessment] = useState<{ actionId: string; opened: boolean; secondsLeft: number } | null>(null);
+  const [foreheadHandOpen, setForeheadHandOpen] = useState(false);
+  const [foreheadHandPosition, setForeheadHandPosition] = useState({ x: 72, y: 68 });
+  const [foreheadHandDragging, setForeheadHandDragging] = useState(false);
+  const foreheadSceneRef = useRef<HTMLDivElement | null>(null);
+
   const clothingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const clothingStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clothingSecondsRef = useRef(10);
@@ -692,6 +699,12 @@ export default function Home() {
       setCurrentEcg(ecgToShow);
       setEcgModalOpen(true);
       setEcgFeedback('');
+      return;
+    }
+
+    if (isBlsScenario && id === 'breaths') {
+      setForeheadHandPosition({ x: 72, y: 68 });
+      setForeheadHandOpen(true);
       return;
     }
 
@@ -1250,6 +1263,56 @@ export default function Home() {
         </div>
       )}
 
+
+      {foreheadHandOpen && (
+        <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/85 p-3">
+          <div className="w-full max-w-3xl rounded-2xl bg-white p-4 text-gray-800 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="text-lg font-bold">Положите ладонь на лоб пострадавшего</h3>
+              <button type="button" onClick={() => { setForeheadHandOpen(false); setForeheadHandDragging(false); }} className="rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-100">Закрыть</button>
+            </div>
+            <div
+              ref={foreheadSceneRef}
+              className="relative mx-auto w-full max-w-2xl touch-none overflow-hidden rounded-xl bg-slate-100"
+              onPointerMove={(event) => {
+                if (!foreheadHandDragging || !foreheadSceneRef.current) return;
+                const rect = foreheadSceneRef.current.getBoundingClientRect();
+                setForeheadHandPosition({
+                  x: Math.max(0, Math.min(88, ((event.clientX - rect.left) / rect.width) * 100 - 10)),
+                  y: Math.max(0, Math.min(82, ((event.clientY - rect.top) / rect.height) * 100 - 9))
+                });
+              }}
+              onPointerUp={(event) => {
+                if (!foreheadHandDragging || !foreheadSceneRef.current) return;
+                const rect = foreheadSceneRef.current.getBoundingClientRect();
+                const x = ((event.clientX - rect.left) / rect.width) * 100;
+                const y = ((event.clientY - rect.top) / rect.height) * 100;
+                setForeheadHandDragging(false);
+                if (x >= 34 && x <= 67 && y >= 5 && y <= 39) {
+                  setForeheadHandOpen(false);
+                  toggleAction('forehead_hand');
+                  setPatientResponse('Правильно: ладонь одной руки расположена на лбу пострадавшего.');
+                } else {
+                  setForeheadHandPosition({ x: 72, y: 68 });
+                  setPatientResponse('Рука расположена неправильно. Попробуйте ещё раз.');
+                }
+              }}
+              onPointerCancel={() => { setForeheadHandDragging(false); setForeheadHandPosition({ x: 72, y: 68 }); }}
+            >
+              <img src="/patient_face_closeup.png" alt="Лицо пострадавшего" draggable={false} className="block h-auto w-full select-none" />
+              <img
+                src="/airway_hand_forehead.png"
+                alt="Перемещаемая рука"
+                draggable={false}
+                onPointerDown={(event) => { event.preventDefault(); setForeheadHandDragging(true); event.currentTarget.setPointerCapture(event.pointerId); }}
+                className="absolute z-10 w-[42%] cursor-grab touch-none select-none active:cursor-grabbing"
+                style={{ left: `${foreheadHandPosition.x}%`, top: `${foreheadHandPosition.y}%` }}
+              />
+            </div>
+            <p className="mt-3 text-center text-sm text-gray-600">Перетащите изображение руки на область лба пациента.</p>
+          </div>
+        </div>
+      )}
 
       {clothingAssessment && (
         <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-[60] p-4">
