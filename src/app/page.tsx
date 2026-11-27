@@ -182,7 +182,7 @@ const getTrainingSmpOptions = (scenario: ScenarioType): SmpOption[] => {
     { id: 'victims', text: 'У нас один пострадавший.', correct: true },
     { id: 'address', text: 'Адрес: улица Ленина, дом 5.', correct: true },
     { id: 'sex', text: 'Пострадавший — мужчина.', correct: true },
-    { id: 'age', text: info.age, correct: true },
+    { id: 'age', text: info.age.replace(/^Мужчина,\\s*/i, '').replace(/^Женщина,\\s*/i, ''), correct: true },
     { id: 'condition', text: info.condition, correct: true },
     { id: 'help', text: info.help, correct: true },
     { id: 'wrongPulse', text: 'Пульса нет.', correct: false },
