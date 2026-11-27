@@ -1370,16 +1370,17 @@ export default function Home() {
     const prepComplete = equipmentReady && ivPrepAmpouleChecked && ivPrepAmpouleOpened && ivPrepSyringeFilled && ivPrepNeedleChanged;
     const toggleEquipment = (id: string) => setIvPrepEquipment(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
     const prepHotspots: IVRoomHotspot[] = [
-      { id: 'patient', label: 'Пациент', x: 63, y: 58 },
-      { id: 'documents', label: 'Лист назначения', x: 38, y: 72 },
-      { id: 'sink', label: 'Раковина и антисептик', x: 13, y: 48 },
-      { id: 'tray', label: 'Лоток', x: 31, y: 66, done: ivPrepEquipment.includes('tray') },
-      { id: 'syringe', label: 'Шприц', x: 40, y: 65, done: ivPrepEquipment.includes('syringe') },
-      { id: 'needles', label: 'Стерильные иглы', x: 47, y: 65, done: ivPrepEquipment.includes('needles') },
-      { id: 'swabs', label: 'Ватные шарики и антисептик', x: 54, y: 65, done: ivPrepEquipment.includes('swabs') },
-      { id: 'gloves', label: 'Перчатки', x: 33, y: 78, done: ivPrepEquipment.includes('gloves') },
-      { id: 'waste', label: 'Контейнер для острых отходов', x: 78, y: 78, done: ivPrepEquipment.includes('waste') },
-      { id: 'ampoule', label: 'Ампула', x: 47, y: 55, done: ivPrepAmpouleChecked },
+      // Координаты привязаны к реальным предметам на изображении кабинета.
+      { id: 'patient', label: 'Пациент', x: 43, y: 40 },
+      { id: 'documents', label: 'Лист назначения', x: 8, y: 79 },
+      { id: 'sink', label: 'Раковина и антисептик', x: 57, y: 33 },
+      { id: 'tray', label: 'Лоток', x: 75, y: 80, done: ivPrepEquipment.includes('tray') },
+      { id: 'syringe', label: 'Шприц', x: 49, y: 77, done: ivPrepEquipment.includes('syringe') },
+      { id: 'needles', label: 'Стерильные иглы', x: 59, y: 77, done: ivPrepEquipment.includes('needles') },
+      { id: 'swabs', label: 'Ватные шарики и антисептик', x: 66, y: 71, done: ivPrepEquipment.includes('swabs') },
+      { id: 'gloves', label: 'Перчатки', x: 80, y: 86, done: ivPrepEquipment.includes('gloves') },
+      { id: 'waste', label: 'Контейнер для острых отходов', x: 92, y: 81, done: ivPrepEquipment.includes('waste') },
+      { id: 'ampoule', label: 'Ампула', x: 61, y: 73, done: ivPrepAmpouleChecked },
     ];
     const handlePrepRoomClick = (id: string) => {
       if (id === 'patient') {
