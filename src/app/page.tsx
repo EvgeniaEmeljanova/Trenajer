@@ -948,49 +948,42 @@ export default function Home() {
     if (aedState === 'no_shock') completeAedUse();
   };
 
-  const handleTrainingSmpMessage = () => {
-    const message = smpInput.trim();
-    if (!message || callSuccess) return;
-    const history = [...chatHistory, { sender: 'doctor' as const, text: message }];
-    const fullText = history.filter(item => item.sender === 'doctor').map(item => item.text).join(' ').toLowerCase();
+  const handleTrainingSmpSubmit = () => {
+    if (callSuccess) return;
+    const options = getTrainingSmpOptions(scenario);
+    const selected = options.filter(option => selectedSmpOptions.includes(option.id));
+    const wrong = selected.filter(option => !option.correct);
+    const missing = options.filter(option => option.correct && !selectedSmpOptions.includes(option.id));
 
-    // Проверяем содержание сообщения, а не точное совпадение с заготовленной фразой.
-    const hasAddress = /(?:адрес|улиц[аы]?|ул\.?|проспект|пр-т|переулок|шоссе|дом\s*\d|д\.?\s*\d|квартир[аы]|корпус|находимся|на месте происшествия|по адресу|ориентир)/i.test(fullText);
-    const hasVictimCount = /(?:один|одна|один человек|один пострадавший|одна пострадавшая|1\s*(?:пострадавш|человек|пациент)|единственн\w* пострадавш)/i.test(fullText);
-    const hasSex = /(?:мужчин[ауы]?|женщин[ауы]?|мужского пола|женского пола|мальчик|девочк|подросток|реб[её]нок)/i.test(fullText);
-    const hasAge = /(?:\b\d{1,2}\s*(?:лет|года|год|месяц(?:ев|а)?)\b|\d{1,2}-летн|пожилого возраста|среднего возраста|взросл\w*|подросток|реб[её]нок)/i.test(fullText);
-    const hasDemographic = hasSex && hasAge;
-    const hasConsciousness = /(?:без сознани|не в сознани|потерял сознани|не реагирует|в сознании|сознание сохранено|отвечает)/i.test(fullText);
-    const hasBreathing = /(?:не дышит|дыхания нет|нет нормального дыхания|нормального дыхания нет|дыхание отсутствует|дышит|дыхание есть)/i.test(fullText);
-    const hasCondition = isBlsScenario
-      ? hasConsciousness && hasBreathing
-      : /(?:боль|одышк|цианоз|затрудненн\w* дыхан|укуса? пчел|аллергическ|слабост|кофейн\w* гущ|кровотечен|травм\w* груд|спутанн\w* сознани|сухост\w* во рту|гипогликеми|гипергликеми|тромбоэмболи)/i.test(fullText);
-    const hasHelp = isBlsScenario
-      ? /(?:слр|сердечно.?легочн\w* реанимац|реанимац|компресс|помощь при удуш|удары между лопатками|приступаю к помощи)/i.test(fullText)
-      : /(?:оказываю|оказываем|начинаю|приступаю|готов\w* начать|провожу|оказывать помощь|экстренн\w* помощь|первая помощь)/i.test(fullText);
+    setChatHistory(prev => [
+      ...prev,
+      { sender: 'doctor', text: selected.map(option => option.text).join(' ') || 'Передаю сведения о пострадавшем.' }
+    ]);
 
-    setChatHistory(history);
-    setSmpInput('');
-
-    const missing: { key: string; prompt: string }[] = [];
-    if (!hasAddress) missing.push({ key: 'address', prompt: 'Назовите адрес или место происшествия.' });
-    if (!hasVictimCount) missing.push({ key: 'victims', prompt: 'Сколько пострадавших?' });
-    if (!hasDemographic) missing.push({ key: 'demographic', prompt: 'Уточните пол и возраст или возрастную категорию пострадавшего.' });
-    if (!hasCondition) missing.push({ key: 'condition', prompt: isBlsScenario ? 'Пострадавший в сознании? Есть ли нормальное дыхание?' : 'Опишите состояние пострадавшего.' });
-    if (!hasHelp) missing.push({ key: 'help', prompt: isBlsScenario ? 'Какую помощь Вы готовы начать?' : 'Какую помощь Вы оказываете пострадавшему?' });
-
-    if (missing.length) {
-      const prompt = missing[0].prompt;
-      setChatHistory([...history, { sender: 'dispatcher', text: prompt }]);
-      setSmpFeedback('');
+    if (wrong.length > 0 || missing.length > 0) {
+      const prompts: Record<string, string> = {
+        address: 'Назовите адрес или место происшествия.',
+        victims: 'Сколько пострадавших?',
+        ageSex: 'Уточните пол и возраст или возрастную категорию пострадавшего.',
+        condition: 'В каком состоянии находится пострадавший?',
+        help: 'Какую помощь Вы оказываете или готовы начать?'
+      };
+      const prompt = missing.length > 0
+        ? prompts[missing[0].id]
+        : 'Проверьте передаваемые сведения и выберите подходящие варианты.';
+      setChatHistory(prev => [...prev, { sender: 'dispatcher', text: prompt }]);
+      setSmpFeedback(wrong.length > 0
+        ? 'Есть неверный вариант. Снимите отметку с него и выберите правильные сведения.'
+        : 'Не все необходимые сведения переданы. Дополните выбор.');
       playAudio(prompt);
       return;
     }
 
-    setChatHistory([...history, { sender: 'dispatcher', text: 'Вызов принят!' }]);
-    setSmpFeedback('Все необходимые сведения переданы.');
+    const confirmation = 'Вызов принят!';
+    setChatHistory(prev => [...prev, { sender: 'dispatcher', text: confirmation }]);
+    setSmpFeedback('Верно! Все необходимые сведения переданы.');
     setCallSuccess(true);
-    playAudio('Вызов принят!');
+    playAudio(confirmation);
     setTimeout(() => {
       setPhoneModal(false);
       toggleAction('call');
@@ -1488,17 +1481,25 @@ export default function Home() {
               ))}
               {runMode === 'training' && !callSuccess ? (
                 <div className="rounded-xl border border-gray-600 bg-gray-900/70 p-3 space-y-3">
-                  <p className="text-sm font-semibold text-white">Сообщите диспетчеру необходимые сведения своими словами:</p>
-                  <textarea
-                    value={smpInput}
-                    onChange={(event) => setSmpInput(event.target.value)}
-                    onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleTrainingSmpMessage(); } }}
-                    placeholder="Например: Адрес — улица Советская, дом 5. Один пострадавший, мужчина 45 лет..."
-                    rows={3}
-                    className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-3 text-sm text-white placeholder:text-gray-400 focus:border-blue-400 focus:outline-none"
-                  />
+                  <p className="text-sm font-semibold text-white">Выберите правильные сведения для передачи диспетчеру. Среди вариантов есть неверные.</p>
+                  <div className="space-y-2">
+                    {getTrainingSmpOptions(scenario).map(option => (
+                      <label key={option.id} className="flex items-start gap-3 rounded-lg bg-gray-700/70 p-3 text-sm text-gray-100 cursor-pointer hover:bg-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={selectedSmpOptions.includes(option.id)}
+                          onChange={(event) => {
+                            setSelectedSmpOptions(prev => event.target.checked ? [...prev, option.id] : prev.filter(id => id !== option.id));
+                            setSmpFeedback('');
+                          }}
+                          className="mt-0.5 h-4 w-4 accent-blue-500"
+                        />
+                        <span>{option.text}</span>
+                      </label>
+                    ))}
+                  </div>
                   {smpFeedback && <p className="text-sm text-amber-300">{smpFeedback}</p>}
-                  <button onClick={handleTrainingSmpMessage} disabled={!smpInput.trim()} className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-40">Передать диспетчеру</button>
+                  <button onClick={handleTrainingSmpSubmit} disabled={selectedSmpOptions.length === 0} className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-40">Передать диспетчеру</button>
                 </div>
               ) : runMode !== 'training' && !callSuccess ? (
                 <div className="flex gap-2">
