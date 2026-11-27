@@ -1330,7 +1330,7 @@ export default function Home() {
                 src="/airway_hand_forehead.png"
                 alt="Рука на лбу"
                 draggable={false}
-                onPointerDown={(event) => { event.preventDefault(); if (foreheadHandPlaced) return; setForeheadHandDragging(true); foreheadSceneRef.current?.setPointerCapture(event.pointerId); }}
+                onPointerDown={(event) => { event.preventDefault(); if (foreheadHandPlaced) return; setForeheadHandDragging(true); event.currentTarget.setPointerCapture(event.pointerId); }}
                 className={`absolute z-10 w-[40%] max-w-[300px] select-none ${foreheadHandPlaced ? 'pointer-events-none' : 'cursor-grab touch-none active:cursor-grabbing'}`}
                 style={{ left: `${foreheadHandPosition.x}%`, top: `${foreheadHandPosition.y}%` }}
               />
@@ -1339,7 +1339,7 @@ export default function Home() {
                   src="/airway_hand_chin2.png"
                   alt="Вторая рука для подъёма подбородка"
                   draggable={false}
-                  onPointerDown={(event) => { event.preventDefault(); if (chinHandPlaced) return; setChinHandDragging(true); foreheadSceneRef.current?.setPointerCapture(event.pointerId); }}
+                  onPointerDown={(event) => { event.preventDefault(); if (chinHandPlaced) return; setChinHandDragging(true); event.currentTarget.setPointerCapture(event.pointerId); }}
                   className={`absolute z-20 w-[40%] max-w-[300px] select-none ${chinHandPlaced ? 'pointer-events-none' : 'cursor-grab touch-none active:cursor-grabbing'}`}
                   style={{ left: `${chinHandPosition.x}%`, top: `${chinHandPosition.y}%` }}
                 />
