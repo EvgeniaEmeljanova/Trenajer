@@ -1313,7 +1313,7 @@ export default function Home() {
                 }
                 if (chinHandDragging && foreheadHandPlaced && !chinHandPlaced) {
                   setChinHandDragging(false);
-                  if (x >= 35 && x <= 69 && y >= 48 && y <= 78) {
+                  if (x >= 30 && x <= 75 && y >= 43 && y <= 84) {
                     setChinHandPlaced(true);
                     toggleAction('chin_lift');
                     setPatientResponse('Правильно: подбородок приподнят двумя пальцами.');
