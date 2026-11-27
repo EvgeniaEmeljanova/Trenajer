@@ -372,6 +372,7 @@ export default function Home() {
   const [ivArmSecondBloodReturn, setIvArmSecondBloodReturn] = useState(false);
   const [ivArmFeedback, setIvArmFeedback] = useState('');
   const [ivActionFlags, setIvActionFlags] = useState<Record<string, boolean>>({});
+  const [ivInjectedVolume, setIvInjectedVolume] = useState(0);
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [actions, setActions] = useState<Record<string, boolean>>({});
   const actionsRef = useRef<Record<string, boolean>>({});
@@ -1521,17 +1522,45 @@ export default function Home() {
               {autoEvaluated ? <div className="mt-7 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Этот критерий уже оценён автоматически по действиям в интерактивной сцене.</div> : currentIvAction ? (
                 <div className="mt-7 rounded-xl border border-sky-200 bg-sky-50 p-4">
                   <p className="text-sm text-sky-900">{currentIvAction.note}</p>
+                  {currentIvAction.id === 'iv_15' && (
+                    <div className="mt-4 rounded-xl border border-sky-100 bg-white p-4">
+                      <div className="flex items-center justify-between text-sm font-semibold"><span>Шприц · введено</span><span className="tabular-nums">{ivInjectedVolume.toFixed(1).replace('.', ',')} / {ivScenario.dose}</span></div>
+                      <div className="mt-3 h-4 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-sky-600 transition-all duration-300" style={{ width: `${Math.min(100, (ivInjectedVolume / Number.parseFloat(ivScenario.dose)) * 100)}%` }} /></div>
+                      <p className="mt-2 text-xs text-slate-500">Каждое нажатие моделирует введение 0,5 мл. Критерий засчитывается только после введения всего назначенного объёма.</p>
+                    </div>
+                  )}
                   {ivActionFlags[currentIvAction.id] ? (
                     <div className="mt-4 rounded-lg border border-emerald-200 bg-white p-4 text-sm font-semibold text-emerald-800">✓ {currentIvAction.done}</div>
                   ) : (
                     <button
                       onClick={() => {
+                        if (currentIvAction.id === 'iv_15') {
+                          const prescribed = Number.parseFloat(ivScenario.dose);
+                          const nextVolume = Math.min(prescribed, Number((ivInjectedVolume + 0.5).toFixed(1)));
+                          setIvInjectedVolume(nextVolume);
+                          if (nextVolume >= prescribed) {
+                            setIvActionFlags(prev => ({ ...prev, iv_15: true }));
+                            setIvAnswers(prev => ({ ...prev, iv_15: true }));
+                          }
+                          return;
+                        }
                         setIvActionFlags(prev => ({ ...prev, [currentIvAction.id]: true }));
                         setIvAnswers(prev => ({ ...prev, [currentIvAction.id]: true }));
                       }}
-                      disabled={currentIvAction.id === 'iv_15' && !ivArmSecondBloodReturn}
+                      disabled={
+                        (currentIvAction.id === 'iv_15' && (!ivArmSecondBloodReturn || ivInjectedVolume >= Number.parseFloat(ivScenario.dose))) ||
+                        (currentIvAction.id === 'iv_16' && !ivActionFlags.iv_15) ||
+                        (currentIvAction.id === 'iv_17' && !ivActionFlags.iv_16) ||
+                        (currentIvAction.id === 'iv_18' && !ivActionFlags.iv_17) ||
+                        (currentIvAction.id === 'iv_19' && !ivActionFlags.iv_18) ||
+                        (currentIvAction.id === 'iv_20' && !ivActionFlags.iv_19) ||
+                        (currentIvAction.id === 'iv_21' && !ivActionFlags.iv_20) ||
+                        (currentIvAction.id === 'iv_22' && !ivActionFlags.iv_21) ||
+                        (currentIvAction.id === 'iv_23' && !ivActionFlags.iv_22) ||
+                        (currentIvAction.id === 'iv_24' && !ivActionFlags.iv_23)
+                      }
                       className="mt-4 w-full rounded-xl bg-sky-700 px-5 py-4 font-bold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-40"
-                    >{currentIvAction.button}</button>
+                    >{currentIvAction.id === 'iv_15' ? `Ввести 0,5 мл · ${ivInjectedVolume.toFixed(1).replace('.', ',')} / ${ivScenario.dose}` : currentIvAction.button}</button>
                   )}
                 </div>
               ) : <div className="mt-7 grid grid-cols-2 gap-3">
@@ -1559,7 +1588,7 @@ export default function Home() {
   if (stage === 'iv_finished') {
     const completed = IV_CRITERIA.filter(item => ivAnswers[item.id] === true).length;
     const scoreIv = Math.floor((completed / IV_CRITERIA.length) * 100);
-    const passed = scoreIv >= 70;
+    const passed = completed >= Math.ceil(IV_CRITERIA.length * 0.7);
     return (
       <div className="min-h-screen bg-slate-50 p-4 md:p-8 flex items-center justify-center">
         <div className="w-full max-w-3xl rounded-2xl border border-sky-100 bg-white p-6 md:p-8 shadow-xl">
@@ -1567,7 +1596,7 @@ export default function Home() {
           <h1 className="mt-2 text-center text-2xl font-bold text-slate-900">Внутривенная инъекция</h1>
           <div className="mt-5 text-center"><p className={`text-6xl font-bold ${passed ? 'text-green-600' : 'text-red-600'}`}>{scoreIv}%</p><p className={`mt-2 text-xl font-bold ${passed ? 'text-green-700' : 'text-red-700'}`}>{passed ? 'ЭКЗАМЕН СДАН' : 'ЭКЗАМЕН НЕ СДАН'}</p><p className="mt-1 text-sm text-slate-500">{completed} из 24 · проходной порог 70%</p></div>
           <div className="mt-6 space-y-2">{IV_CRITERIA.map((item, index) => { const yes = ivAnswers[item.id] === true; return <div key={item.id} className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${yes ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}><span className="text-sm text-slate-800">{index + 1}. {item.title}</span><strong className={yes ? 'text-green-700' : 'text-red-700'}>{yes ? 'Да' : 'Нет'}</strong></div>; })}</div>
-          <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => { setIvAnswers({}); setIvActionFlags({}); setIvCurrentCriterion(0); setTimeLeft(600); setStage('iv_briefing'); }} className="rounded-xl bg-sky-700 px-6 py-3 font-bold text-white">Повторить станцию</button><button onClick={() => setStage('station_select')} className="rounded-xl bg-slate-100 px-6 py-3 font-bold text-slate-700">К выбору станций</button></div>
+          <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => { setIvAnswers({}); setIvActionFlags({}); setIvInjectedVolume(0); setIvCurrentCriterion(0); setTimeLeft(600); setStage('iv_briefing'); }} className="rounded-xl bg-sky-700 px-6 py-3 font-bold text-white">Повторить станцию</button><button onClick={() => setStage('station_select')} className="rounded-xl bg-slate-100 px-6 py-3 font-bold text-slate-700">К выбору станций</button></div>
         </div>
       </div>
     );
