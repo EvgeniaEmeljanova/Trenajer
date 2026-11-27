@@ -99,7 +99,7 @@ const SPECIALTIES = [
         required: true,
         scenarios: ['OKS1', 'OKS2', 'ANAPHYLAXIS', 'ZHKK', 'BOS', 'TELA', 'PNEUMOTHORAX', 'HYPOGLYCEMIA', 'HYPERGLYCEMIA']
       },
-      { id: 'iv_injection', title: 'Станция 3: Внутривенная инъекция', type: 'locked', required: true },
+      { id: 'iv_injection', title: 'Станция 3: Внутривенная инъекция', type: 'iv', required: true },
       {
         id: 'random_history',
         title: 'Станция 4: Рандомный выбор — 1 из 2',
@@ -121,6 +121,39 @@ const SPECIALTIES = [
     ]
   },
 ];
+
+const IV_SCENARIOS = [
+  { id: 'ascorbic', title: 'Аскорбиновая кислота', prescription: 'Раствор 5% — 1 мл', ampoule: 'Аскорбиновая кислота 1 мл, раствор для в/в и в/м введения 5%', expiry: 'до 09.20ХХ', ampouleVolume: '1 мл', dose: '1 мл' },
+  { id: 'furosemide', title: 'Фуросемид', prescription: 'Раствор 1% — 2 мл', ampoule: 'Фуросемид 2 мл, раствор для в/в и в/м введения 1%', expiry: 'до 09.20ХХ', ampouleVolume: '2 мл', dose: '2 мл' },
+  { id: 'tranexamic', title: 'Транексамовая кислота', prescription: 'Раствор 5% — 2 мл', ampoule: 'Транексамовая кислота 5 мл, раствор для в/в введения 5%', expiry: 'до 06.20ХХ', ampouleVolume: '5 мл', dose: '2 мл' },
+] as const;
+
+const IV_CRITERIA = [
+  { id: 'iv_01', title: 'Установил контакт с пациентом', detail: 'Поздоровайтесь, представьтесь и обозначьте свою роль.' },
+  { id: 'iv_02', title: 'Идентифицировал пациента', detail: 'Попросите пациента назвать ФИО и возраст, сверьте сведения с медицинской документацией.' },
+  { id: 'iv_03', title: 'Осведомился о самочувствии пациента', detail: 'Обратитесь к пациенту по имени и отчеству. Ответ пациента: «Нормально».' },
+  { id: 'iv_04', title: 'Уточнил аллергологический анамнез', detail: 'Спросите об аллергических реакциях в анамнезе и на назначенное лекарственное средство. Ответ: «Нет».' },
+  { id: 'iv_05', title: 'Убедился в наличии информированного добровольного согласия', detail: 'Проверьте наличие подписанного согласия в медицинской документации.' },
+  { id: 'iv_06', title: 'Обработал руки гигиеническим способом', detail: 'Выполните гигиеническую обработку рук до начала манипуляции.' },
+  { id: 'iv_07', title: 'Проверил медицинское оборудование и расходные материалы', detail: 'Проверьте наличие и пригодность оборудования, стерильность упаковок, сроки годности, размеры шприца и игл, целостность упаковок и комплектность.' },
+  { id: 'iv_08', title: 'Проверил лекарственное средство', detail: 'Сверьте название, концентрацию, объём, срок годности, целостность ампулы и однородность раствора с назначением.' },
+  { id: 'iv_09', title: 'Набрал лекарственное средство в шприц в нужной дозировке', detail: 'Подготовьте лоток и шприц, обработайте ампулу, вскройте её безопасным способом и наберите назначенный объём препарата.' },
+  { id: 'iv_10', title: 'Произвёл смену иглы', detail: 'Снимите использованную для набора иглу и установите дополнительную стерильную иглу, не нарушая асептику.' },
+  { id: 'iv_11', title: 'Наложил венозный жгут правильно', detail: 'Наложите жгут на среднюю треть плеча через ткань, салфетку или бинт; проверьте пульс на лучевой артерии.' },
+  { id: 'iv_12', title: 'Дважды обработал место инъекции', detail: 'Обработайте поле от центра к периферии, затем непосредственно место пункции отдельным ватным шариком.' },
+  { id: 'iv_13', title: 'Снял жгут после первого доказательства нахождения иглы в вене', detail: 'После появления крови в шприце ослабьте и снимите жгут.' },
+  { id: 'iv_14', title: 'Получил доказательство нахождения иглы в вене после снятия жгута', detail: 'После снятия жгута выполните повторную тракцию поршня и убедитесь в появлении новой порции крови.' },
+  { id: 'iv_15', title: 'Ввёл необходимый объём лекарственного средства', detail: 'Медленно введите назначенную дозу. Для транексамовой кислоты по этому заданию набирается 2 мл из ампулы объёмом 5 мл.' },
+  { id: 'iv_16', title: 'Оценивал состояние пациента во время введения препарата', detail: 'Периодически интересуйтесь самочувствием пациента. Ответ: «Чувствую себя как обычно».' },
+  { id: 'iv_17', title: 'Верно утилизировал шприц', detail: 'Безопасно отсоедините иглу с помощью предусмотренного устройства и утилизируйте острые отходы в непрокалываемый контейнер класса Б.' },
+  { id: 'iv_18', title: 'Наложил давящую повязку', detail: 'Прижмите ватный шарик к месту инъекции, убедитесь в отсутствии кровотечения и наложите давящую повязку.' },
+  { id: 'iv_19', title: 'Оценил состояние пациента после введения препарата', detail: 'Уточните самочувствие после процедуры. Ответ: «Всё хорошо, спасибо, доктор».' },
+  { id: 'iv_20', title: 'Сдал лоток на дезинфекцию и последующую стерилизацию', detail: 'Передайте лоток на дезинфекцию и последующую стерилизацию.' },
+  { id: 'iv_21', title: 'Сообщил о необходимости снятия давящей повязки', detail: 'Скажите пациенту, что повязку необходимо снять через 15–20 минут.' },
+  { id: 'iv_22', title: 'Выбросил смотровые перчатки', detail: 'Снимите перчатки, не касаясь голыми руками их внешней поверхности, и утилизируйте в пакет класса Б.' },
+  { id: 'iv_23', title: 'Обработал руки после манипуляции', detail: 'Выполните гигиеническую обработку рук.' },
+  { id: 'iv_24', title: 'Сделал отметку о выполненной манипуляции', detail: 'Внесите отметку о выполнении назначения в медицинскую документацию.' },
+] as const;
 
 const VOICE_INTROS: Record<ScenarioType, string> = {
   OKS1: 'Пациент 45 лет. Жалуется на сильные загрудинные боли. Время пошло!',
@@ -312,13 +345,16 @@ const HOTSPOTS = [
   { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
 ];
 
-type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'finished';
+type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'finished' | 'iv_briefing' | 'iv_playing' | 'iv_finished';
 type RunMode = 'training' | 'exam';
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>('menu');
   const [runMode, setRunMode] = useState<RunMode>('training');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
+  const [ivScenarioIndex, setIvScenarioIndex] = useState(0);
+  const [ivAnswers, setIvAnswers] = useState<Record<string, boolean>>({});
+  const [ivCurrentCriterion, setIvCurrentCriterion] = useState(0);
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [actions, setActions] = useState<Record<string, boolean>>({});
   const actionsRef = useRef<Record<string, boolean>>({});
@@ -417,6 +453,13 @@ export default function Home() {
       if (onEnd) onEnd();
     }
   };
+
+  useEffect(() => {
+    if (stage !== 'iv_playing') return;
+    if (timeLeft <= 0) { setStage('iv_finished'); return; }
+    const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft, stage]);
 
   useEffect(() => {
     if (stage !== 'playing') return;
@@ -548,6 +591,14 @@ export default function Home() {
 
   const handleSelectStation = (station: any) => {
     if (station.type === 'locked') return;
+    if (station.id === 'iv_injection') {
+      setIvScenarioIndex(Math.floor(Math.random() * IV_SCENARIOS.length));
+      setIvAnswers({});
+      setIvCurrentCriterion(0);
+      setTimeLeft(600);
+      setStage('iv_briefing');
+      return;
+    }
     
     if (station.type === 'single') {
       const selectedScenario = station.id === 'BLS'
@@ -1172,7 +1223,7 @@ export default function Home() {
                   {st.type === 'group' && <p className="text-sm text-gray-400 mt-1">Обязательная станция · случайный выбор одного из 9 клинических сценариев</p>}
                   {st.required && st.type !== 'group' && <p className="text-sm text-gray-400 mt-1">Обязательная станция</p>}
                   {!st.required && st.choices && <div className="text-sm text-gray-400 mt-2 space-y-1"><p>Случайно выбирается один вариант:</p>{st.choices.map((choice: string) => <p key={choice}>• {choice}</p>)}</div>}
-                  {st.id === 'iv_injection' && <p className="text-sm text-gray-400 mt-1">Обязательная станция</p>}
+                  {st.id === 'iv_injection' && <p className="text-sm text-gray-400 mt-1">Обязательная станция · 3 варианта лекарственного назначения</p>}
                 </div>
                 <div>
                   {st.type === 'locked' ? <span className="text-xs bg-gray-700 px-2 py-1 rounded">В разработке</span> : <span className="text-blue-500 text-2xl">→</span>}
@@ -1180,6 +1231,104 @@ export default function Home() {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === 'iv_briefing') {
+    const ivScenario = IV_SCENARIOS[ivScenarioIndex];
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8 flex items-center justify-center">
+        <div className="w-full max-w-3xl rounded-2xl border border-sky-200 bg-white p-6 md:p-8 shadow-xl">
+          <button onClick={() => setStage('station_select')} className="mb-5 text-sky-700 hover:text-sky-900">← К выбору станций</button>
+          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Станция 3 · Лечебное дело</p>
+          <h1 className="mt-2 text-3xl font-bold text-slate-900">Внутривенная инъекция</h1>
+          <div className="mt-5 rounded-xl bg-sky-50 border border-sky-100 p-5">
+            <p className="font-semibold">Задание</p>
+            <p className="mt-2">В процедурном кабинете Вас ожидает пациент, которому необходимо провести внутривенную инъекцию препарата, указанного в листе назначения. Озвучивайте свои действия.</p>
+            <div className="mt-4 rounded-lg bg-white p-4 border border-sky-100">
+              <p className="text-sm text-slate-500">Назначение (случайный сценарий)</p>
+              <p className="mt-1 text-lg font-bold">{ivScenario.title}</p>
+              <p className="text-sky-800 font-semibold">{ivScenario.prescription}</p>
+            </div>
+          </div>
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg bg-slate-50 p-3"><span className="text-slate-500">Пациент</span><p className="font-semibold">Николаенко Николай Николаевич, 30 лет</p></div>
+            <div className="rounded-lg bg-slate-50 p-3"><span className="text-slate-500">Продолжительность</span><p className="font-semibold">10 минут</p></div>
+          </div>
+          <div className="mt-5">
+            <p className="font-semibold text-slate-700 mb-2">Режим прохождения</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => setRunMode('training')} className={`rounded-xl border-2 px-4 py-3 font-bold ${runMode === 'training' ? 'border-sky-500 bg-sky-100 text-sky-900' : 'border-slate-200 bg-white text-slate-600'}`}>Обучение</button>
+              <button onClick={() => setRunMode('exam')} className={`rounded-xl border-2 px-4 py-3 font-bold ${runMode === 'exam' ? 'border-amber-500 bg-amber-50 text-amber-900' : 'border-slate-200 bg-white text-slate-600'}`}>Экзамен</button>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">В экзамене подсказки скрыты. Оценивание проводится по 24 официальным критериям.</p>
+          </div>
+          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setTimeLeft(600); setStage('iv_playing'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать выполнение</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === 'iv_playing') {
+    const ivScenario = IV_SCENARIOS[ivScenarioIndex];
+    const current = IV_CRITERIA[ivCurrentCriterion];
+    const completed = Object.values(ivAnswers).filter(Boolean).length;
+    const answered = Object.keys(ivAnswers).length;
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-100 pb-4">
+            <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ЛЕЧЕБНОЕ ДЕЛО</p><h1 className="text-2xl md:text-3xl font-bold">Внутривенная инъекция</h1></div>
+            <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
+          </div>
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-5">
+            <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-sky-700">Критерий {ivCurrentCriterion + 1} из 24</span>
+                <span className="text-sm text-slate-500">{answered} отмечено · {completed} «Да»</span>
+              </div>
+              <div className="mt-3 h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-sky-600 transition-all" style={{ width: `${((ivCurrentCriterion + 1) / IV_CRITERIA.length) * 100}%` }} /></div>
+              <h2 className="mt-6 text-xl md:text-2xl font-bold text-slate-900">{current.title}</h2>
+              <p className="mt-3 text-slate-600 leading-relaxed">{current.detail}</p>
+              {ivCurrentCriterion === 1 && <div className="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm"><p className="font-semibold">Данные пациента</p><p>Николаенко Николай Николаевич, 30 лет</p></div>}
+              {ivCurrentCriterion === 7 && <div className="mt-4 rounded-lg bg-sky-50 border border-sky-100 p-4 text-sm"><p className="font-semibold">Лист назначения</p><p>{ivScenario.title} — {ivScenario.prescription}</p><p className="mt-2 font-semibold">Маркировка ампулы</p><p>{ivScenario.ampoule}</p><p>Объём ампулы: {ivScenario.ampouleVolume} · Назначено набрать: {ivScenario.dose}</p><p className="text-slate-500 mt-1">Срок годности на маркировке: {ivScenario.expiry}</p></div>}
+              {runMode === 'training' && <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900"><span className="font-semibold">Учебная вводная:</span> {ivCurrentCriterion === 2 ? 'Пациент отвечает: «Нормально».' : ivCurrentCriterion === 3 ? 'Пациент сообщает: «Аллергических реакций не было».' : ivCurrentCriterion === 4 ? 'Считаем, что информированное добровольное согласие получено.' : ivCurrentCriterion === 14 ? 'Во время введения пациент отвечает: «Чувствую себя как обычно».' : ivCurrentCriterion === 18 ? 'После процедуры пациент отвечает: «Всё хорошо, спасибо, доктор».' : 'Выполняйте действие по алгоритму станции. В экзаменационном режиме эта вводная не отображается.'}</div>}
+              <div className="mt-7 grid grid-cols-2 gap-3">
+                <button onClick={() => setIvAnswers(prev => ({ ...prev, [current.id]: true }))} className={`rounded-xl border-2 py-4 font-bold transition ${ivAnswers[current.id] === true ? 'border-green-500 bg-green-50 text-green-800' : 'border-slate-200 bg-white hover:border-green-400'}`}>✓ Да, выполнено</button>
+                <button onClick={() => setIvAnswers(prev => ({ ...prev, [current.id]: false }))} className={`rounded-xl border-2 py-4 font-bold transition ${ivAnswers[current.id] === false ? 'border-red-400 bg-red-50 text-red-800' : 'border-slate-200 bg-white hover:border-red-300'}`}>Нет, не выполнено</button>
+              </div>
+              <div className="mt-6 flex flex-wrap justify-between gap-3">
+                <button disabled={ivCurrentCriterion === 0} onClick={() => setIvCurrentCriterion(v => Math.max(0, v - 1))} className="rounded-lg bg-slate-100 px-5 py-3 font-semibold text-slate-700 disabled:opacity-40">← Назад</button>
+                {ivCurrentCriterion < IV_CRITERIA.length - 1 ? <button disabled={ivAnswers[current.id] === undefined} onClick={() => setIvCurrentCriterion(v => Math.min(IV_CRITERIA.length - 1, v + 1))} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Следующий критерий →</button> : <button disabled={answered < IV_CRITERIA.length} onClick={() => setStage('iv_finished')} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Завершить станцию</button>}
+              </div>
+              <p className="mt-4 text-xs text-slate-400">Это первая интерактивная версия станции: отметки фиксируют выполнение критериев, а детальная проверка манипуляций будет добавляться поэтапно.</p>
+            </section>
+            <aside className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
+              <h3 className="font-bold text-slate-800">Назначение</h3><p className="mt-2 text-sky-800 font-semibold">{ivScenario.title}</p><p className="text-sm text-slate-600">{ivScenario.prescription}</p>
+              <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-sm font-semibold">Оценка</p><p className="mt-1 text-3xl font-bold text-sky-800">{Math.floor((completed / 24) * 100)}%</p><p className="text-xs text-slate-500">{completed} из 24 критериев «Да»</p></div>
+              <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-sm font-semibold mb-2">Все критерии</p><div className="space-y-1 max-h-[45vh] overflow-y-auto">{IV_CRITERIA.map((item, index) => <button key={item.id} onClick={() => setIvCurrentCriterion(index)} className={`w-full rounded-lg px-2 py-2 text-left text-xs ${index === ivCurrentCriterion ? 'bg-sky-100 text-sky-900 font-bold' : ivAnswers[item.id] === true ? 'bg-green-50 text-green-800' : ivAnswers[item.id] === false ? 'bg-red-50 text-red-800' : 'bg-slate-50 text-slate-600'}`}>{index + 1}. {item.title}</button>)}</div></div>
+              <button onClick={() => setStage('iv_finished')} className="mt-5 w-full rounded-lg border border-slate-200 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Завершить досрочно</button>
+            </aside>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === 'iv_finished') {
+    const completed = IV_CRITERIA.filter(item => ivAnswers[item.id] === true).length;
+    const scoreIv = Math.floor((completed / IV_CRITERIA.length) * 100);
+    const passed = scoreIv >= 70;
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 md:p-8 flex items-center justify-center">
+        <div className="w-full max-w-3xl rounded-2xl border border-sky-100 bg-white p-6 md:p-8 shadow-xl">
+          <p className="text-center text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ИТОГОВЫЙ ЧЕК-ЛИСТ</p>
+          <h1 className="mt-2 text-center text-2xl font-bold text-slate-900">Внутривенная инъекция</h1>
+          <div className="mt-5 text-center"><p className={`text-6xl font-bold ${passed ? 'text-green-600' : 'text-red-600'}`}>{scoreIv}%</p><p className={`mt-2 text-xl font-bold ${passed ? 'text-green-700' : 'text-red-700'}`}>{passed ? 'ЭКЗАМЕН СДАН' : 'ЭКЗАМЕН НЕ СДАН'}</p><p className="mt-1 text-sm text-slate-500">{completed} из 24 · проходной порог 70%</p></div>
+          <div className="mt-6 space-y-2">{IV_CRITERIA.map((item, index) => { const yes = ivAnswers[item.id] === true; return <div key={item.id} className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${yes ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}><span className="text-sm text-slate-800">{index + 1}. {item.title}</span><strong className={yes ? 'text-green-700' : 'text-red-700'}>{yes ? 'Да' : 'Нет'}</strong></div>; })}</div>
+          <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setTimeLeft(600); setStage('iv_briefing'); }} className="rounded-xl bg-sky-700 px-6 py-3 font-bold text-white">Повторить станцию</button><button onClick={() => setStage('station_select')} className="rounded-xl bg-slate-100 px-6 py-3 font-bold text-slate-700">К выбору станций</button></div>
         </div>
       </div>
     );
