@@ -1336,7 +1336,7 @@ export default function Home() {
               />
               {foreheadHandPlaced && (
                 <img
-                  src="/airway_hand_chin.png"
+                  src="/airway_hand_chin2.png"
                   alt="Вторая рука для подъёма подбородка"
                   draggable={false}
                   onPointerDown={(event) => { event.preventDefault(); if (chinHandPlaced) return; setChinHandDragging(true); foreheadSceneRef.current?.setPointerCapture(event.pointerId); }}
