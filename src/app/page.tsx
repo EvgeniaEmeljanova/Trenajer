@@ -1369,13 +1369,6 @@ export default function Home() {
     const correctVolume = ivScenario.dose;
     const prepComplete = equipmentReady && ivPrepAmpouleChecked && ivPrepAmpouleOpened && ivPrepSyringeFilled && ivPrepNeedleChanged;
     const toggleEquipment = (id: string) => setIvPrepEquipment(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-7">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-100 pb-4">
-            <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ИНТЕРАКТИВНЫЙ ЭТАП 1</p><h1 className="text-2xl md:text-3xl font-bold">Подготовка препарата</h1></div>
-            <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
-          </div>
     const prepHotspots: IVRoomHotspot[] = [
       { id: 'patient', label: 'Пациент', x: 63, y: 58 },
       { id: 'documents', label: 'Лист назначения', x: 38, y: 72 },
@@ -1404,6 +1397,13 @@ export default function Home() {
         setIvPrepFeedback(item ? `Проверка: ${item.label}.` : '');
       }
     };
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-7">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-100 pb-4">
+            <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ИНТЕРАКТИВНЫЙ ЭТАП 1</p><h1 className="text-2xl md:text-3xl font-bold">Подготовка препарата</h1></div>
+            <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
+          </div>
           <IVRoomScene phase="Подготовка препарата" hotspots={prepHotspots} onHotspotClick={handlePrepRoomClick} />
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
             <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
