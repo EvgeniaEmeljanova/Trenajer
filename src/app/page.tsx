@@ -103,15 +103,6 @@ const SPECIALTIES = [
       { id: 'physical_exam', title: 'Станция 5: Физикальное обследование', type: 'locked' },
     ]
   },
-  {
-    id: 'pediatrics',
-    title: 'Педиатрия',
-    description: 'Первичная аккредитация (Специалитет)',
-    stations: [
-      { id: 'ped_bls', title: 'Станция 1: СЛР у детей', type: 'locked' },
-      { id: 'ped_emergency', title: 'Станция 2: Экстренная помощь ребенку', type: 'locked' },
-    ]
-  }
 ];
 
 const VOICE_INTROS: Record<ScenarioType, string> = {
