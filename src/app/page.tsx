@@ -155,7 +155,75 @@ const APK_MESSAGES: Record<string, string> = {
   pleural_puncture: 'Будем считать, что пункция грудной полости выполнена',
 };
 
-const SMP_SCRIPT = [{ dispatcher: 'Скорая помощь слушает, что случилось?' }];
+const SMP_SCRIPT = [{ dispatcher: 'Скорая помощь. Слушаю!' }];
+
+type SmpOption = { id: string; text: string; correct: boolean };
+
+const getTrainingSmpOptions = (scenario: ScenarioType): SmpOption[] => {
+  const isBlsChoking = scenario === 'BLS1' || scenario === 'BLS2';
+  const isBlsArrest = scenario === 'BLS3' || scenario === 'BLS4' || scenario === 'BLS';
+  const eventByScenario: Record<ScenarioType, string> = {
+    OKS1: 'У пациента сильная загрудинная боль, подозрение на острый коронарный синдром.',
+    OKS2: 'У пациента боль в груди, одышка и признаки осложнённого острого коронарного синдрома.',
+    ANAPHYLAXIS: 'После укуса пчелы у пациента резко ухудшилось состояние.',
+    ZHKK: 'У пациента рвота содержимым типа кофейной гущи, подозрение на желудочно-кишечное кровотечение.',
+    BOS: 'У пациента выраженное затруднение дыхания.',
+    TELA: 'У пациента внезапная боль в грудной клетке и одышка, подозрение на ТЭЛА.',
+    PNEUMOTHORAX: 'После травмы грудной клетки возникли боль и одышка.',
+    HYPOGLYCEMIA: 'У пациента спутанность сознания, подозрение на гипогликемию.',
+    HYPERGLYCEMIA: 'У пациента выраженная слабость и сухость во рту, подозрение на гипергликемию.',
+    BLS: 'Человек обнаружен без сознания, нормального дыхания нет.',
+    BLS1: 'Мужчина подавился пищей, не может эффективно откашляться.',
+    BLS2: 'Мужчина подавился пищей, не может эффективно откашляться.',
+    BLS3: 'Мужчина без сознания, нормального дыхания нет.',
+    BLS4: 'Мужчина без сознания, нормального дыхания нет.'
+  };
+  const conditionByScenario: Record<ScenarioType, string> = {
+    OKS1: 'Пациент в сознании, выраженная боль в груди, состояние тяжёлое.',
+    OKS2: 'Пациент в тяжёлом состоянии, одышка и цианоз.',
+    ANAPHYLAXIS: 'Состояние тяжёлое, выраженная слабость, признаки аллергической реакции.',
+    ZHKK: 'Пациент бледный, состояние тяжёлое, есть признаки кровотечения.',
+    BOS: 'Пациент испытывает выраженное затруднение дыхания.',
+    TELA: 'Состояние тяжёлое, одышка и боль в грудной клетке.',
+    PNEUMOTHORAX: 'Состояние тяжёлое, одышка, подозрение на напряжённый пневмоторакс.',
+    HYPOGLYCEMIA: 'Сознание спутанное, кожа влажная.',
+    HYPERGLYCEMIA: 'Пациент ослаблен, выраженная сухость во рту.',
+    BLS: 'Без сознания, нормального дыхания нет.',
+    BLS1: 'В сознании, не может эффективно откашляться.',
+    BLS2: 'В сознании, не может эффективно откашляться.',
+    BLS3: 'Без сознания, нормального дыхания нет.',
+    BLS4: 'Без сознания, нормального дыхания нет.'
+  };
+  const helpByScenario: Record<ScenarioType, string> = {
+    OKS1: 'Начинаю оказание экстренной медицинской помощи.',
+    OKS2: 'Начинаю оказание экстренной медицинской помощи.',
+    ANAPHYLAXIS: 'Начинаю оказание экстренной медицинской помощи.',
+    ZHKK: 'Начинаю оказание экстренной медицинской помощи.',
+    BOS: 'Начинаю оказание экстренной медицинской помощи.',
+    TELA: 'Начинаю оказание экстренной медицинской помощи.',
+    PNEUMOTHORAX: 'Начинаю оказание экстренной медицинской помощи.',
+    HYPOGLYCEMIA: 'Начинаю оказание экстренной медицинской помощи.',
+    HYPERGLYCEMIA: 'Начинаю оказание экстренной медицинской помощи.',
+    BLS: 'Начинаю сердечно-лёгочную реанимацию.',
+    BLS1: 'Начинаю помощь при тяжёлой обструкции дыхательных путей.',
+    BLS2: 'Начинаю помощь при тяжёлой обструкции дыхательных путей.',
+    BLS3: 'Начинаю сердечно-лёгочную реанимацию.',
+    BLS4: 'Начинаю сердечно-лёгочную реанимацию.'
+  };
+  const options: SmpOption[] = [
+    { id: 'event', text: eventByScenario[scenario], correct: true },
+    { id: 'address', text: 'Сообщаю точный адрес и ориентиры места происшествия.', correct: true },
+    { id: 'victims', text: 'У нас один пострадавший.', correct: true },
+    { id: 'ageSex', text: scenario.startsWith('BLS') ? 'Пострадавший — мужчина; возраст сообщаю, если он известен.' : 'Сообщаю пол и примерный возраст пациента, не называя неизвестные данные.', correct: true },
+    { id: 'condition', text: conditionByScenario[scenario], correct: true },
+    { id: 'help', text: helpByScenario[scenario], correct: true },
+    { id: 'wrongVictims', text: 'У нас трое пострадавших.', correct: false },
+    { id: 'wrongAddress', text: 'Точный адрес и ориентиры сообщать не обязательно.', correct: false },
+    { id: 'wrongHelp', text: 'Оставляю пациента одного и отхожу ожидать бригаду.', correct: false },
+    { id: 'wrongInfo', text: 'Сообщаю диспетчеру только фамилию пациента, остальное неважно.', correct: false }
+  ];
+  return options;
+};
 
 const MEDICATIONS: Record<ScenarioType, { name: string, correct: boolean }[]> = {
   OKS1: [{ name: 'Ацетилсалициловая кислота', correct: true }, { name: 'Гепарин', correct: true }, { name: 'Морфин', correct: true }, { name: 'Адреналин', correct: false }],
@@ -333,6 +401,8 @@ export default function Home() {
   const [phoneModal, setPhoneModal] = useState(false);
   const [chatHistory, setChatHistory] = useState<{sender: 'dispatcher' | 'doctor', text: string}[]>([]);
   const [smpInput, setSmpInput] = useState('');
+  const [selectedSmpOptions, setSelectedSmpOptions] = useState<string[]>([]);
+  const [smpFeedback, setSmpFeedback] = useState('');
   const [callSuccess, setCallSuccess] = useState(false);
 
   const [medicationModal, setMedicationModal] = useState(false);
@@ -807,6 +877,8 @@ export default function Home() {
     if (id === 'call') {
       setPhoneModal(true);
       setSmpInput('');
+      setSelectedSmpOptions([]);
+      setSmpFeedback('');
       setCallSuccess(false);
       setChatHistory([{ sender: 'dispatcher', text: SMP_SCRIPT[0].dispatcher }]);
       playAudio(SMP_SCRIPT[0].dispatcher);
@@ -906,6 +978,31 @@ export default function Home() {
 
   const handleAedNoShock = () => {
     if (aedState === 'no_shock') completeAedUse();
+  };
+
+  const handleTrainingSmpSubmit = () => {
+    if (callSuccess) return;
+    const options = getTrainingSmpOptions(scenario);
+    const selected = options.filter(option => selectedSmpOptions.includes(option.id));
+    const correctSelected = selected.filter(option => option.correct).length;
+    const incorrectSelected = selected.filter(option => !option.correct).length;
+    const allRequiredSelected = options.filter(option => option.correct).every(option => selectedSmpOptions.includes(option.id));
+
+    if (allRequiredSelected && incorrectSelected === 0) {
+      const confirmation = 'Вызов принят! Информация передана.';
+      setChatHistory(prev => [...prev, { sender: 'doctor', text: selected.map(option => option.text).join(' ') }, { sender: 'dispatcher', text: confirmation }]);
+      setSmpFeedback('Верно! Все необходимые сведения переданы диспетчеру.');
+      setCallSuccess(true);
+      playAudio(confirmation);
+      setTimeout(() => {
+        setPhoneModal(false);
+        toggleAction('call');
+      }, 2500);
+      return;
+    }
+
+    const missing = options.filter(option => option.correct && !selectedSmpOptions.includes(option.id)).length;
+    setSmpFeedback(`Проверьте выбор: не отмечено необходимых сведений — ${missing}; лишних вариантов выбрано — ${incorrectSelected}.`);
   };
 
   const handleSmpMessage = () => {
@@ -1391,15 +1488,32 @@ export default function Home() {
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {chatHistory.map((msg, index) => (
                 <div key={index} className={`flex ${msg.sender === 'doctor' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] p-3 rounded-xl text-sm ${msg.sender === 'doctor' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'}`}>
+                  <div className={`max-w-[90%] p-3 rounded-xl text-sm ${msg.sender === 'doctor' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'}`}>
                     {msg.sender === 'dispatcher' && <span className="block text-xs text-gray-400 mb-1">Диспетчер:</span>}
                     {msg.text}
                   </div>
                 </div>
               ))}
-            </div>
-            <div className="p-4 bg-gray-900 rounded-b-2xl border-t border-gray-700">
-              {!callSuccess ? (
+              {runMode === 'training' && !callSuccess ? (
+                <div className="rounded-xl border border-gray-600 bg-gray-900/70 p-3 space-y-3">
+                  <p className="text-sm font-semibold text-white">Выберите все правильные варианты ответа:</p>
+                  <div className="space-y-2">
+                    {getTrainingSmpOptions(scenario).map(option => (
+                      <label key={option.id} className="flex items-start gap-3 rounded-lg bg-gray-700/70 p-3 text-sm text-gray-100 cursor-pointer hover:bg-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={selectedSmpOptions.includes(option.id)}
+                          onChange={(event) => setSelectedSmpOptions(prev => event.target.checked ? [...prev, option.id] : prev.filter(id => id !== option.id))}
+                          className="mt-0.5 h-4 w-4 accent-blue-500"
+                        />
+                        <span>{option.text}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {smpFeedback && <p className="text-sm text-amber-300">{smpFeedback}</p>}
+                  <button onClick={handleTrainingSmpSubmit} disabled={selectedSmpOptions.length === 0} className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-40">Передать диспетчеру</button>
+                </div>
+              ) : runMode !== 'training' && !callSuccess ? (
                 <div className="flex gap-2">
                   <input
                     value={smpInput}
