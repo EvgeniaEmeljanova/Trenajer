@@ -160,8 +160,6 @@ const SMP_SCRIPT = [{ dispatcher: 'Скорая помощь. Слушаю!' }];
 type SmpOption = { id: string; text: string; correct: boolean };
 
 const getTrainingSmpOptions = (scenario: ScenarioType): SmpOption[] => {
-  const isBlsChoking = scenario === 'BLS1' || scenario === 'BLS2';
-  const isBlsArrest = scenario === 'BLS3' || scenario === 'BLS4' || scenario === 'BLS';
   const eventByScenario: Record<ScenarioType, string> = {
     OKS1: 'У пациента сильная загрудинная боль, подозрение на острый коронарный синдром.',
     OKS2: 'У пациента боль в груди, одышка и признаки осложнённого острого коронарного синдрома.',
@@ -984,7 +982,6 @@ export default function Home() {
     if (callSuccess) return;
     const options = getTrainingSmpOptions(scenario);
     const selected = options.filter(option => selectedSmpOptions.includes(option.id));
-    const correctSelected = selected.filter(option => option.correct).length;
     const incorrectSelected = selected.filter(option => !option.correct).length;
     const allRequiredSelected = options.filter(option => option.correct).every(option => selectedSmpOptions.includes(option.id));
 
