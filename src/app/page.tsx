@@ -345,7 +345,7 @@ const HOTSPOTS = [
   { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
 ];
 
-type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'finished' | 'iv_briefing' | 'iv_prep' | 'iv_playing' | 'iv_finished';
+type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'finished' | 'iv_briefing' | 'iv_prep' | 'iv_arm' | 'iv_playing' | 'iv_finished';
 type RunMode = 'training' | 'exam';
 
 export default function Home() {
@@ -362,6 +362,15 @@ export default function Home() {
   const [ivPrepSyringeFilled, setIvPrepSyringeFilled] = useState(false);
   const [ivPrepNeedleChanged, setIvPrepNeedleChanged] = useState(false);
   const [ivPrepFeedback, setIvPrepFeedback] = useState('');
+  const [ivArmTourniquetPosition, setIvArmTourniquetPosition] = useState('');
+  const [ivArmPulseChecked, setIvArmPulseChecked] = useState(false);
+  const [ivArmFirstSkinPrep, setIvArmFirstSkinPrep] = useState(false);
+  const [ivArmSecondSkinPrep, setIvArmSecondSkinPrep] = useState(false);
+  const [ivArmPunctureSiteSelected, setIvArmPunctureSiteSelected] = useState(false);
+  const [ivArmFirstBloodReturn, setIvArmFirstBloodReturn] = useState(false);
+  const [ivArmTourniquetReleased, setIvArmTourniquetReleased] = useState(false);
+  const [ivArmSecondBloodReturn, setIvArmSecondBloodReturn] = useState(false);
+  const [ivArmFeedback, setIvArmFeedback] = useState('');
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [actions, setActions] = useState<Record<string, boolean>>({});
   const actionsRef = useRef<Record<string, boolean>>({});
@@ -462,7 +471,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (stage !== 'iv_playing' && stage !== 'iv_prep') return;
+    if (stage !== 'iv_playing' && stage !== 'iv_prep' && stage !== 'iv_arm') return;
     if (timeLeft <= 0) { setStage('iv_finished'); return; }
     const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
     return () => clearInterval(timer);
@@ -1279,7 +1288,7 @@ export default function Home() {
             </div>
             <p className="text-xs text-slate-500 mt-2">В экзамене подсказки скрыты. Оценивание проводится по 24 официальным критериям.</p>
           </div>
-          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setTimeLeft(600); setStage('iv_prep'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать подготовку препарата</button>
+          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback(''); setTimeLeft(600); setStage('iv_prep'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать подготовку препарата</button>
         </div>
       </div>
     );
@@ -1369,8 +1378,8 @@ export default function Home() {
                 <button onClick={() => setStage('iv_briefing')} className="rounded-lg bg-slate-100 px-5 py-3 font-semibold text-slate-700">← К вводной</button>
                 <button disabled={!prepComplete} onClick={() => {
                   setIvAnswers(prev => ({ ...prev, iv_07: true, iv_08: true, iv_09: true, iv_10: true }));
-                  setIvCurrentCriterion(0);
-                  setStage('iv_playing');
+                  setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback('');
+                  setStage('iv_arm');
                 }} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Продолжить станцию →</button>
               </div>
               <p className="mt-3 text-xs text-slate-400">Это учебная 2D-симуляция последовательности действий. Она фиксирует выборы и порядок действий, но не измеряет реальную технику работы с медицинским фантомом.</p>
@@ -1393,11 +1402,89 @@ export default function Home() {
     );
   }
 
+
+  if (stage === 'iv_arm') {
+    const tourniquetCorrect = ivArmTourniquetPosition === 'middle';
+    const armComplete = tourniquetCorrect && ivArmPulseChecked && ivArmFirstSkinPrep && ivArmSecondSkinPrep && ivArmPunctureSiteSelected && ivArmFirstBloodReturn && ivArmTourniquetReleased && ivArmSecondBloodReturn;
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-7">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-100 pb-4">
+            <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ИНТЕРАКТИВНЫЙ ЭТАП 2</p><h1 className="text-2xl md:text-3xl font-bold">Подготовка руки и венепункция</h1></div>
+            <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
+          </div>
+          <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
+            <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
+              <h2 className="text-lg font-bold">Рука пациента</h2>
+              <p className="mt-2 text-sm text-slate-600">{runMode === 'training' ? 'Выберите правильное место для жгута, проверьте пульс, выполните двукратную обработку и последовательно смоделируйте подтверждение положения иглы.' : 'Выполните действия в правильной последовательности. Учебные пояснения отключены.'}</p>
+              <div className="mt-5 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-4 md:p-6">
+                <div className="relative mx-auto h-64 max-w-2xl overflow-hidden rounded-xl bg-white border border-slate-100">
+                  <div className="absolute left-[8%] top-[39%] h-24 w-[84%] rounded-full border border-orange-200 bg-gradient-to-b from-orange-100 to-orange-200 shadow-inner" />
+                  <div className="absolute left-[5%] top-[41%] h-20 w-[17%] rounded-full border border-orange-200 bg-orange-100" />
+                  <div className="absolute right-[5%] top-[41%] h-20 w-[17%]] rounded-full border border-orange-200 bg-orange-100" />
+                  <button onClick={() => { setIvArmTourniquetPosition('upper'); setIvArmFeedback('Жгут расположен выше средней трети плеча. Это не соответствует критерию станции.'); }} className={`absolute left-[31%] top-[31%] h-9 w-[12%] rounded-md border-2 text-[10px] font-bold ${ivArmTourniquetPosition === 'upper' ? 'border-red-500 bg-red-100 text-red-700' : 'border-slate-300 bg-white/90 text-slate-600'}`}>Верхняя</button>
+                  <button onClick={() => { setIvArmTourniquetPosition('middle'); setIvArmFeedback('Жгут наложен на среднюю треть плеча.'); }} className={`absolute left-[47%] top-[31%] h-9 w-[12%] rounded-md border-2 text-[10px] font-bold ${tourniquetCorrect ? 'border-emerald-500 bg-emerald-100 text-emerald-800' : 'border-slate-300 bg-white/90 text-slate-600'}`}>Средняя</button>
+                  <button onClick={() => { setIvArmTourniquetPosition('lower'); setIvArmFeedback('Жгут расположен ниже средней трети плеча. Это не соответствует критерию станции.'); }} className={`absolute left-[63%] top-[31%] h-9 w-[12%] rounded-md border-2 text-[10px] font-bold ${ivArmTourniquetPosition === 'lower' ? 'border-red-500 bg-red-100 text-red-700' : 'border-slate-300 bg-white/90 text-slate-600'}`}>Нижняя</button>
+                  <div className="absolute left-[43%] top-[49%] h-8 w-[14%] rounded-lg border border-sky-300 bg-sky-100/90 flex items-center justify-center text-[10px] font-bold text-sky-800">Зона вены</div>
+                  <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500"><span>Плечо</span><span>Предплечье</span><span>Кисть</span></div>
+                </div>
+                <p className="mt-3 text-xs text-slate-500">Схематичное изображение руки для отработки последовательности, не анатомическая карта вен.</p>
+              </div>
+              <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-slate-200 p-4">
+                  <h3 className="font-bold">1. Наложение жгута</h3>
+                  <p className="mt-1 text-sm text-slate-600">Средняя треть плеча; жгут накладывается через ткань, салфетку или бинт.</p>
+                  <p className="mt-3 text-sm">{tourniquetCorrect ? '✓ Жгут расположен правильно' : '○ Место наложения не подтверждено'}</p>
+                  <p className="mt-1 text-sm">{ivArmPulseChecked ? '✓ Пульс на лучевой артерии проверен' : '○ Проверка пульса не выполнена'}</p>
+                  <button disabled={!tourniquetCorrect} onClick={() => { setIvArmPulseChecked(true); setIvArmFeedback('Проверка пульса на лучевой артерии отмечена.'); }} className="mt-3 w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-3 text-sm font-bold text-sky-800 disabled:opacity-40">Проверить пульс на лучевой артерии</button>
+                </div>
+                <div className="rounded-xl border border-slate-200 p-4">
+                  <h3 className="font-bold">2. Обработка места инъекции</h3>
+                  <p className="mt-1 text-sm text-slate-600">Выполните обе обработки отдельными действиями.</p>
+                  <button disabled={!ivArmPulseChecked} onClick={() => { setIvArmFirstSkinPrep(true); setIvArmFeedback('Первая обработка поля выполнена в симуляции.'); }} className={`mt-3 w-full rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmFirstSkinPrep ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmFirstSkinPrep ? 'Первая обработка ✓' : 'Выполнить первую обработку'}</button>
+                  <button disabled={!ivArmFirstSkinPrep} onClick={() => { setIvArmSecondSkinPrep(true); setIvArmFeedback('Вторая обработка места пункции выполнена в симуляции.'); }} className={`mt-2 w-full rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmSecondSkinPrep ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmSecondSkinPrep ? 'Вторая обработка ✓' : 'Выполнить вторую обработку'}</button>
+                </div>
+              </div>
+              <div className="mt-4 rounded-xl border border-slate-200 p-4">
+                <h3 className="font-bold">3. Венепункция — подтверждение положения иглы</h3>
+                <p className="mt-1 text-sm text-slate-600">После подготовки кожи смоделируйте пункцию, подтвердите первое появление крови, снимите жгут и выполните повторную проверку после его снятия.</p>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button disabled={!ivArmSecondSkinPrep} onClick={() => { setIvArmPunctureSiteSelected(true); setIvArmFeedback('Зона пункции выбрана. Можно перейти к подтверждению положения иглы.'); }} className={`rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmPunctureSiteSelected ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmPunctureSiteSelected ? 'Зона пункции выбрана ✓' : 'Выбрать зону пункции'}</button>
+                  <button disabled={!ivArmPunctureSiteSelected || !tourniquetCorrect} onClick={() => { setIvArmFirstBloodReturn(true); setIvArmFeedback('Первое появление крови смоделировано. Теперь снимите жгут.'); }} className={`rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmFirstBloodReturn ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmFirstBloodReturn ? 'Первое подтверждение ✓' : 'Смоделировать первое появление крови'}</button>
+                  <button disabled={!ivArmFirstBloodReturn} onClick={() => { setIvArmTourniquetReleased(true); setIvArmFeedback('Жгут снят после первого подтверждения нахождения иглы в вене.'); }} className={`rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmTourniquetReleased ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmTourniquetReleased ? 'Жгут снят ✓' : 'Снять жгут'}</button>
+                  <button disabled={!ivArmTourniquetReleased} onClick={() => { setIvArmSecondBloodReturn(true); setIvArmFeedback('Повторное подтверждение после снятия жгута смоделировано.'); }} className={`rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmSecondBloodReturn ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmSecondBloodReturn ? 'Повторное подтверждение ✓' : 'Проверить положение после снятия жгута'}</button>
+                </div>
+              </div>
+              {ivArmFeedback && <p aria-live="polite" className="mt-4 rounded-xl bg-sky-50 border border-sky-100 p-3 text-sm text-sky-900">{ivArmFeedback}</p>}
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                <button onClick={() => setStage('iv_prep')} className="rounded-lg bg-slate-100 px-5 py-3 font-semibold text-slate-700">← К подготовке препарата</button>
+                <button disabled={!armComplete} onClick={() => { setIvAnswers(prev => ({ ...prev, iv_11: true, iv_12: true, iv_13: true, iv_14: true })); setIvCurrentCriterion(14); setStage('iv_playing'); }} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Продолжить к введению препарата →</button>
+              </div>
+              <p className="mt-3 text-xs text-slate-400">Симуляция фиксирует последовательность действий, но не измеряет реальный угол, глубину, усилие и точность венепункции на фантоме.</p>
+            </section>
+            <aside className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
+              <h3 className="font-bold">Критерии этого этапа</h3>
+              <div className="mt-3 space-y-3 text-sm">
+                {[
+                  ['Жгут на средней трети плеча и проверка пульса', tourniquetCorrect && ivArmPulseChecked],
+                  ['Двукратная обработка места инъекции', ivArmFirstSkinPrep && ivArmSecondSkinPrep],
+                  ['Первое подтверждение и снятие жгута', ivArmFirstBloodReturn && ivArmTourniquetReleased],
+                  ['Повторное подтверждение после снятия жгута', ivArmSecondBloodReturn],
+                ].map(([label, done]) => <div key={String(label)} className="flex items-start gap-2"><span className={done ? 'text-emerald-600' : 'text-slate-300'}>{done ? '✓' : '○'}</span><span>{String(label)}</span></div>)}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (stage === 'iv_playing') {
     const ivScenario = IV_SCENARIOS[ivScenarioIndex];
     const current = IV_CRITERIA[ivCurrentCriterion];
     const completed = Object.values(ivAnswers).filter(Boolean).length;
     const answered = Object.keys(ivAnswers).length;
+    const autoEvaluated = /^iv_(0[7-9]|1[0-4])$/.test(current.id);
     return (
       <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8">
         <div className="mx-auto max-w-5xl">
@@ -1417,10 +1504,10 @@ export default function Home() {
               {ivCurrentCriterion === 1 && <div className="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm"><p className="font-semibold">Данные пациента</p><p>Николаенко Николай Николаевич, 30 лет</p></div>}
               {ivCurrentCriterion === 7 && <div className="mt-4 rounded-lg bg-sky-50 border border-sky-100 p-4 text-sm"><p className="font-semibold">Лист назначения</p><p>{ivScenario.title} — {ivScenario.prescription}</p><p className="mt-2 font-semibold">Маркировка ампулы</p><p>{ivScenario.ampoule}</p><p>Объём ампулы: {ivScenario.ampouleVolume} · Назначено набрать: {ivScenario.dose}</p><p className="text-slate-500 mt-1">Срок годности на маркировке: {ivScenario.expiry}</p></div>}
               {runMode === 'training' && <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900"><span className="font-semibold">Учебная вводная:</span> {ivCurrentCriterion === 2 ? 'Пациент отвечает: «Нормально».' : ivCurrentCriterion === 3 ? 'Пациент сообщает: «Аллергических реакций не было».' : ivCurrentCriterion === 4 ? 'Считаем, что информированное добровольное согласие получено.' : ivCurrentCriterion === 15 ? 'Во время введения пациент отвечает: «Чувствую себя как обычно».' : ivCurrentCriterion === 18 ? 'После процедуры пациент отвечает: «Всё хорошо, спасибо, доктор».' : 'Выполняйте действие по алгоритму станции. В экзаменационном режиме эта вводная не отображается.'}</div>}
-              <div className="mt-7 grid grid-cols-2 gap-3">
+              {autoEvaluated ? <div className="mt-7 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Этот критерий уже оценён автоматически по действиям в интерактивной сцене.</div> : <div className="mt-7 grid grid-cols-2 gap-3">
                 <button onClick={() => setIvAnswers(prev => ({ ...prev, [current.id]: true }))} className={`rounded-xl border-2 py-4 font-bold transition ${ivAnswers[current.id] === true ? 'border-green-500 bg-green-50 text-green-800' : 'border-slate-200 bg-white hover:border-green-400'}`}>✓ Да, выполнено</button>
                 <button onClick={() => setIvAnswers(prev => ({ ...prev, [current.id]: false }))} className={`rounded-xl border-2 py-4 font-bold transition ${ivAnswers[current.id] === false ? 'border-red-400 bg-red-50 text-red-800' : 'border-slate-200 bg-white hover:border-red-300'}`}>Нет, не выполнено</button>
-              </div>
+              </div>}
               <div className="mt-6 flex flex-wrap justify-between gap-3">
                 <button disabled={ivCurrentCriterion === 0} onClick={() => setIvCurrentCriterion(v => Math.max(0, v - 1))} className="rounded-lg bg-slate-100 px-5 py-3 font-semibold text-slate-700 disabled:opacity-40">← Назад</button>
                 {ivCurrentCriterion < IV_CRITERIA.length - 1 ? <button disabled={ivAnswers[current.id] === undefined} onClick={() => setIvCurrentCriterion(v => Math.min(IV_CRITERIA.length - 1, v + 1))} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Следующий критерий →</button> : <button disabled={answered < IV_CRITERIA.length} onClick={() => setStage('iv_finished')} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Завершить станцию</button>}
@@ -1430,7 +1517,7 @@ export default function Home() {
             <aside className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
               <h3 className="font-bold text-slate-800">Назначение</h3><p className="mt-2 text-sky-800 font-semibold">{ivScenario.title}</p><p className="text-sm text-slate-600">{ivScenario.prescription}</p>
               <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-sm font-semibold">Оценка</p><p className="mt-1 text-3xl font-bold text-sky-800">{Math.floor((completed / 24) * 100)}%</p><p className="text-xs text-slate-500">{completed} из 24 критериев «Да»</p></div>
-              <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-sm font-semibold mb-2">{runMode === 'training' ? 'Все критерии' : 'Ход выполнения'}</p><div className="space-y-1 max-h-[45vh] overflow-y-auto">{IV_CRITERIA.map((item, index) => <button key={item.id} onClick={() => setIvCurrentCriterion(index)} className={`w-full rounded-lg px-2 py-2 text-left text-xs ${index === ivCurrentCriterion ? 'bg-sky-100 text-sky-900 font-bold' : ivAnswers[item.id] === true ? 'bg-green-50 text-green-800' : ivAnswers[item.id] === false ? 'bg-red-50 text-red-800' : 'bg-slate-50 text-slate-600'}`}>{index + 1}. {runMode === 'training' ? item.title : ivAnswers[item.id] === true ? 'Выполнено' : ivAnswers[item.id] === false ? 'Не выполнено' : 'Не отмечено'}</button>)}</div></div>
+              <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-sm font-semibold mb-2">{runMode === 'training' ? 'Все критерии' : 'Ход выполнения'}</p><div className="space-y-1 max-h-[45vh] overflow-y-auto">{IV_CRITERIA.map((item, index) => <button key={item.id} disabled={/^iv_(0[7-9]|1[0-4])$/.test(item.id)} onClick={() => setIvCurrentCriterion(index)} className={`w-full rounded-lg px-2 py-2 text-left text-xs ${index === ivCurrentCriterion ? 'bg-sky-100 text-sky-900 font-bold' : ivAnswers[item.id] === true ? 'bg-green-50 text-green-800' : ivAnswers[item.id] === false ? 'bg-red-50 text-red-800' : 'bg-slate-50 text-slate-600'}`}>{index + 1}. {runMode === 'training' ? item.title : ivAnswers[item.id] === true ? 'Выполнено' : ivAnswers[item.id] === false ? 'Не выполнено' : 'Не отмечено'}</button>)}</div></div>
               <button onClick={() => setStage('iv_finished')} className="mt-5 w-full rounded-lg border border-slate-200 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Завершить досрочно</button>
             </aside>
           </div>
