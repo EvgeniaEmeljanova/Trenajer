@@ -1486,7 +1486,7 @@ export default function Home() {
     const current = IV_CRITERIA[ivCurrentCriterion];
     const completed = Object.values(ivAnswers).filter(Boolean).length;
     const answered = Object.keys(ivAnswers).length;
-    const autoEvaluated = /^iv_(0[1-9]|1[0-4])$/.test(current.id);
+    const autoEvaluated = /^iv_(0[1-9]|1[0-4])$/.test(current.id) && ivAnswers[current.id] === true;
     const ivIntroActionSteps = [
       { id: 'iv_01', title: 'Установить контакт с пациентом', button: 'Поздороваться, представиться и назвать свою роль', done: 'Контакт установлен: специалист поздоровался, представился и обозначил свою роль.', note: 'Обратитесь к пациенту, поздоровайтесь, представьтесь и назовите свою роль.' },
       { id: 'iv_02', title: 'Идентифицировать пациента', button: 'Запросить ФИО и возраст и сверить с назначением', done: 'Пациент идентифицирован: ФИО и возраст сверены с данными задания.', note: 'Попросите пациента назвать ФИО и возраст, затем сверьте сведения с данными задания.' },
