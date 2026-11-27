@@ -189,8 +189,8 @@ const getTrainingSmpOptions = (scenario: ScenarioType): SmpOption[] => {
     { id: 'wrongAge', text: 'Он не разговаривает, возраст я не знаю.', correct: false },
     { id: 'wrongPlace', text: 'Мы где-то в институте, адрес и этаж не помню.', correct: false },
     { id: 'wrongVictims', text: 'Пострадавших трое.', correct: false },
-    { id: 'wrongAddress', text: 'Адрес не сообщаю, бригада сама нас найдёт.', correct: false },
-    { id: 'wrongHelp', text: 'Ничего не делаю, просто жду приезда бригады.', correct: false }
+    { id: 'wrongAddress', text: 'С ним что-то случилось. Что мне делать?', correct: false },
+    { id: 'wrongHelp', text: 'Я Вас жду, не трогаю пострадавшего, чтобы не навредить.', correct: false }
   ];
 };
 
