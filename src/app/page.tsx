@@ -418,6 +418,7 @@ export default function Home() {
   const [ivPrepSyringeFilled, setIvPrepSyringeFilled] = useState(false);
   const [ivPrepNeedleChanged, setIvPrepNeedleChanged] = useState(false);
   const [ivPrepFeedback, setIvPrepFeedback] = useState('');
+  const [ivPrepActiveObject, setIvPrepActiveObject] = useState<string | null>(null);
   const [ivArmTourniquetPosition, setIvArmTourniquetPosition] = useState('');
   const [ivArmPulseChecked, setIvArmPulseChecked] = useState(false);
   const [ivArmFirstSkinPrep, setIvArmFirstSkinPrep] = useState(false);
@@ -1436,7 +1437,7 @@ export default function Home() {
     const correctAmpoule = ivScenario.id === 'ascorbic' ? 'ascorbic' : ivScenario.id === 'furosemide' ? 'furosemide' : 'tranexamic';
     const correctVolume = ivScenario.dose;
     const prepComplete = equipmentReady && ivPrepAmpouleChecked && ivPrepAmpouleOpened && ivPrepSyringeFilled && ivPrepNeedleChanged;
-    const toggleEquipment = (id: string) => setIvPrepEquipment(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+    const toggleEquipment = (id: string) => setIvPrepEquipment(prev => prev.includes(id) ? prev : [...prev, id]);
     const prepHotspots: IVRoomHotspot[] = [
       // Координаты привязаны к реальным предметам на изображении кабинета.
       { id: 'patient', label: 'Пациент', x: 43, y: 40, w: 25, h: 48 },
@@ -1452,18 +1453,49 @@ export default function Home() {
     ];
     const handlePrepRoomClick = (id: string) => {
       if (id === 'patient') {
-        setIvPrepFeedback('Пациент: Николаенко Николай Николаевич, 30 лет. Перед манипуляцией необходимо установить контакт и уточнить данные.');
-      } else if (id === 'documents') {
-        setIvPrepFeedback('Лист назначения открыт. Сверьте название препарата и назначенный объём с маркировкой ампулы.');
-      } else if (id === 'sink') {
-        setIvPrepFeedback('Зона гигиены рук. Гигиеническая обработка рук будет отмечена на соответствующем этапе алгоритма.');
-      } else if (id === 'ampoule') {
-        setIvPrepAmpouleChecked(true);
-        setIvPrepFeedback('Маркировка ампулы сверена с листом назначения.');
-      } else if (['tray', 'syringe', 'needles', 'swabs', 'gloves', 'waste'].includes(id)) {
-        toggleEquipment(id);
+        setIvPrepActiveObject('patient');
+        setIvPrepFeedback('Пациент: Николаенко Николай Николаевич, 30 лет.');
+        return;
+      }
+      if (id === 'documents') {
+        setIvPrepActiveObject('documents');
+        setIvPrepFeedback(`Лист назначения: ${ivScenario.title}. Назначено ${ivScenario.dose}. Сверьте препарат и дозу с ампулой.`);
+        return;
+      }
+      if (id === 'sink') {
+        setIvPrepActiveObject('sink');
+        setIvPrepFeedback('Зона гигиены рук. Обработка рук уже выполнена на предыдущем этапе.');
+        return;
+      }
+      if (['tray', 'syringe', 'needles', 'swabs', 'gloves', 'waste'].includes(id)) {
+        setIvPrepActiveObject(id);
         const item = requiredEquipment.find(entry => entry.id === id);
-        setIvPrepFeedback(item ? `Проверка: ${item.label}.` : '');
+        if (id === 'syringe') {
+          setIvPrepFeedback(ivPrepAmpouleOpened ? 'Шприц выбран. Выберите назначенный объём, затем выполните набор препарата.' : 'Сначала проверьте маркировку и вскройте ампулу.');
+        } else if (id === 'needles') {
+          if (ivPrepSyringeFilled) {
+            setIvPrepNeedleChanged(true);
+            setIvPrepFeedback('Смена иглы выполнена: установлена стерильная игла для введения.');
+          } else {
+            setIvPrepFeedback('Сначала наберите назначенный объём препарата в шприц.');
+          }
+        } else {
+          setIvPrepEquipment(prev => prev.includes(id) ? prev : [...prev, id]);
+          setIvPrepFeedback(item ? `Проверено: ${item.label}. Предмет подготовлен к работе.` : '');
+        }
+        return;
+      }
+      if (id === 'ampoule') {
+        setIvPrepActiveObject('ampoule');
+        if (!ivPrepAmpouleChecked) {
+          setIvPrepAmpouleChecked(true);
+          setIvPrepFeedback(`Маркировка сверена: ${ivScenario.ampoule}. Назначено набрать ${ivScenario.dose}.`);
+        } else if (!ivPrepAmpouleOpened) {
+          setIvPrepAmpouleOpened(true);
+          setIvPrepFeedback('Ампула вскрыта в симуляции. Теперь выберите шприц и наберите назначенный объём.');
+        } else {
+          setIvPrepFeedback('Ампула уже вскрыта. Продолжите работу со шприцем.');
+        }
       }
     };
     return (
@@ -1478,57 +1510,44 @@ export default function Home() {
             <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
               <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-bold">Процедурный столик</h2><span className="text-xs text-slate-500">Выбирайте предметы по ходу работы</span></div>
               <p className="mt-2 text-sm text-slate-600">{runMode === 'training' ? 'Отметьте проверенные предметы, затем сверьте ампулу с назначением и выполните подготовку шприца.' : 'Выполните подготовку препарата самостоятельно. Подсказки отключены.'}</p>
-              <div className="mt-5 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-4 md:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {requiredEquipment.map(item => {
-                    const selected = ivPrepEquipment.includes(item.id);
-                    return <button key={item.id} onClick={() => toggleEquipment(item.id)} className={`min-h-24 rounded-xl border-2 p-3 text-center transition ${selected ? 'border-emerald-400 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white hover:border-sky-300'}`}>
-                      <span className="block text-2xl">{item.id === 'tray' ? '▱' : item.id === 'syringe' ? '💉' : item.id === 'needles' ? '⌁' : item.id === 'swabs' ? '◌' : item.id === 'gloves' ? '🧤' : '♲'}</span>
-                      <span className="mt-2 block text-sm font-semibold">{item.label}</span>
-                      <span className="mt-1 block text-xs">{selected ? 'Проверено ✓' : 'Нажмите для проверки'}</span>
-                    </button>;
-                  })}
-                </div>
-                <div className="mt-4 rounded-xl border border-sky-100 bg-white p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">Лист назначения</h3><span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">Пациент · 30 лет</span></div>
-                  <p className="mt-2 text-lg font-bold text-sky-800">{ivScenario.title}</p>
-                  <p className="text-sm text-slate-700">Назначено: {ivScenario.prescription}</p>
-                  <p className="mt-1 text-xs text-slate-500">Пациент: Николаенко Николай Николаевич</p>
-                </div>
-              </div>
-              <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <h3 className="font-bold">Ампула</h3>
-                  <div className="mt-3 flex items-center gap-3">
-                    <div className="flex h-28 w-16 items-center justify-center rounded-t-2xl rounded-b-lg border-2 border-sky-300 bg-sky-50 shadow-inner"><div className="h-16 w-10 rounded bg-white border border-sky-200 flex items-center justify-center text-[9px] text-center font-bold text-sky-800 px-1"> {ivScenario.title} </div></div>
-                    <div className="min-w-0 flex-1"><p className="text-sm font-semibold">{ivScenario.ampoule}</p><p className="mt-1 text-xs text-slate-500">Объём: {ivScenario.ampouleVolume} · Срок: {ivScenario.expiry}</p></div>
-                  </div>
-                  <button onClick={() => { setIvPrepAmpouleChecked(true); setIvPrepFeedback('Маркировка сверена с листом назначения.'); }} className="mt-3 w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-3 text-sm font-bold text-sky-800 hover:bg-sky-100">{ivPrepAmpouleChecked ? 'Маркировка проверена ✓' : 'Проверить маркировку ампулы'}</button>
-                  <button disabled={!ivPrepAmpouleChecked} onClick={() => { setIvPrepAmpouleOpened(true); setIvPrepFeedback('Ампула вскрыта в симуляции.'); }} className="mt-2 w-full rounded-lg bg-sky-700 px-3 py-3 text-sm font-bold text-white disabled:opacity-40">{ivPrepAmpouleOpened ? 'Ампула вскрыта ✓' : 'Вскрыть ампулу'}</button>
-                </div>
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <h3 className="font-bold">Шприц</h3>
-                  <div className="mt-3 flex h-28 items-center justify-center rounded-xl bg-slate-50">
-                    <div className="relative flex h-12 w-4/5 items-center">
-                      <div className="h-9 flex-1 rounded-l-md border-2 border-sky-400 bg-white"><div className={`h-full bg-sky-200 transition-all ${ivPrepSyringeFilled ? 'w-full' : 'w-0'}`} /></div><div className="h-1 w-5 bg-slate-400" /><div className="h-0.5 w-7 bg-slate-500" />
+              <div className="mt-5 rounded-2xl border border-sky-100 bg-sky-50/60 p-4 md:p-6">
+                <h3 className="font-bold text-slate-800">Подготовка на процедурном столике</h3>
+                <p className="mt-1 text-sm text-slate-600">Взаимодействуйте с предметами непосредственно в комнате. Проверенные предметы отмечаются галочкой.</p>
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+                  {requiredEquipment.map(item => (
+                    <div key={item.id} className={`rounded-lg border px-3 py-2 ${ivPrepEquipment.includes(item.id) ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}>
+                      <span className="mr-2">{ivPrepEquipment.includes(item.id) ? '✓' : '○'}</span>{item.label}
                     </div>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-600">Выберите объём, который необходимо набрать по назначению.</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {['1 мл', '2 мл', '5 мл'].map(volume => <button key={volume} disabled={!ivPrepAmpouleOpened} onClick={() => { setIvPrepSelectedVolume(volume); setIvPrepSyringeFilled(false); setIvPrepFeedback('Выбран объём ' + volume + '.'); }} className={`rounded-lg border px-4 py-2 text-sm font-bold disabled:opacity-40 ${ivPrepSelectedVolume === volume ? 'border-sky-500 bg-sky-100 text-sky-900' : 'border-slate-200 bg-white'}`}>{volume}</button>)}
-                  </div>
-                  <button disabled={!ivPrepAmpouleOpened || !ivPrepSelectedVolume} onClick={() => {
-                    if (ivPrepSelectedVolume === correctVolume) {
-                      setIvPrepSyringeFilled(true);
-                      setIvPrepFeedback('В симуляции набран назначенный объём.');
-                    } else {
-                      setIvPrepSyringeFilled(false);
-                      setIvPrepFeedback('Объём не соответствует назначению. Проверьте лист назначения.');
-                    }
-                  }} className="mt-3 w-full rounded-lg bg-sky-700 px-3 py-3 text-sm font-bold text-white disabled:opacity-40">Набрать препарат в шприц</button>
-                  {ivPrepSyringeFilled && <p className="mt-2 text-sm font-semibold text-emerald-700">Набрано: {correctVolume} ✓</p>}
-                  <button disabled={!ivPrepSyringeFilled} onClick={() => { setIvPrepNeedleChanged(true); setIvPrepFeedback('Игла для введения установлена в симуляции.'); }} className="mt-3 w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm font-bold text-emerald-800 disabled:opacity-40">{ivPrepNeedleChanged ? 'Игла заменена ✓' : 'Заменить иглу'}</button>
+                  ))}
+                  <div className={`rounded-lg border px-3 py-2 ${ivPrepAmpouleChecked ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-2">{ivPrepAmpouleChecked ? '✓' : '○'}</span>Маркировка ампулы</div>
+                  <div className={`rounded-lg border px-3 py-2 ${ivPrepAmpouleOpened ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-2">{ivPrepAmpouleOpened ? '✓' : '○'}</span>Ампула вскрыта</div>
+                  <div className={`rounded-lg border px-3 py-2 ${ivPrepSyringeFilled ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-2">{ivPrepSyringeFilled ? '✓' : '○'}</span>Препарат набран</div>
+                  <div className={`rounded-lg border px-3 py-2 ${ivPrepNeedleChanged ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-2">{ivPrepNeedleChanged ? '✓' : '○'}</span>Игла заменена</div>
                 </div>
+                {ivPrepActiveObject === 'syringe' && ivPrepAmpouleOpened && (
+                  <div className="mt-4 rounded-xl border border-sky-200 bg-white p-4">
+                    <p className="font-semibold">Шприц: выберите объём согласно листу назначения</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {['1 мл', '2 мл', '5 мл'].map(volume => (
+                        <button key={volume} onClick={() => { setIvPrepSelectedVolume(volume); setIvPrepSyringeFilled(false); setIvPrepFeedback(`Выбран объём ${volume}. Проверьте соответствие назначению.`); }} className={`rounded-lg border px-4 py-2 text-sm font-bold ${ivPrepSelectedVolume === volume ? 'border-sky-500 bg-sky-100 text-sky-900' : 'border-slate-200 bg-white'}`}>{volume}</button>
+                      ))}
+                    </div>
+                    <button onClick={() => {
+                      if (ivPrepSelectedVolume === correctVolume) {
+                        setIvPrepSyringeFilled(true);
+                        setIvPrepFeedback(`В шприц набран назначенный объём: ${correctVolume}.`);
+                      } else {
+                        setIvPrepSyringeFilled(false);
+                        setIvPrepFeedback('Объём не соответствует назначению. Сверьте лист назначения.');
+                      }
+                    }} disabled={!ivPrepSelectedVolume} className="mt-3 w-full rounded-lg bg-sky-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-40">Выполнить набор препарата</button>
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-sm font-bold text-slate-800">Назначение для текущего сценария</p>
+                <p className="mt-1 text-sm text-slate-700">{ivScenario.ampoule}</p>
+                <p className="mt-1 text-xs text-slate-500">Объём ампулы: {ivScenario.ampouleVolume} · Срок годности на маркировке: {ivScenario.expiry} · Набрать: {ivScenario.dose}</p>
               </div>
               {ivPrepFeedback && <p aria-live="polite" className="mt-4 rounded-xl bg-sky-50 border border-sky-100 p-3 text-sm text-sky-900">{ivPrepFeedback}</p>}
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
