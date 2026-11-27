@@ -1596,6 +1596,29 @@ export default function Home() {
       { id: 'iv_24', title: 'Сделать запись в медицинской документации', button: 'Оформить запись в медицинской карте', done: 'Отметка о выполненной процедуре внесена в медицинскую документацию.', note: 'Выберите действие оформления записи. Карта пациента соответствует назначенному сценарию.' },
     ];
     const currentIvAction = ivCurrentCriterion < 6 ? ivIntroActionSteps[ivCurrentCriterion] : ivCurrentCriterion >= 14 ? ivActionSteps[ivCurrentCriterion - 14] : null;
+    const ivInteractionHotspots: IVRoomHotspot[] = ivCurrentCriterion < 6 ? [
+      { id: 'patient', label: 'Пациент · диалог', x: 52, y: 48, w: 31, h: 48 },
+      { id: 'documents', label: 'Документы', x: 17, y: 81, w: 22, h: 18 },
+      { id: 'sink', label: 'Гигиена рук', x: 69, y: 31, w: 18, h: 22 },
+    ] : [];
+    const handleIVInteraction = (id: string) => {
+      const expected = ivCurrentCriterion <= 3 ? 'patient' : ivCurrentCriterion === 4 ? 'documents' : 'sink';
+      if (id !== expected) {
+        setIvPrepFeedback(id === 'patient' ? 'Сначала выполните действие с текущим объектом по алгоритму.' : 'Сейчас требуется другой объект. Вернитесь к текущему этапу процедуры.');
+        return;
+      }
+      const criterionId = IV_CRITERIA[ivCurrentCriterion].id;
+      setIvActionFlags(prev => ({ ...prev, [criterionId]: true }));
+      setIvAnswers(prev => ({ ...prev, [criterionId]: true }));
+      setIvPrepFeedback(
+        id === 'patient'
+          ? ['Контакт установлен. Вы представились и обозначили свою роль.', 'Пациент назвал ФИО и возраст. Данные сверены.', 'Пациент сообщил: «Нормально».', 'Пациент сообщил: «Аллергических реакций не было».'][ivCurrentCriterion]
+          : id === 'documents'
+            ? 'Открыты медицинские документы. Наличие информированного добровольного согласия проверено.'
+            : 'У дозатора выполнена гигиеническая обработка рук.'
+      );
+      setIvCurrentCriterion(prev => Math.min(prev + 1, 6));
+    };
     return (
       <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8">
         <div className="mx-auto max-w-5xl">
@@ -1603,7 +1626,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ЛЕЧЕБНОЕ ДЕЛО</p><h1 className="text-2xl md:text-3xl font-bold">Внутривенная инъекция</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="Введение препарата и завершение процедуры" />
+          <IVRoomScene phase="Пациент · документы · гигиена рук" hotspots={ivInteractionHotspots} onHotspotClick={handleIVInteraction} />
           <div className="mt-5 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-5">
             <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
               <div className="flex items-center justify-between gap-3">
@@ -1616,7 +1639,14 @@ export default function Home() {
               {ivCurrentCriterion === 1 && <div className="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm"><p className="font-semibold">Данные пациента</p><p>Николаенко Николай Николаевич, 30 лет</p></div>}
               {ivCurrentCriterion === 7 && <div className="mt-4 rounded-lg bg-sky-50 border border-sky-100 p-4 text-sm"><p className="font-semibold">Лист назначения</p><p>{ivScenario.title} — {ivScenario.prescription}</p><p className="mt-2 font-semibold">Маркировка ампулы</p><p>{ivScenario.ampoule}</p><p>Объём ампулы: {ivScenario.ampouleVolume} · Назначено набрать: {ivScenario.dose}</p><p className="text-slate-500 mt-1">Срок годности на маркировке: {ivScenario.expiry}</p></div>}
               {runMode === 'training' && <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900"><span className="font-semibold">Учебная вводная:</span> {ivCurrentCriterion === 2 ? 'Пациент отвечает: «Нормально».' : ivCurrentCriterion === 3 ? 'Пациент сообщает: «Аллергических реакций не было».' : ivCurrentCriterion === 4 ? 'Считаем, что информированное добровольное согласие получено.' : ivCurrentCriterion === 15 ? 'Во время введения пациент отвечает: «Чувствую себя как обычно».' : ivCurrentCriterion === 18 ? 'После процедуры пациент отвечает: «Всё хорошо, спасибо, доктор».' : 'Выполняйте действие по алгоритму станции. В экзаменационном режиме эта вводная не отображается.'}</div>}
-              {autoEvaluated ? <div className="mt-7 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Этот критерий уже оценён автоматически по действиям в интерактивной сцене.</div> : currentIvAction ? (
+              {ivCurrentCriterion < 6 ? (
+                <div className="mt-7 rounded-xl border border-sky-200 bg-sky-50 p-4">
+                  <p className="font-semibold text-sky-900">Выполните действие непосредственно в кабинете</p>
+                  <p className="mt-2 text-sm text-sky-800">{currentIvAction?.note}</p>
+                  <p className="mt-3 text-sm text-slate-600">Нажмите на пациента, планшет с документами или дозатор в изображении кабинета. Следующий этап откроется после правильного выбора объекта.</p>
+                  {ivPrepFeedback && <p className="mt-3 rounded-lg bg-white p-3 text-sm font-medium text-emerald-800">{ivPrepFeedback}</p>}
+                </div>
+              ) : autoEvaluated ? <div className="mt-7 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Этот критерий уже оценён автоматически по действиям в интерактивной сцене.</div> : currentIvAction ? (
                 <div className="mt-7 rounded-xl border border-sky-200 bg-sky-50 p-4">
                   <p className="text-sm text-sky-900">{currentIvAction.note}</p>
                   {currentIvAction.id === 'iv_15' && (
