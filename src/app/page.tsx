@@ -348,6 +348,98 @@ const HOTSPOTS = [
 type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'finished' | 'iv_briefing' | 'iv_prep' | 'iv_arm' | 'iv_playing' | 'iv_finished';
 type RunMode = 'training' | 'exam';
 
+
+function IVRoomScene({ phase }: { phase: string }) {
+  return (
+    <section className="relative mt-5 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-lg">
+      <div className="absolute left-4 top-4 z-10 rounded-lg border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">Процедурный кабинет</p>
+        <p className="mt-0.5 text-sm font-semibold text-slate-800">{phase}</p>
+      </div>
+      <div className="relative aspect-[16/7] min-h-[220px] w-full overflow-hidden bg-[#e9f1f1]">
+        <svg viewBox="0 0 1200 525" className="h-full w-full" role="img" aria-label="Светлый процедурный кабинет: кушетка с пациентом, медицинский столик, шкафы, раковина и оборудование">
+          <defs>
+            <linearGradient id="ivWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f5f8f6"/><stop offset="1" stopColor="#dce8e7"/></linearGradient>
+            <linearGradient id="ivFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#d8e1df"/><stop offset="1" stopColor="#aebfbd"/></linearGradient>
+            <linearGradient id="ivBed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff"/><stop offset="1" stopColor="#dce8ee"/></linearGradient>
+            <linearGradient id="ivMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f8fbfc"/><stop offset="1" stopColor="#aebfc6"/></linearGradient>
+            <filter id="ivShadow" x="-30%" y="-30%" width="160%" height="180%"><feGaussianBlur stdDeviation="9"/></filter>
+          </defs>
+          <rect width="1200" height="365" fill="url(#ivWall)"/>
+          <path d="M0 365 L1200 365 L1200 525 L0 525 Z" fill="url(#ivFloor)"/>
+          <path d="M0 365 L1200 365" stroke="#b7c9c7" strokeWidth="5"/>
+          <path d="M0 430 H1200 M0 490 H1200 M180 365 L110 525 M420 365 L390 525 M680 365 L690 525 M940 365 L990 525" stroke="#c3d0ce" strokeWidth="2" opacity=".8"/>
+          <rect x="38" y="58" width="270" height="205" rx="8" fill="#b9c9c9" stroke="#8da3a4" strokeWidth="7"/>
+          <rect x="52" y="72" width="242" height="176" rx="3" fill="#b9d7e2"/>
+          <path d="M173 72 V248 M52 160 H294" stroke="#eef5f5" strokeWidth="8"/>
+          <path d="M52 91 H294 M52 112 H294 M52 133 H294" stroke="#edf4f3" strokeWidth="5" opacity=".8"/>
+          <path d="M40 265 H307" stroke="#879b9b" strokeWidth="8"/>
+          <rect x="70" y="286" width="195" height="10" rx="5" fill="#aab9b8"/>
+          <rect x="84" y="300" width="168" height="63" rx="8" fill="#f3f7f6" stroke="#b7c8c7" strokeWidth="3"/>
+          <rect x="96" y="309" width="145" height="40" rx="4" fill="#dbe9e8"/>
+          <path d="M143 297 V288 Q143 278 154 278 H183 Q194 278 194 288 V297" fill="none" stroke="#8ba3a4" strokeWidth="6"/>
+          <rect x="350" y="62" width="430" height="160" rx="8" fill="#dce6e4" stroke="#b2c3c0" strokeWidth="5"/>
+          <rect x="365" y="76" width="400" height="130" rx="4" fill="#f7faf8"/>
+          <path d="M365 139 H765 M565 76 V206" stroke="#c4d2cf" strokeWidth="4"/>
+          <rect x="378" y="88" width="170" height="40" rx="4" fill="#e7eeee"/>
+          <rect x="580" y="88" width="170" height="40" rx="4" fill="#e7eeee"/>
+          <path d="M396 108 H530 M598 108 H735" stroke="#b2c5c3" strokeWidth="5"/>
+          <rect x="830" y="56" width="110" height="110" rx="55" fill="#f8fbfa" stroke="#a9bcba" strokeWidth="5"/>
+          <path d="M885 72 V111 L910 128" fill="none" stroke="#607c7d" strokeWidth="5" strokeLinecap="round"/>
+          <circle cx="885" cy="111" r="6" fill="#607c7d"/>
+          <rect x="1000" y="64" width="150" height="115" rx="8" fill="#e4edeb" stroke="#b0c1bf" strokeWidth="4"/>
+          <rect x="1015" y="80" width="120" height="82" rx="4" fill="#f8fbfa"/>
+          <path d="M1075 80 V162 M1015 121 H1135" stroke="#c1d0ce" strokeWidth="3"/>
+          <rect x="1032" y="195" width="88" height="145" rx="8" fill="#e9f0ee" stroke="#9eb2b0" strokeWidth="4"/>
+          <path d="M1044 214 H1108 M1044 258 H1108 M1044 302 H1108" stroke="#b5c5c2" strokeWidth="3"/>
+          <ellipse cx="835" cy="430" rx="300" ry="38" fill="#637a7b" opacity=".22" filter="url(#ivShadow)"/>
+          <path d="M610 314 H1110 L1150 355 H585 Z" fill="#71878a" opacity=".18"/>
+          <rect x="605" y="265" width="505" height="48" rx="12" fill="#d8e4e8" stroke="#879fa7" strokeWidth="5"/>
+          <rect x="620" y="236" width="475" height="52" rx="18" fill="url(#ivBed)" stroke="#9eb3bb" strokeWidth="4"/>
+          <rect x="630" y="220" width="112" height="56" rx="22" fill="#f9fbfc" stroke="#c2d0d5" strokeWidth="3"/>
+          <path d="M747 234 Q810 218 895 235 L1045 252 Q1072 260 1070 280 L755 280 Q735 270 747 234Z" fill="#e9c9b8" stroke="#c79f8c" strokeWidth="3"/>
+          <path d="M775 243 Q830 227 890 245 L1030 258 L1015 280 H770Z" fill="#f2d9cb"/>
+          <ellipse cx="680" cy="247" rx="31" ry="28" fill="#d9b29f" stroke="#b98f7d" strokeWidth="3"/>
+          <path d="M654 240 Q664 207 697 222 Q711 231 708 248 Q690 231 654 240Z" fill="#6c7779"/>
+          <path d="M755 280 L755 350 M1055 280 L1055 350 M780 310 L780 350 M1080 310 L1080 350" stroke="#82999e" strokeWidth="12" strokeLinecap="round"/>
+          <path d="M742 350 H792 M1042 350 H1092" stroke="#6e858a" strokeWidth="9" strokeLinecap="round"/>
+          <rect x="895" y="202" width="145" height="24" rx="8" fill="#d5e7eb" stroke="#9eb9c1" strokeWidth="3"/>
+          <path d="M915 202 V180 H1020 V202" fill="none" stroke="#8da6ad" strokeWidth="4"/>
+          <path d="M922 180 V160 M1012 180 V160" stroke="#8da6ad" strokeWidth="4"/>
+          <path d="M930 162 H1005" stroke="#7d969c" strokeWidth="5"/>
+          <path d="M965 157 V141" stroke="#7d969c" strokeWidth="4"/>
+          <rect x="955" y="126" width="22" height="28" rx="4" fill="#d8f0f3" stroke="#7ba8b0" strokeWidth="2"/>
+          <path d="M966 126 V115" stroke="#7ba8b0" strokeWidth="3"/>
+          <ellipse cx="420" cy="445" rx="155" ry="24" fill="#607a7c" opacity=".18" filter="url(#ivShadow)"/>
+          <path d="M320 330 H520 L545 350 H300Z" fill="#71898d"/>
+          <rect x="315" y="280" width="215" height="55" rx="8" fill="url(#ivMetal)" stroke="#849ba1" strokeWidth="4"/>
+          <rect x="330" y="290" width="185" height="12" rx="4" fill="#f8fbfc"/>
+          <path d="M340 335 V425 M505 335 V425" stroke="#81979c" strokeWidth="9"/>
+          <path d="M330 425 H350 M495 425 H515" stroke="#71878c" strokeWidth="7" strokeLinecap="round"/>
+          <rect x="350" y="250" width="54" height="27" rx="5" fill="#d5e7e8" stroke="#8fa9ac" strokeWidth="2"/>
+          <rect x="360" y="235" width="13" height="18" rx="4" fill="#f4fbfc" stroke="#9db7bc" strokeWidth="2"/>
+          <rect x="379" y="231" width="13" height="22" rx="4" fill="#e4f2f6" stroke="#9db7bc" strokeWidth="2"/>
+          <rect x="420" y="245" width="35" height="30" rx="5" fill="#e9f0f2" stroke="#91a7ad" strokeWidth="2"/>
+          <path d="M426 252 H449 M426 260 H449" stroke="#9fb4b9" strokeWidth="2"/>
+          <rect x="468" y="244" width="40" height="31" rx="5" fill="#e6f0ed" stroke="#91a7a5" strokeWidth="2"/>
+          <path d="M478 244 V233 H499 V244" fill="none" stroke="#8fa8a7" strokeWidth="3"/>
+          <rect x="195" y="350" width="62" height="78" rx="8" fill="#e8f0ee" stroke="#8da4a2" strokeWidth="4"/>
+          <rect x="205" y="361" width="42" height="12" rx="3" fill="#b6ceca"/>
+          <path d="M205 383 H247" stroke="#a2b9b5" strokeWidth="3"/>
+          <rect x="1080" y="385" width="66" height="90" rx="8" fill="#d9e7e5" stroke="#8da7a4" strokeWidth="4"/>
+          <path d="M1092 402 H1134 M1092 418 H1134" stroke="#a1b9b5" strokeWidth="3"/>
+          <path d="M1113 385 V372" stroke="#8da7a4" strokeWidth="5"/>
+          <rect x="0" y="0" width="1200" height="525" fill="none" stroke="#ffffff" strokeOpacity=".35" strokeWidth="12"/>
+        </svg>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-sky-100 bg-white px-4 py-2.5 text-xs text-slate-500">
+        <span>Кушетка пациента · процедурный столик · раковина · медицинские шкафы</span>
+        <span className="font-semibold text-sky-800">Единое пространство станции</span>
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const [stage, setStage] = useState<Stage>('menu');
   const [runMode, setRunMode] = useState<RunMode>('training');
@@ -1267,6 +1359,7 @@ export default function Home() {
       <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8 flex items-center justify-center">
         <div className="w-full max-w-3xl rounded-2xl border border-sky-200 bg-white p-6 md:p-8 shadow-xl">
           <button onClick={() => setStage('station_select')} className="mb-5 text-sky-700 hover:text-sky-900">← К выбору станций</button>
+          <IVRoomScene phase="Осмотр кабинета и знакомство с заданием" />
           <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Станция 3 · Лечебное дело</p>
           <h1 className="mt-2 text-3xl font-bold text-slate-900">Внутривенная инъекция</h1>
           <div className="mt-5 rounded-xl bg-sky-50 border border-sky-100 p-5">
@@ -1319,6 +1412,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ИНТЕРАКТИВНЫЙ ЭТАП 1</p><h1 className="text-2xl md:text-3xl font-bold">Подготовка препарата</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
+          <IVRoomScene phase="Подготовка препарата" />
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
             <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
               <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-bold">Процедурный столик</h2><span className="text-xs text-slate-500">Выбирайте предметы по ходу работы</span></div>
@@ -1415,6 +1509,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ИНТЕРАКТИВНЫЙ ЭТАП 2</p><h1 className="text-2xl md:text-3xl font-bold">Подготовка руки и венепункция</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
+          <IVRoomScene phase="Подготовка руки пациента и венепункция" />
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
             <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
               <h2 className="text-lg font-bold">Рука пациента</h2>
@@ -1515,6 +1610,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ЛЕЧЕБНОЕ ДЕЛО</p><h1 className="text-2xl md:text-3xl font-bold">Внутривенная инъекция</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
+          <IVRoomScene phase="Введение препарата и завершение процедуры" />
           <div className="mt-5 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-5">
             <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
               <div className="flex items-center justify-between gap-3">
