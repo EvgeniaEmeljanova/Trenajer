@@ -91,16 +91,33 @@ const SPECIALTIES = [
     title: 'Лечебное дело',
     description: 'Первичная аккредитация (Специалитет)',
     stations: [
-      { id: 'BLS', title: 'Станция 1: Базовая СЛР', type: 'single' },
-      { 
-        id: 'emergency_help', 
-        title: 'Станция 2: Экстренная медицинская помощь', 
+      { id: 'BLS', title: 'Станция 1: Базовая сердечно-лёгочная реанимация взрослых и поддержание проходимости дыхательных путей', type: 'single', required: true },
+      {
+        id: 'emergency_help',
+        title: 'Станция 2: Экстренная медицинская помощь',
         type: 'group',
+        required: true,
         scenarios: ['OKS1', 'OKS2', 'ANAPHYLAXIS', 'ZHKK', 'BOS', 'TELA', 'PNEUMOTHORAX', 'HYPOGLYCEMIA', 'HYPERGLYCEMIA']
       },
-      { id: 'iv_injection', title: 'Станция 3: Внутривенная инъекция', type: 'locked' },
-      { id: 'anamnesis', title: 'Станция 4: Сбор жалоб и анамнеза', type: 'locked' },
-      { id: 'physical_exam', title: 'Станция 5: Физикальное обследование', type: 'locked' },
+      { id: 'iv_injection', title: 'Станция 3: Внутривенная инъекция', type: 'locked', required: true },
+      {
+        id: 'random_history',
+        title: 'Станция 4: Рандомный выбор — 1 из 2',
+        type: 'locked',
+        required: false,
+        choices: ['Диспансеризация', 'Сбор жалоб и анамнеза']
+      },
+      {
+        id: 'random_exam',
+        title: 'Станция 5: Рандомный выбор — 1 из 3',
+        type: 'locked',
+        required: false,
+        choices: [
+          'Физикальное обследование пациента: сердечно-сосудистая система',
+          'Физикальное обследование пациента: дыхательная система',
+          'Физикальное обследование пациента: желудочно-кишечный тракт'
+        ]
+      }
     ]
   },
 ];
@@ -1152,7 +1169,10 @@ export default function Home() {
               <button key={st.id} onClick={() => handleSelectStation(st)} disabled={st.type === 'locked'} className={`w-full text-left p-6 rounded-xl border-2 transition flex justify-between items-center ${st.type === 'locked' ? 'bg-gray-800/50 border-gray-800 text-gray-600 cursor-not-allowed' : 'bg-gray-800 border-gray-700 hover:border-blue-500 text-white'}`}>
                 <div>
                   <h3 className="text-xl font-bold">{st.title}</h3>
-                  {st.type === 'group' && <p className="text-sm text-gray-400 mt-1">Случайный выбор одного из 9 сценариев</p>}
+                  {st.type === 'group' && <p className="text-sm text-gray-400 mt-1">Обязательная станция · случайный выбор одного из 9 клинических сценариев</p>}
+                  {st.required && st.type !== 'group' && <p className="text-sm text-gray-400 mt-1">Обязательная станция</p>}
+                  {!st.required && st.choices && <div className="text-sm text-gray-400 mt-2 space-y-1"><p>Случайно выбирается один вариант:</p>{st.choices.map((choice: string) => <p key={choice}>• {choice}</p>)}</div>}
+                  {st.id === 'iv_injection' && <p className="text-sm text-gray-400 mt-1">Обязательная станция</p>}
                 </div>
                 <div>
                   {st.type === 'locked' ? <span className="text-xs bg-gray-700 px-2 py-1 rounded">В разработке</span> : <span className="text-blue-500 text-2xl">→</span>}
