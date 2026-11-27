@@ -216,7 +216,7 @@ const CHECKLIST_BLS = [
   { id: 'call', text: 'Вызов СМП' },
   { id: 'compressions', text: 'Компрессии (30 раз)' },
   { id: 'forehead_hand', text: 'Положил ладонь одной руки на лоб пострадавшего' },
-  { id: 'forehead_hand', text: 'Положил ладонь одной руки на лоб пострадавшего' },
+  { id: 'chin_lift', text: 'Приподнял подбородок двумя пальцами' },
   { id: 'breaths', text: 'Сделал 2 вдоха' },
   { id: 'aed', text: 'Работа с АНД' },
   { id: 'compressions_repeat', text: 'Возобновил СЛР после АНД' },
@@ -231,6 +231,8 @@ const CHECKLIST_BLS_ARREST = [
   { id: 'pulse', text: 'Оценил пульс' },
   { id: 'call', text: 'Вызов СМП' },
   { id: 'compressions', text: 'Компрессии (30 раз)' },
+  { id: 'forehead_hand', text: 'Положил ладонь одной руки на лоб пострадавшего' },
+  { id: 'chin_lift', text: 'Приподнял подбородок двумя пальцами' },
   { id: 'breaths', text: 'Сделал 2 вдоха' },
   { id: 'aed', text: 'Работа с АНД' },
   { id: 'compressions_repeat', text: 'Возобновил СЛР после АНД' },
@@ -296,6 +298,9 @@ export default function Home() {
   const [foreheadHandPosition, setForeheadHandPosition] = useState({ x: 39, y: 58 });
   const [foreheadHandDragging, setForeheadHandDragging] = useState(false);
   const [foreheadHandPlaced, setForeheadHandPlaced] = useState(false);
+  const [chinHandPosition, setChinHandPosition] = useState({ x: 61, y: 66 });
+  const [chinHandDragging, setChinHandDragging] = useState(false);
+  const [chinHandPlaced, setChinHandPlaced] = useState(false);
   const foreheadSceneRef = useRef<HTMLDivElement | null>(null);
 
   const clothingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -706,6 +711,9 @@ export default function Home() {
     if (isBlsScenario && id === 'breaths') {
       setForeheadHandPosition({ x: 39, y: 58 });
       setForeheadHandPlaced(false);
+      setChinHandPosition({ x: 61, y: 66 });
+      setChinHandDragging(false);
+      setChinHandPlaced(false);
       setForeheadHandOpen(true);
       return;
     }
@@ -1271,47 +1279,73 @@ export default function Home() {
           <div className="max-h-[96vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-3 text-gray-800 shadow-2xl sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="text-lg font-bold">Положите ладонь на лоб пострадавшего</h3>
-              <button type="button" onClick={() => { setForeheadHandOpen(false); setForeheadHandDragging(false); setForeheadHandPlaced(false); }} className="rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-100">Закрыть</button>
+              <button type="button" onClick={() => { setForeheadHandOpen(false); setForeheadHandDragging(false); setForeheadHandPlaced(false); setChinHandDragging(false); setChinHandPlaced(false); }} className="rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-100">Закрыть</button>
             </div>
             <div
               ref={foreheadSceneRef}
               className="relative mx-auto w-fit max-w-full touch-none overflow-visible rounded-xl bg-slate-100"
               onPointerMove={(event) => {
-                if (!foreheadHandDragging || foreheadHandPlaced || !foreheadSceneRef.current) return;
+                if (!foreheadSceneRef.current) return;
                 const rect = foreheadSceneRef.current.getBoundingClientRect();
-                setForeheadHandPosition({
+                const position = {
                   x: Math.max(-12, Math.min(92, ((event.clientX - rect.left) / rect.width) * 100 - 11)),
                   y: Math.max(-12, Math.min(92, ((event.clientY - rect.top) / rect.height) * 100 - 11))
-                });
+                };
+                if (foreheadHandDragging && !foreheadHandPlaced) setForeheadHandPosition(position);
+                if (chinHandDragging && foreheadHandPlaced && !chinHandPlaced) setChinHandPosition(position);
               }}
               onPointerUp={(event) => {
-                if (!foreheadHandDragging || !foreheadSceneRef.current) return;
+                if (!foreheadSceneRef.current) return;
                 const rect = foreheadSceneRef.current.getBoundingClientRect();
                 const x = ((event.clientX - rect.left) / rect.width) * 100;
                 const y = ((event.clientY - rect.top) / rect.height) * 100;
-                setForeheadHandDragging(false);
-                if (x >= 34 && x <= 67 && y >= 5 && y <= 39) {
-                  setForeheadHandPlaced(true);
-                  toggleAction('forehead_hand');
-                  setPatientResponse('Правильно: ладонь одной руки расположена на лбу пострадавшего.');
-                } else {
-                  setForeheadHandPosition({ x: 39, y: 58 });
-                  setPatientResponse('Рука расположена неправильно. Попробуйте ещё раз.');
+                if (foreheadHandDragging && !foreheadHandPlaced) {
+                  setForeheadHandDragging(false);
+                  if (x >= 34 && x <= 67 && y >= 5 && y <= 39) {
+                    setForeheadHandPlaced(true);
+                    toggleAction('forehead_hand');
+                    setPatientResponse('Правильно: ладонь одной руки расположена на лбу пострадавшего.');
+                  } else {
+                    setForeheadHandPosition({ x: 39, y: 58 });
+                    setPatientResponse('Рука расположена неправильно. Попробуйте ещё раз.');
+                  }
+                  return;
+                }
+                if (chinHandDragging && foreheadHandPlaced && !chinHandPlaced) {
+                  setChinHandDragging(false);
+                  if (x >= 35 && x <= 69 && y >= 48 && y <= 78) {
+                    setChinHandPlaced(true);
+                    toggleAction('chin_lift');
+                    setPatientResponse('Правильно: подбородок приподнят двумя пальцами.');
+                  } else {
+                    setChinHandPosition({ x: 61, y: 66 });
+                    setPatientResponse('Установите пальцы под подбородок и попробуйте ещё раз.');
+                  }
                 }
               }}
-              onPointerCancel={() => { setForeheadHandDragging(false); setForeheadHandPosition({ x: 72, y: 68 }); }}
+              onPointerCancel={() => { setForeheadHandDragging(false); setChinHandDragging(false); }}
             >
               <img src="/patient_face_closeup.png" alt="Лицо пострадавшего" draggable={false} className="mx-auto block h-auto max-h-[70vh] w-auto max-w-full select-none object-contain" />
               <img
                 src="/airway_hand_forehead.png"
-                alt="Перемещаемая рука"
+                alt="Рука на лбу"
                 draggable={false}
                 onPointerDown={(event) => { event.preventDefault(); if (foreheadHandPlaced) return; setForeheadHandDragging(true); foreheadSceneRef.current?.setPointerCapture(event.pointerId); }}
-                className="absolute z-10 w-[40%] max-w-[300px] cursor-grab touch-none select-none active:cursor-grabbing"
+                className={`absolute z-10 w-[40%] max-w-[300px] select-none ${foreheadHandPlaced ? 'pointer-events-none' : 'cursor-grab touch-none active:cursor-grabbing'}`}
                 style={{ left: `${foreheadHandPosition.x}%`, top: `${foreheadHandPosition.y}%` }}
               />
+              {foreheadHandPlaced && (
+                <img
+                  src="/airway_hand_chin.png"
+                  alt="Вторая рука для подъёма подбородка"
+                  draggable={false}
+                  onPointerDown={(event) => { event.preventDefault(); if (chinHandPlaced) return; setChinHandDragging(true); foreheadSceneRef.current?.setPointerCapture(event.pointerId); }}
+                  className={`absolute z-20 w-[40%] max-w-[300px] select-none ${chinHandPlaced ? 'pointer-events-none' : 'cursor-grab touch-none active:cursor-grabbing'}`}
+                  style={{ left: `${chinHandPosition.x}%`, top: `${chinHandPosition.y}%` }}
+                />
+              )}
             </div>
-            <p className="mt-3 text-center text-sm text-gray-600">{foreheadHandPlaced ? "Правильно! Рука осталась на месте. Можно закрыть окно." : "Перетащите изображение руки на область лба пациента."}</p>
+            <p className="mt-3 text-center text-sm text-gray-600">{!foreheadHandPlaced ? "Перетащите первую руку на область лба пациента." : !chinHandPlaced ? "Теперь перетащите вторую руку под подбородок." : "Правильно! Подбородок приподнят. Можно закрыть окно."}</p>
           </div>
         </div>
       )}
