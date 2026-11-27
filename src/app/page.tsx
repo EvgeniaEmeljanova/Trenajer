@@ -345,7 +345,7 @@ const HOTSPOTS = [
   { id: 'aed', x: 72, y: 5, w: 8, h: 10, label: 'АНД' },
 ];
 
-type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'finished' | 'iv_briefing' | 'iv_prep' | 'iv_arm' | 'iv_playing' | 'iv_finished';
+type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'finished' | 'iv_briefing' | 'iv_contact' | 'iv_prep' | 'iv_arm' | 'iv_playing' | 'iv_finished';
 type RunMode = 'training' | 'exam';
 
 
@@ -1347,12 +1347,80 @@ export default function Home() {
             </div>
             <p className="text-xs text-slate-500 mt-2">В экзамене подсказки скрыты. Оценивание проводится по 24 официальным критериям.</p>
           </div>
-          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback(''); setTimeLeft(600); setStage('iv_prep'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать подготовку препарата</button>
+          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback(''); setIvActionFlags({}); setIvPrepFeedback(''); setTimeLeft(600); setStage('iv_contact'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать подготовку препарата</button>
         </div>
       </div>
     );
   }
 
+
+  if (stage === 'iv_contact') {
+    const contactSteps = [
+      { title: 'Установить контакт с пациентом', detail: 'Нажмите на пациента, чтобы обратиться к нему: поздоровайтесь, представьтесь и обозначьте свою роль.', object: 'patient' },
+      { title: 'Идентифицировать пациента', detail: 'Повторно нажмите на пациента, попросите назвать ФИО и возраст и сверьте ответ с данными задания.', object: 'patient' },
+      { title: 'Уточнить самочувствие', detail: 'Обратитесь к пациенту по имени и отчеству и спросите о самочувствии.', object: 'patient' },
+      { title: 'Уточнить аллергологический анамнез', detail: 'Спросите пациента об аллергии в анамнезе и на назначенное лекарство.', object: 'patient' },
+      { title: 'Проверить информированное согласие', detail: 'Нажмите на планшет и проверьте наличие подписанного согласия в документации.', object: 'documents' },
+      { title: 'Выполнить гигиеническую обработку рук', detail: 'Нажмите на дозатор у раковины и выполните гигиеническую обработку рук.', object: 'sink' },
+    ];
+    const step = contactSteps[Math.min(ivCurrentCriterion, 5)];
+    const contactHotspots: IVRoomHotspot[] = [
+      { id: 'patient', label: 'Пациент', x: 52, y: 48, w: 31, h: 48 },
+      { id: 'documents', label: 'Планшет с документами', x: 17, y: 81, w: 22, h: 18 },
+      { id: 'sink', label: 'Раковина и дозатор', x: 69, y: 31, w: 18, h: 22 },
+    ];
+    const handleContactClick = (id: string) => {
+      if (id !== step.object) {
+        setIvPrepFeedback('Сейчас выполните действие с нужным объектом: ' + (step.object === 'patient' ? 'пациентом' : step.object === 'documents' ? 'планшетом с документами' : 'дозатором у раковины') + '.');
+        return;
+      }
+      const criterionId = IV_CRITERIA[ivCurrentCriterion].id;
+      setIvAnswers(prev => ({ ...prev, [criterionId]: true }));
+      setIvActionFlags(prev => ({ ...prev, [criterionId]: true }));
+      const response = ivCurrentCriterion === 0 ? 'Вы поздоровались, представились и обозначили свою роль.' :
+        ivCurrentCriterion === 1 ? 'Пациент: «Николаенко Николай Николаевич, 30 лет». Данные сверены.' :
+        ivCurrentCriterion === 2 ? 'Пациент: «Нормально».' :
+        ivCurrentCriterion === 3 ? 'Пациент: «Аллергических реакций не было».' :
+        ivCurrentCriterion === 4 ? 'В документации найдено подписанное информированное добровольное согласие.' :
+        'Гигиеническая обработка рук выполнена.';
+      setIvPrepFeedback(response);
+      if (ivCurrentCriterion === 5) {
+        setIvCurrentCriterion(0);
+        setStage('iv_prep');
+      } else {
+        setIvCurrentCriterion(prev => prev + 1);
+      }
+    };
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 md:p-7 text-slate-800">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex items-center justify-between gap-3 border-b border-sky-100 pb-4">
+            <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold">Пациент и подготовка к процедуре</h1></div>
+            <div className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-center"><p className="text-xs text-slate-500">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-sky-800">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
+          </div>
+          <IVRoomScene phase="Общение с пациентом · документы · гигиена рук" hotspots={contactHotspots} onHotspotClick={handleContactClick} />
+          <div className="mt-5 grid gap-5 md:grid-cols-[1fr_280px]">
+            <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
+              <p className="text-sm font-semibold text-sky-700">ДЕЙСТВИЕ {ivCurrentCriterion + 1} ИЗ 6</p>
+              <h2 className="mt-2 text-xl font-bold">{step.title}</h2>
+              <p className="mt-3 text-slate-600">{step.detail}</p>
+              {runMode === 'training' && ivCurrentCriterion === 1 && <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm">Данные для сверки: Николаенко Николай Николаевич, 30 лет.</p>}
+              {runMode === 'training' && ivCurrentCriterion === 2 && <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm">Ответ пациента появится после обращения.</p>}
+              {runMode === 'training' && ivCurrentCriterion === 3 && <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm">Уточните аллергию в анамнезе и реакцию на назначенный препарат.</p>}
+              {ivPrepFeedback && <p className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-800">{ivPrepFeedback}</p>}
+              <p className="mt-4 text-xs text-slate-500">Действие засчитывается только при нажатии на соответствующий объект в комнате. После завершения шести действий откроется подготовка препарата.</p>
+            </section>
+            <aside className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
+              <h3 className="font-bold">Ход выполнения</h3>
+              <div className="mt-3 space-y-2 text-sm">
+                {contactSteps.map((item, index) => <div key={item.title} className="flex gap-2"><span className={ivAnswers[IV_CRITERIA[index].id] ? 'font-bold text-emerald-600' : 'text-slate-300'}>{ivAnswers[IV_CRITERIA[index].id] ? '✓' : '○'}</span><span className={ivAnswers[IV_CRITERIA[index].id] ? 'text-emerald-800' : 'text-slate-600'}>{item.title}</span></div>)}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (stage === 'iv_prep') {
     const ivScenario = IV_SCENARIOS[ivScenarioIndex];
