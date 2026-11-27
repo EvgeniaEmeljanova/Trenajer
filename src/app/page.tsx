@@ -160,67 +160,37 @@ const SMP_SCRIPT = [{ dispatcher: 'Скорая помощь. Слушаю!' }];
 type SmpOption = { id: string; text: string; correct: boolean };
 
 const getTrainingSmpOptions = (scenario: ScenarioType): SmpOption[] => {
-  const eventByScenario: Record<ScenarioType, string> = {
-    OKS1: 'У пациента сильная загрудинная боль, подозрение на острый коронарный синдром.',
-    OKS2: 'У пациента боль в груди, одышка и признаки осложнённого острого коронарного синдрома.',
-    ANAPHYLAXIS: 'После укуса пчелы у пациента резко ухудшилось состояние.',
-    ZHKK: 'У пациента рвота содержимым типа кофейной гущи, подозрение на желудочно-кишечное кровотечение.',
-    BOS: 'У пациента выраженное затруднение дыхания.',
-    TELA: 'У пациента внезапная боль в грудной клетке и одышка, подозрение на ТЭЛА.',
-    PNEUMOTHORAX: 'После травмы грудной клетки возникли боль и одышка.',
-    HYPOGLYCEMIA: 'У пациента спутанность сознания, подозрение на гипогликемию.',
-    HYPERGLYCEMIA: 'У пациента выраженная слабость и сухость во рту, подозрение на гипергликемию.',
-    BLS: 'Человек обнаружен без сознания, нормального дыхания нет.',
-    BLS1: 'Мужчина подавился пищей, не может эффективно откашляться.',
-    BLS2: 'Мужчина подавился пищей, не может эффективно откашляться.',
-    BLS3: 'Мужчина без сознания, нормального дыхания нет.',
-    BLS4: 'Мужчина без сознания, нормального дыхания нет.'
+  // Учебный звонок: проверяем только передачу сведений, предусмотренных методикой.
+  // «Что произошло?» не является отдельным оцениваемым критерием.
+  const patientInfo: Record<ScenarioType, { demographic: string; condition: string; help: string }> = {
+    OKS1: { demographic: 'Один взрослый пациент, примерно 45 лет.', condition: 'Пациент в сознании, сильная боль за грудиной, состояние тяжёлое.', help: 'Начинаю оказывать экстренную медицинскую помощь.' },
+    OKS2: { demographic: 'Один взрослый пациент, примерно 50 лет.', condition: 'Пациент в тяжёлом состоянии: выраженная одышка и цианоз.', help: 'Начинаю оказывать экстренную медицинскую помощь.' },
+    ANAPHYLAXIS: { demographic: 'Один взрослый пациент, примерно 30 лет.', condition: 'После укуса пчелы резко ухудшилось состояние, выраженная слабость.', help: 'Начинаю оказывать экстренную медицинскую помощь.' },
+    ZHKK: { demographic: 'Один взрослый пациент, примерно 55 лет.', condition: 'Пациент в тяжёлом состоянии, рвота содержимым типа кофейной гущи.', help: 'Начинаю оказывать экстренную медицинскую помощь.' },
+    BOS: { demographic: 'Один взрослый пациент, примерно 25 лет.', condition: 'Пациент в сознании, выраженное затруднение дыхания.', help: 'Начинаю оказывать экстренную медицинскую помощь.' },
+    TELA: { demographic: 'Один взрослый пациент, примерно 60 лет.', condition: 'Пациент в тяжёлом состоянии: внезапная боль в грудной клетке и одышка.', help: 'Начинаю оказывать экстренную медицинскую помощь.' },
+    PNEUMOTHORAX: { demographic: 'Один взрослый пациент, примерно 40 лет.', condition: 'После травмы грудной клетки возникли боль и одышка.', help: 'Начинаю оказывать экстренную медицинскую помощь.' },
+    HYPOGLYCEMIA: { demographic: 'Один взрослый пациент, примерно 50 лет.', condition: 'Сознание спутанное, кожа влажная.', help: 'Начинаю оказывать экстренную медицинскую помощь.' },
+    HYPERGLYCEMIA: { demographic: 'Один взрослый пациент, примерно 35 лет.', condition: 'Выраженная слабость и сухость во рту.', help: 'Начинаю оказывать экстренную медицинскую помощь.' },
+    BLS: { demographic: 'Один взрослый мужчина.', condition: 'Пострадавший без сознания, нормального дыхания нет.', help: 'Готов начать сердечно-лёгочную реанимацию.' },
+    BLS1: { demographic: 'Один взрослый мужчина.', condition: 'Пострадавший в сознании, не может эффективно откашляться.', help: 'Начинаю помощь при тяжёлой обструкции дыхательных путей.' },
+    BLS2: { demographic: 'Один взрослый мужчина.', condition: 'Пострадавший в сознании, не может эффективно откашляться.', help: 'Начинаю помощь при тяжёлой обструкции дыхательных путей.' },
+    BLS3: { demographic: 'Один взрослый мужчина.', condition: 'Пострадавший без сознания, нормального дыхания нет.', help: 'Готов начать сердечно-лёгочную реанимацию.' },
+    BLS4: { demographic: 'Один взрослый мужчина.', condition: 'Пострадавший без сознания, нормального дыхания нет.', help: 'Готов начать сердечно-лёгочную реанимацию.' }
   };
-  const conditionByScenario: Record<ScenarioType, string> = {
-    OKS1: 'Пациент в сознании, выраженная боль в груди, состояние тяжёлое.',
-    OKS2: 'Пациент в тяжёлом состоянии, одышка и цианоз.',
-    ANAPHYLAXIS: 'Состояние тяжёлое, выраженная слабость, признаки аллергической реакции.',
-    ZHKK: 'Пациент бледный, состояние тяжёлое, есть признаки кровотечения.',
-    BOS: 'Пациент испытывает выраженное затруднение дыхания.',
-    TELA: 'Состояние тяжёлое, одышка и боль в грудной клетке.',
-    PNEUMOTHORAX: 'Состояние тяжёлое, одышка, подозрение на напряжённый пневмоторакс.',
-    HYPOGLYCEMIA: 'Сознание спутанное, кожа влажная.',
-    HYPERGLYCEMIA: 'Пациент ослаблен, выраженная сухость во рту.',
-    BLS: 'Без сознания, нормального дыхания нет.',
-    BLS1: 'В сознании, не может эффективно откашляться.',
-    BLS2: 'В сознании, не может эффективно откашляться.',
-    BLS3: 'Без сознания, нормального дыхания нет.',
-    BLS4: 'Без сознания, нормального дыхания нет.'
-  };
-  const helpByScenario: Record<ScenarioType, string> = {
-    OKS1: 'Начинаю оказание экстренной медицинской помощи.',
-    OKS2: 'Начинаю оказание экстренной медицинской помощи.',
-    ANAPHYLAXIS: 'Начинаю оказание экстренной медицинской помощи.',
-    ZHKK: 'Начинаю оказание экстренной медицинской помощи.',
-    BOS: 'Начинаю оказание экстренной медицинской помощи.',
-    TELA: 'Начинаю оказание экстренной медицинской помощи.',
-    PNEUMOTHORAX: 'Начинаю оказание экстренной медицинской помощи.',
-    HYPOGLYCEMIA: 'Начинаю оказание экстренной медицинской помощи.',
-    HYPERGLYCEMIA: 'Начинаю оказание экстренной медицинской помощи.',
-    BLS: 'Начинаю сердечно-лёгочную реанимацию.',
-    BLS1: 'Начинаю помощь при тяжёлой обструкции дыхательных путей.',
-    BLS2: 'Начинаю помощь при тяжёлой обструкции дыхательных путей.',
-    BLS3: 'Начинаю сердечно-лёгочную реанимацию.',
-    BLS4: 'Начинаю сердечно-лёгочную реанимацию.'
-  };
-  const options: SmpOption[] = [
-    { id: 'event', text: eventByScenario[scenario], correct: true },
-    { id: 'address', text: 'Сообщаю точный адрес и ориентиры места происшествия.', correct: true },
-    { id: 'victims', text: 'У нас один пострадавший.', correct: true },
-    { id: 'ageSex', text: scenario.startsWith('BLS') ? 'Пострадавший — мужчина; возраст сообщаю, если он известен.' : 'Сообщаю пол и примерный возраст пациента, не называя неизвестные данные.', correct: true },
-    { id: 'condition', text: conditionByScenario[scenario], correct: true },
-    { id: 'help', text: helpByScenario[scenario], correct: true },
-    { id: 'wrongVictims', text: 'У нас трое пострадавших.', correct: false },
-    { id: 'wrongAddress', text: 'Точный адрес и ориентиры сообщать не обязательно.', correct: false },
-    { id: 'wrongHelp', text: 'Оставляю пациента одного и отхожу ожидать бригаду.', correct: false },
-    { id: 'wrongInfo', text: 'Сообщаю диспетчеру только фамилию пациента, остальное неважно.', correct: false }
+  const info = patientInfo[scenario];
+  return [
+    { id: 'address', text: 'Называю адрес или место происшествия.', correct: true },
+    { id: 'victims', text: 'Сообщаю, что пострадавший один.', correct: true },
+    { id: 'ageSex', text: info.demographic, correct: true },
+    { id: 'condition', text: info.condition, correct: true },
+    { id: 'help', text: info.help, correct: true },
+    { id: 'wrongAddress', text: 'Адрес не называю — бригада сама найдёт место.', correct: false },
+    { id: 'wrongVictims', text: 'Не уточняю количество пострадавших.', correct: false },
+    { id: 'wrongDemographic', text: 'Не сообщаю сведения о пострадавшем.', correct: false },
+    { id: 'wrongCondition', text: 'Говорю диспетчеру, что состояние пациента неизвестно, хотя оно описано в сценарии.', correct: false },
+    { id: 'wrongHelp', text: 'Сообщаю, что помощь не оказываю и жду бригаду.', correct: false }
   ];
-  return options;
 };
 
 const MEDICATIONS: Record<ScenarioType, { name: string, correct: boolean }[]> = {
@@ -982,24 +952,42 @@ export default function Home() {
     if (callSuccess) return;
     const options = getTrainingSmpOptions(scenario);
     const selected = options.filter(option => selectedSmpOptions.includes(option.id));
-    const incorrectSelected = selected.filter(option => !option.correct).length;
-    const allRequiredSelected = options.filter(option => option.correct).every(option => selectedSmpOptions.includes(option.id));
+    const incorrectSelected = selected.filter(option => !option.correct);
+    const missing = options.filter(option => option.correct && !selectedSmpOptions.includes(option.id));
 
-    if (allRequiredSelected && incorrectSelected === 0) {
-      const confirmation = 'Вызов принят! Информация передана.';
-      setChatHistory(prev => [...prev, { sender: 'doctor', text: selected.map(option => option.text).join(' ') }, { sender: 'dispatcher', text: confirmation }]);
-      setSmpFeedback('Верно! Все необходимые сведения переданы диспетчеру.');
-      setCallSuccess(true);
-      playAudio(confirmation);
-      setTimeout(() => {
-        setPhoneModal(false);
-        toggleAction('call');
-      }, 2500);
+    setChatHistory(prev => [
+      ...prev,
+      { sender: 'doctor', text: selected.map(option => option.text).join(' ') || 'Пытаюсь передать сведения диспетчеру.' }
+    ]);
+
+    if (missing.length > 0 || incorrectSelected.length > 0) {
+      const prompts: Record<string, string> = {
+        address: 'Назовите адрес или место происшествия.',
+        victims: 'Сколько пострадавших?',
+        ageSex: 'Уточните, кто пострадал: мужчина, женщина, подросток или ребёнок.',
+        condition: 'В каком состоянии находится пострадавший?',
+        help: 'Какую помощь Вы оказываете или готовы начать?'
+      };
+      const nextPrompt = missing.length > 0
+        ? prompts[missing[0].id]
+        : 'Пожалуйста, уточните сведения о пострадавшем и оказываемой помощи.';
+      setChatHistory(prev => [...prev, { sender: 'dispatcher', text: nextPrompt }]);
+      setSmpFeedback(incorrectSelected.length > 0
+        ? 'Есть неточные сведения. Исправьте выбор и дополните недостающее.'
+        : 'Диспетчер уточняет недостающую информацию. Дополните ответ и передайте его ещё раз.');
+      playAudio(nextPrompt);
       return;
     }
 
-    const missing = options.filter(option => option.correct && !selectedSmpOptions.includes(option.id)).length;
-    setSmpFeedback(`Проверьте выбор: не отмечено необходимых сведений — ${missing}; лишних вариантов выбрано — ${incorrectSelected}.`);
+    const confirmation = 'Вызов принят!';
+    setChatHistory(prev => [...prev, { sender: 'dispatcher', text: confirmation }]);
+    setSmpFeedback('Верно! Все необходимые сведения переданы диспетчеру.');
+    setCallSuccess(true);
+    playAudio(confirmation);
+    setTimeout(() => {
+      setPhoneModal(false);
+      toggleAction('call');
+    }, 2500);
   };
 
   const handleSmpMessage = () => {
@@ -1493,7 +1481,7 @@ export default function Home() {
               ))}
               {runMode === 'training' && !callSuccess ? (
                 <div className="rounded-xl border border-gray-600 bg-gray-900/70 p-3 space-y-3">
-                  <p className="text-sm font-semibold text-white">Выберите все правильные варианты ответа:</p>
+                  <p className="text-sm font-semibold text-white">Выберите сведения, которые нужно сообщить диспетчеру:</p>
                   <div className="space-y-2">
                     {getTrainingSmpOptions(scenario).map(option => (
                       <label key={option.id} className="flex items-start gap-3 rounded-lg bg-gray-700/70 p-3 text-sm text-gray-100 cursor-pointer hover:bg-gray-700">
