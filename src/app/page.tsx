@@ -349,10 +349,20 @@ type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'fin
 type RunMode = 'training' | 'exam';
 
 
-function IVRoomScene({ phase }: { phase: string }) {
+type IVRoomHotspot = { id: string; label: string; x: number; y: number; done?: boolean };
+
+function IVRoomScene({
+  phase,
+  hotspots = [],
+  onHotspotClick,
+}: {
+  phase: string;
+  hotspots?: IVRoomHotspot[];
+  onHotspotClick?: (id: string) => void;
+}) {
   return (
     <section className="relative mt-5 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-lg">
-      <div className="absolute left-4 top-4 z-10 rounded-lg border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur">
+      <div className="absolute left-4 top-4 z-20 rounded-lg border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">Процедурный кабинет</p>
         <p className="mt-0.5 text-sm font-semibold text-slate-800">{phase}</p>
       </div>
@@ -363,10 +373,32 @@ function IVRoomScene({ phase }: { phase: string }) {
           draggable={false}
           className="block h-auto w-full object-contain"
         />
+        {hotspots.length > 0 && (
+          <div className="absolute inset-0">
+            {hotspots.map((spot) => (
+              <button
+                key={spot.id}
+                type="button"
+                onClick={() => onHotspotClick?.(spot.id)}
+                aria-label={spot.label}
+                title={spot.label}
+                className="group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-300"
+                style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+              >
+                <span className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-sm font-black text-white shadow-lg transition group-hover:scale-110 ${spot.done ? 'bg-emerald-600' : 'bg-sky-700'}`}>
+                  {spot.done ? '✓' : '+'}
+                </span>
+                <span className="max-w-28 rounded-md border border-white/80 bg-white/95 px-2 py-1 text-center text-[10px] font-bold leading-tight text-slate-700 shadow-md transition group-hover:bg-sky-50">
+                  {spot.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-sky-100 bg-white px-4 py-2.5 text-xs text-slate-500">
-        <span>Кушетка пациента · процедурный столик · раковина · медицинские шкафы</span>
-        <span className="font-semibold text-sky-800">Единое пространство станции</span>
+        <span>Пациент · документы · процедурный столик · раковина · контейнер для отходов</span>
+        <span className="font-semibold text-sky-800">{hotspots.length ? 'Нажимайте на предметы в комнате' : 'Единое пространство станции'}</span>
       </div>
     </section>
   );
@@ -1344,7 +1376,35 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ИНТЕРАКТИВНЫЙ ЭТАП 1</p><h1 className="text-2xl md:text-3xl font-bold">Подготовка препарата</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="Подготовка препарата" />
+    const prepHotspots: IVRoomHotspot[] = [
+      { id: 'patient', label: 'Пациент', x: 63, y: 58 },
+      { id: 'documents', label: 'Лист назначения', x: 38, y: 72 },
+      { id: 'sink', label: 'Раковина и антисептик', x: 13, y: 48 },
+      { id: 'tray', label: 'Лоток', x: 31, y: 66, done: ivPrepEquipment.includes('tray') },
+      { id: 'syringe', label: 'Шприц', x: 40, y: 65, done: ivPrepEquipment.includes('syringe') },
+      { id: 'needles', label: 'Стерильные иглы', x: 47, y: 65, done: ivPrepEquipment.includes('needles') },
+      { id: 'swabs', label: 'Ватные шарики и антисептик', x: 54, y: 65, done: ivPrepEquipment.includes('swabs') },
+      { id: 'gloves', label: 'Перчатки', x: 33, y: 78, done: ivPrepEquipment.includes('gloves') },
+      { id: 'waste', label: 'Контейнер для острых отходов', x: 78, y: 78, done: ivPrepEquipment.includes('waste') },
+      { id: 'ampoule', label: 'Ампула', x: 47, y: 55, done: ivPrepAmpouleChecked },
+    ];
+    const handlePrepRoomClick = (id: string) => {
+      if (id === 'patient') {
+        setIvPrepFeedback('Пациент: Николаенко Николай Николаевич, 30 лет. Перед манипуляцией необходимо установить контакт и уточнить данные.');
+      } else if (id === 'documents') {
+        setIvPrepFeedback('Лист назначения открыт. Сверьте название препарата и назначенный объём с маркировкой ампулы.');
+      } else if (id === 'sink') {
+        setIvPrepFeedback('Зона гигиены рук. Гигиеническая обработка рук будет отмечена на соответствующем этапе алгоритма.');
+      } else if (id === 'ampoule') {
+        setIvPrepAmpouleChecked(true);
+        setIvPrepFeedback('Маркировка ампулы сверена с листом назначения.');
+      } else if (['tray', 'syringe', 'needles', 'swabs', 'gloves', 'waste'].includes(id)) {
+        toggleEquipment(id);
+        const item = requiredEquipment.find(entry => entry.id === id);
+        setIvPrepFeedback(item ? `Проверка: ${item.label}.` : '');
+      }
+    };
+          <IVRoomScene phase="Подготовка препарата" hotspots={prepHotspots} onHotspotClick={handlePrepRoomClick} />
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
             <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
               <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-bold">Процедурный столик</h2><span className="text-xs text-slate-500">Выбирайте предметы по ходу работы</span></div>
