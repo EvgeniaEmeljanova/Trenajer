@@ -1486,7 +1486,15 @@ export default function Home() {
     const current = IV_CRITERIA[ivCurrentCriterion];
     const completed = Object.values(ivAnswers).filter(Boolean).length;
     const answered = Object.keys(ivAnswers).length;
-    const autoEvaluated = /^iv_(0[7-9]|1[0-4])$/.test(current.id);
+    const autoEvaluated = /^iv_(0[1-9]|1[0-4])$/.test(current.id);
+    const ivIntroActionSteps = [
+      { id: 'iv_01', title: 'Установить контакт с пациентом', button: 'Поздороваться, представиться и назвать свою роль', done: 'Контакт установлен: специалист поздоровался, представился и обозначил свою роль.', note: 'Обратитесь к пациенту, поздоровайтесь, представьтесь и назовите свою роль.' },
+      { id: 'iv_02', title: 'Идентифицировать пациента', button: 'Запросить ФИО и возраст и сверить с назначением', done: 'Пациент идентифицирован: ФИО и возраст сверены с данными задания.', note: 'Попросите пациента назвать ФИО и возраст, затем сверьте сведения с данными задания.' },
+      { id: 'iv_03', title: 'Уточнить самочувствие пациента', button: 'Спросить пациента о самочувствии', done: 'Самочувствие уточнено. Пациент отвечает: «Нормально».', note: 'Обратитесь к пациенту по имени и отчеству и спросите о самочувствии.' },
+      { id: 'iv_04', title: 'Уточнить аллергологический анамнез', button: 'Спросить об аллергических реакциях', done: 'Аллергологический анамнез уточнён. Пациент сообщает: «Аллергических реакций не было».', note: 'Уточните наличие аллергии в анамнезе и реакций на вводимое лекарственное средство.' },
+      { id: 'iv_05', title: 'Убедиться в наличии информированного добровольного согласия', button: 'Проверить наличие подписанного согласия', done: 'Наличие информированного добровольного согласия подтверждено.', note: 'Убедитесь, что информированное добровольное согласие пациента получено.' },
+      { id: 'iv_06', title: 'Обработать руки гигиеническим способом', button: 'Выполнить гигиеническую обработку рук', done: 'Гигиеническая обработка рук перед манипуляцией выполнена.', note: 'Выполните один предусмотренный алгоритмом способ гигиенической обработки рук.' },
+    ];
     const ivActionSteps = [
       { id: 'iv_15', title: 'Ввести назначенный объём препарата', button: 'Ввести препарат', done: 'Назначенный объём введён в симуляции.', note: 'Действие доступно после повторного подтверждения положения иглы после снятия жгута.' },
       { id: 'iv_16', title: 'Оценить состояние пациента во время введения', button: 'Уточнить самочувствие пациента', done: 'Пациент отвечает: «Чувствую себя как обычно».', note: 'Смоделируйте контроль самочувствия во время введения.' },
@@ -1499,7 +1507,7 @@ export default function Home() {
       { id: 'iv_23', title: 'Обработать руки после манипуляции', button: 'Выполнить гигиеническую обработку рук', done: 'Гигиеническая обработка рук после манипуляции выполнена.', note: 'Выполните заключительную гигиеническую обработку рук.' },
       { id: 'iv_24', title: 'Сделать запись в медицинской документации', button: 'Оформить запись в медицинской карте', done: 'Отметка о выполненной процедуре внесена в медицинскую документацию.', note: 'Выберите действие оформления записи. Карта пациента соответствует назначенному сценарию.' },
     ];
-    const currentIvAction = ivCurrentCriterion >= 14 ? ivActionSteps[ivCurrentCriterion - 14] : null;
+    const currentIvAction = ivCurrentCriterion < 6 ? ivIntroActionSteps[ivCurrentCriterion] : ivCurrentCriterion >= 14 ? ivActionSteps[ivCurrentCriterion - 14] : null;
     return (
       <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8">
         <div className="mx-auto max-w-5xl">
@@ -1548,6 +1556,11 @@ export default function Home() {
                         setIvAnswers(prev => ({ ...prev, [currentIvAction.id]: true }));
                       }}
                       disabled={
+                        (currentIvAction.id === 'iv_02' && !ivActionFlags.iv_01) ||
+                        (currentIvAction.id === 'iv_03' && !ivActionFlags.iv_02) ||
+                        (currentIvAction.id === 'iv_04' && !ivActionFlags.iv_03) ||
+                        (currentIvAction.id === 'iv_05' && !ivActionFlags.iv_04) ||
+                        (currentIvAction.id === 'iv_06' && !ivActionFlags.iv_05) ||
                         (currentIvAction.id === 'iv_15' && (!ivArmSecondBloodReturn || ivInjectedVolume >= Number.parseFloat(ivScenario.dose))) ||
                         (currentIvAction.id === 'iv_16' && !ivActionFlags.iv_15) ||
                         (currentIvAction.id === 'iv_17' && !ivActionFlags.iv_16) ||
@@ -1571,7 +1584,7 @@ export default function Home() {
                 <button disabled={ivCurrentCriterion === 0} onClick={() => setIvCurrentCriterion(v => Math.max(0, v - 1))} className="rounded-lg bg-slate-100 px-5 py-3 font-semibold text-slate-700 disabled:opacity-40">← Назад</button>
                 {ivCurrentCriterion < IV_CRITERIA.length - 1 ? <button disabled={ivAnswers[current.id] === undefined} onClick={() => setIvCurrentCriterion(v => Math.min(IV_CRITERIA.length - 1, v + 1))} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Следующий критерий →</button> : <button disabled={answered < IV_CRITERIA.length} onClick={() => setStage('iv_finished')} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Завершить станцию</button>}
               </div>
-              <p className="mt-4 text-xs text-slate-400">Критерии 7–15 фиксируются по последовательности интерактивных действий. Критерии 16–24 выполняются отдельными действиями в симуляции. Реальная техника на фантоме датчиками не измеряется.</p>
+              <p className="mt-4 text-xs text-slate-400">Критерии 1–6 и 7–15 фиксируются по последовательности интерактивных действий. Критерии 16–24 выполняются отдельными действиями в симуляции. Реальная техника на фантоме датчиками не измеряется.</p>
             </section>
             <aside className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
               <h3 className="font-bold text-slate-800">Назначение</h3><p className="mt-2 text-sky-800 font-semibold">{ivScenario.title}</p><p className="text-sm text-slate-600">{ivScenario.prescription}</p>
