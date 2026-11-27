@@ -349,7 +349,7 @@ type Stage = 'menu' | 'station_select' | 'briefing' | 'intro' | 'playing' | 'fin
 type RunMode = 'training' | 'exam';
 
 
-type IVRoomHotspot = { id: string; label: string; x: number; y: number; done?: boolean };
+type IVRoomHotspot = { id: string; label: string; x: number; y: number; w?: number; h?: number; done?: boolean };
 
 function IVRoomScene({
   phase,
@@ -382,8 +382,8 @@ function IVRoomScene({
                 onClick={() => onHotspotClick?.(spot.id)}
                 aria-label={spot.label}
                 title={spot.label}
-                className="group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-300"
-                style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+                className={`group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1 focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-300 ${spot.w && spot.h ? 'rounded-xl' : ''}`}
+                style={{ left: `${spot.x}%`, top: `${spot.y}%`, ...(spot.w && spot.h ? { width: `${spot.w}%`, height: `${spot.h}%` } : {}) }}
               >
                 <span className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-sm font-black text-white shadow-lg transition group-hover:scale-110 ${spot.done ? 'bg-emerald-600' : 'bg-sky-700'}`}>
                   {spot.done ? '✓' : '+'}
@@ -1371,9 +1371,9 @@ export default function Home() {
     const toggleEquipment = (id: string) => setIvPrepEquipment(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
     const prepHotspots: IVRoomHotspot[] = [
       // Координаты привязаны к реальным предметам на изображении кабинета.
-      { id: 'patient', label: 'Пациент', x: 43, y: 40 },
-      { id: 'documents', label: 'Лист назначения', x: 8, y: 79 },
-      { id: 'sink', label: 'Раковина и антисептик', x: 57, y: 33 },
+      { id: 'patient', label: 'Пациент', x: 43, y: 40, w: 25, h: 48 },
+      { id: 'documents', label: 'Лист назначения', x: 9, y: 79, w: 19, h: 23 },
+      { id: 'sink', label: 'Раковина и антисептик', x: 57, y: 34, w: 25, h: 23 },
       { id: 'tray', label: 'Лоток', x: 75, y: 80, done: ivPrepEquipment.includes('tray') },
       { id: 'syringe', label: 'Шприц', x: 49, y: 77, done: ivPrepEquipment.includes('syringe') },
       { id: 'needles', label: 'Стерильные иглы', x: 59, y: 77, done: ivPrepEquipment.includes('needles') },
