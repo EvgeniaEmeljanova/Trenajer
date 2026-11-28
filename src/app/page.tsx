@@ -1535,7 +1535,7 @@ export default function Home() {
           </div>
           <IVRoomScene phase="Пациент вошёл · общение · документы · гигиена рук" imageSrc="/iv-patient-entry.png" imageAlt="Пациент только что вошёл в процедурный кабинет" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
           {runMode === 'training' && (
-            <div className="mx-auto mt-4 flex max-w-3xl items-end gap-3">
+            <div className="mx-0 mt-4 flex max-w-3xl items-end gap-3">
               <img src="/helper.png" alt="Аккредик" className="h-20 w-20 shrink-0 object-contain drop-shadow-xl" />
               <div className="flex-1 rounded-2xl border border-blue-400/40 bg-gray-800 p-3 shadow-lg">
                 <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold text-blue-300">Аккредик · помощник станции</p><button type="button" onClick={() => setIvAkkredikHint(v => !v)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-500">{ivAkkredikHint ? 'Скрыть подсказку' : 'Подсказка'}</button></div>
