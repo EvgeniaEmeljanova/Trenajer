@@ -405,7 +405,7 @@ function IVRoomScene({
           </div>
         )}
       </div>
-      {overlay && <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 p-3 sm:p-4"><div className="pointer-events-auto mx-auto max-w-2xl">{overlay}</div></div>}
+      {overlay && <div className="pointer-events-none absolute z-30 p-3 sm:p-4" style={{ left: 'min(300px, 4vw)', top: 'min(750px, 65vh)', width: 'min(580px, 92vw)' }}><div className="pointer-events-auto">{overlay}</div></div>}
     </section>
   );
 }
