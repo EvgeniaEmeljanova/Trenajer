@@ -1475,7 +1475,8 @@ export default function Home() {
         } else if (id === 'needles') {
           if (ivPrepSyringeFilled) {
             setIvPrepNeedleChanged(true);
-            setIvPrepFeedback('Смена иглы выполнена: установлена стерильная игла для введения.');
+            setIvPrepEquipment(prev => prev.includes('needles') ? prev : [...prev, 'needles']);
+            setIvPrepFeedback('Смена иглы выполнена: использованная для набора игла заменена на стерильную иглу для введения.');
           } else {
             setIvPrepFeedback('Сначала наберите назначенный объём препарата в шприц.');
           }
