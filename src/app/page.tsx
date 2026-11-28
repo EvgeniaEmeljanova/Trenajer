@@ -428,6 +428,7 @@ export default function Home() {
   const [ivGreetingSent, setIvGreetingSent] = useState(false);
   const [ivIdentityResponseReceived, setIvIdentityResponseReceived] = useState(false);
   const [ivPatientBubble, setIvPatientBubble] = useState('');
+  const [ivAkkredikHint, setIvAkkredikHint] = useState(false);
   const [ivCurrentCriterion, setIvCurrentCriterion] = useState(0);
   const [ivPrepEquipment, setIvPrepEquipment] = useState<string[]>([]);
   const [ivPrepAmpouleChecked, setIvPrepAmpouleChecked] = useState(false);
@@ -1512,24 +1513,34 @@ export default function Home() {
         : ivCurrentCriterion === 2
           ? ['Николай Николаевич, как Вы себя чувствуете?', 'Есть ли сейчас жалобы на самочувствие?']
           : ['Есть ли у Вас аллергия на лекарства?', 'Были ли у Вас аллергические реакции на препараты?', 'Хорошо ли Вы переносите лекарственные препараты?'];
+    const ivHintText = ivCurrentCriterion === 0 ? 'Поздоровайтесь, представьтесь и обозначьте свою роль.' : ivCurrentCriterion === 1 ? 'Попросите пациента назвать ФИО и возраст. Затем сверьте сведения с листом назначений или медицинской документацией.' : ivCurrentCriterion === 2 ? 'Обратитесь к пациенту по имени и отчеству и уточните его самочувствие.' : ivCurrentCriterion === 3 ? 'Уточните, были ли аллергические реакции в прошлом и есть ли аллергия на назначенный препарат.' : 'Проверьте наличие добровольного информированного согласия в документах.';
     return (
-      <div className="min-h-screen bg-slate-50 p-4 md:p-7 text-slate-800">
+      <div className="min-h-screen bg-gray-900 p-4 md:p-7 text-gray-100">
         <div className="mx-auto max-w-6xl">
-          <div className="flex items-center justify-between gap-3 border-b border-sky-100 pb-4">
-            <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold">Пациент и подготовка к процедуре</h1></div>
-            <div className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-center"><p className="text-xs text-slate-500">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-sky-800">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
+          <div className="flex items-center justify-between gap-3 border-b border-gray-700 pb-4">
+            <div><p className="text-sm font-semibold text-blue-300">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold text-white">Пациент и подготовка к процедуре</h1></div>
+            <div className="rounded-xl border border-gray-600 bg-gray-800 px-4 py-2 text-center"><p className="text-xs text-gray-400">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-blue-300">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
           <IVRoomScene phase="Пациент вошёл · общение · документы · гигиена рук" imageSrc="/iv-patient-entry.png" imageAlt="Пациент только что вошёл в процедурный кабинет" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
+          {runMode === 'training' && (
+            <div className="mx-auto mt-4 flex max-w-3xl items-end gap-3">
+              <img src="/helper.png" alt="Аккредик" className="h-20 w-20 shrink-0 object-contain drop-shadow-xl" />
+              <div className="flex-1 rounded-2xl border border-blue-400/40 bg-gray-800 p-3 shadow-lg">
+                <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold text-blue-300">Аккредик · помощник станции</p><button type="button" onClick={() => setIvAkkredikHint(v => !v)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-500">{ivAkkredikHint ? 'Скрыть подсказку' : 'Подсказка'}</button></div>
+                {ivAkkredikHint && <p className="mt-2 text-sm leading-relaxed text-gray-100">{ivHintText}</p>}
+              </div>
+            </div>
+          )}
           {ivPatientChatOpen && (
-            <div className="mx-auto mt-4 max-w-3xl overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-lg">
-              <div className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-4 py-3">
+            <div className="mx-auto mt-4 max-w-3xl overflow-hidden rounded-2xl border border-gray-600 bg-gray-800 shadow-lg">
+              <div className="flex items-center justify-between border-b border-gray-600 bg-gray-700 px-4 py-3">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Разговор с пациентом</p>
-                  <p className="text-sm font-semibold text-slate-800">Обратитесь к Николаю Николаевичу</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-blue-300">Разговор с пациентом</p>
+                  <p className="text-sm font-semibold text-white">Обратитесь к Николаю Николаевичу</p>
                 </div>
                 <button type="button" onClick={() => setIvPatientChatOpen(false)} className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-white">Свернуть</button>
               </div>
-              <div className="max-h-56 space-y-3 overflow-y-auto bg-slate-50 p-4">
+              <div className="max-h-56 space-y-3 overflow-y-auto bg-gray-900 p-4">
                 {ivPatientChatMessages.length === 0 && <p className="text-sm text-slate-500">Пациент ожидает, когда Вы к нему обратитесь.</p>}
                 {ivPatientChatMessages.map((message,index) => (
                   <div key={index} className={message.sender === 'student' ? 'flex justify-end' : 'flex justify-start'}>
@@ -1540,12 +1551,12 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <div className="border-t border-slate-100 bg-white p-3">
-                <p className="mb-2 text-xs font-semibold text-slate-500">Выберите реплику</p>
+              <div className="border-t border-gray-600 bg-gray-800 p-3">
+                <p className="mb-2 text-xs font-semibold text-gray-300">Выберите реплику</p>
                 <div className="flex flex-wrap gap-2">
                   {patientOptions.map((option,index) => (
                     <button key={index} type="button" onClick={() => handlePatientOption(option)}
-                      className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-left text-sm font-medium text-sky-900 transition hover:border-sky-400 hover:bg-sky-100">
+                      className="rounded-xl border border-blue-400/50 bg-gray-700 px-3 py-2.5 text-left text-sm font-medium text-white transition hover:border-blue-300 hover:bg-gray-600">
                       {option}
                     </button>
                   ))}
