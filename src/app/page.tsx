@@ -1542,34 +1542,49 @@ export default function Home() {
             </div>
           )}
           {ivPrescriptionOpen && (
-            <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-label="Лист назначения для идентификации пациента">
-              <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-sky-200 bg-white text-slate-900 shadow-2xl">
-                <div className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-5 py-4">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-sky-700">Медицинская документация</p>
-                    <h2 className="mt-1 text-xl font-bold">Лист назначения</h2>
-                  </div>
-                  <button type="button" onClick={() => setIvPrescriptionOpen(false)} aria-label="Закрыть лист назначения" className="rounded-lg px-3 py-2 text-xl text-slate-500 hover:bg-white">✕</button>
+            <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/75 p-3 md:p-6" role="dialog" aria-modal="true" aria-label="Лист назначений пациента">
+              <div className="w-full max-w-4xl overflow-hidden rounded-xl border border-slate-300 bg-slate-100 text-slate-900 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-300 bg-slate-200 px-4 py-3">
+                  <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">Медицинская документация · учебный симуляционный бланк</p><h2 className="mt-0.5 text-lg font-bold">Лист врачебных назначений</h2></div>
+                  <button type="button" onClick={() => setIvPrescriptionOpen(false)} aria-label="Закрыть лист назначений" className="rounded-lg px-3 py-2 text-xl text-slate-600 hover:bg-white">✕</button>
                 </div>
-                <div className="p-5 md:p-7">
-                  <div className="border border-slate-300 p-5 shadow-inner">
-                    <p className="text-center text-xs font-semibold uppercase tracking-wide">Медицинская документация</p>
-                    <h3 className="mt-1 border-b-2 border-slate-800 pb-3 text-center text-lg font-bold">Лист врачебных назначений</h3>
-                    <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
-                      <p><span className="text-slate-500">Пациент:</span><br/><strong>Николаенко Николай Николаевич</strong></p>
-                      <p><span className="text-slate-500">Возраст:</span><br/><strong>30 лет</strong></p>
+                <div className="max-h-[78vh] overflow-y-auto bg-slate-300 p-3 md:p-6">
+                  <div className="mx-auto max-w-3xl border border-slate-400 bg-[#fffef8] px-5 py-6 shadow-[0_3px_14px_rgba(15,23,42,0.18)] md:px-9">
+                    <div className="flex items-start justify-between gap-4 border-b-2 border-slate-800 pb-3">
+                      <div><p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600">Медицинская организация</p><p className="mt-1 text-sm font-bold">Процедурный кабинет</p><p className="text-xs text-slate-600">Медицинская документация пациента</p></div>
+                      <div className="min-w-24 border border-slate-500 px-3 py-2 text-center"><p className="text-[9px] uppercase text-slate-500">Мед. карта №</p><p className="text-xl font-bold tabular-nums">{ivScenarioIndex === 0 ? '110' : ivScenarioIndex === 1 ? '111' : '112'}</p></div>
                     </div>
-                    <div className="mt-5 rounded-lg border-2 border-slate-400 p-4">
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Назначение</p>
-                      <p className="mt-2 text-lg font-bold">{ivScenario.title}</p>
-                      <p className="mt-1 font-semibold">{ivScenario.prescription}</p>
+                    <h3 className="mt-4 text-center text-base font-bold uppercase tracking-wide">Лист назначений</h3>
+                    <p className="mt-1 text-center text-[10px] text-slate-500">Для выполнения медицинской манипуляции</p>
+                    <div className="mt-5 grid gap-x-8 gap-y-3 text-xs sm:grid-cols-2">
+                      <div className="border-b border-dotted border-slate-500 pb-1"><span className="text-slate-500">Фамилия, имя, отчество:</span><p className="mt-1 text-sm font-semibold">Николаенко Николай Николаевич</p></div>
+                      <div className="border-b border-dotted border-slate-500 pb-1"><span className="text-slate-500">Возраст:</span><p className="mt-1 text-sm font-semibold">30 лет</p></div>
+                      <div className="border-b border-dotted border-slate-500 pb-1"><span className="text-slate-500">Отделение / кабинет:</span><p className="mt-1 font-semibold">Процедурный кабинет</p></div>
+                      <div className="border-b border-dotted border-slate-500 pb-1"><span className="text-slate-500">Дата назначения:</span><p className="mt-1 font-semibold">________________</p></div>
                     </div>
-                    <p className="mt-4 text-sm text-slate-600">Сверьте ФИО и возраст в листе назначения с данными, которые сообщил пациент.</p>
+                    <div className="mt-6 overflow-hidden border border-slate-700">
+                      <div className="border-b border-slate-700 bg-slate-200 px-3 py-2 text-xs font-bold uppercase tracking-wide">Назначение врача</div>
+                      <table className="w-full border-collapse text-xs">
+                        <thead><tr className="bg-slate-100 text-left"><th className="border-b border-r border-slate-400 p-2">Лекарственное средство</th><th className="border-b border-r border-slate-400 p-2">Концентрация</th><th className="border-b border-r border-slate-400 p-2">Доза</th><th className="border-b border-slate-400 p-2">Путь введения</th></tr></thead>
+                        <tbody><tr><td className="border-r border-slate-400 p-3 align-top font-bold">{ivScenario.title}</td><td className="border-r border-slate-400 p-3 align-top">{ivScenario.id === 'ascorbic' || ivScenario.id === 'tranexamic' ? '5%' : '1%'}</td><td className="border-r border-slate-400 p-3 align-top font-bold">{ivScenario.dose}</td><td className="p-3 align-top">Внутривенно</td></tr></tbody>
+                      </table>
+                    </div>
+                    <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                      <p className="border border-slate-300 p-2"><span className="text-slate-500">Лекарственная форма:</span><br/><strong>Раствор для инъекций</strong></p>
+                      <p className="border border-slate-300 p-2"><span className="text-slate-500">Назначенный объём:</span><br/><strong>{ivScenario.dose}</strong></p>
+                    </div>
+                    <div className="mt-5 border border-slate-400">
+                      <div className="border-b border-slate-400 bg-slate-100 px-3 py-2 text-xs font-bold">Отметка о выполнении назначения</div>
+                      <div className="grid grid-cols-2 text-xs sm:grid-cols-4">
+                        {['Дата','Время','Выполнил','Подпись'].map(label => <div key={label} className="border-r border-slate-300 p-2 last:border-r-0"><span className="text-slate-500">{label}</span><p className="mt-3">____________</p></div>)}
+                      </div>
+                    </div>
+                    <div className="mt-5 flex flex-wrap justify-between gap-3 text-[10px] text-slate-500"><span>Учебный бланк для симуляции станции</span><span>Назначение отображается по выбранному сценарию</span></div>
                   </div>
                 </div>
-                <div className="flex flex-wrap justify-end gap-3 border-t border-sky-100 bg-slate-50 px-5 py-4">
-                  <button type="button" onClick={() => setIvPrescriptionOpen(false)} className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700">Закрыть</button>
-                  <button type="button" onClick={() => {
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-300 bg-white px-4 py-3">
+                  <p className="text-xs text-slate-500">Проверьте ФИО и возраст пациента перед подтверждением идентификации.</p>
+                  <div className="flex gap-2"><button type="button" onClick={() => setIvPrescriptionOpen(false)} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700">Закрыть</button><button type="button" onClick={() => {
                     setIvPrescriptionOpen(false);
                     setIvAnswers(prev => ({ ...prev, iv_02: true }));
                     setIvActionFlags(prev => ({ ...prev, iv_02: true }));
@@ -1577,7 +1592,7 @@ export default function Home() {
                     setIvPatientSeated(false);
                     setIvPatientBubble('');
                     setIvCurrentCriterion(2);
-                  }} className="rounded-xl bg-sky-700 px-5 py-3 font-bold text-white hover:bg-sky-800">Данные совпадают — подтвердить</button>
+                  }} className="rounded-xl bg-sky-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-sky-900">Данные совпадают — подтвердить</button></div>
                 </div>
               </div>
             </div>
