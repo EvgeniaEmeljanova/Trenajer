@@ -382,10 +382,10 @@ function IVRoomScene({
           className="block h-auto w-full object-contain"
         />
         {patientSpeech && (
-          <div className="pointer-events-none absolute right-[18%] top-[5%] z-30 w-[min(26%,240px)] rounded-2xl border border-sky-200 bg-white/95 px-4 py-3 text-sm font-medium leading-relaxed text-slate-800 shadow-xl backdrop-blur-sm">
+          <div className="pointer-events-none absolute right-[18%] top-[1%] z-30 w-[min(26%,240px)] rounded-2xl border border-sky-200 bg-white/95 px-4 py-3 text-sm font-medium leading-relaxed text-slate-800 shadow-xl backdrop-blur-sm">
             <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-sky-700">Пациент говорит</span>
             {patientSpeech}
-            <span className="absolute -bottom-2 left-6 h-4 w-4 rotate-45 border-b border-r border-sky-200 bg-white" />
+            <span className="absolute -bottom-2 left-3 h-4 w-4 rotate-45 border-b border-r border-sky-200 bg-white" />
           </div>
         )}
         {hotspots.length > 0 && (
