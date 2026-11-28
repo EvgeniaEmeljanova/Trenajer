@@ -1595,42 +1595,47 @@ export default function Home() {
               <h2 className="text-lg font-bold">Рука пациента</h2>
               <p className="mt-2 text-sm text-slate-600">{runMode === 'training' ? 'Выберите правильное место для жгута, проверьте пульс, выполните двукратную обработку и последовательно смоделируйте подтверждение положения иглы.' : 'Выполните действия в правильной последовательности. Учебные пояснения отключены.'}</p>
               <div className="mt-5 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-4 md:p-6">
-                <div className="relative mx-auto h-64 max-w-2xl overflow-hidden rounded-xl bg-white border border-slate-100">
+                <h3 className="font-bold">Интерактивная рука пациента</h3>
+                <p className="mt-1 text-sm text-slate-600">Нажимайте на зоны руки. Доступность следующего действия зависит от правильности предыдущего.</p>
+                <div className="relative mx-auto mt-4 h-72 max-w-2xl overflow-hidden rounded-xl border border-slate-100 bg-white">
                   <div className="absolute left-[8%] top-[39%] h-24 w-[84%] rounded-full border border-orange-200 bg-gradient-to-b from-orange-100 to-orange-200 shadow-inner" />
                   <div className="absolute left-[5%] top-[41%] h-20 w-[17%] rounded-full border border-orange-200 bg-orange-100" />
                   <div className="absolute right-[5%] top-[41%] h-20 w-[17%] rounded-full border border-orange-200 bg-orange-100" />
-                  <button onClick={() => { setIvArmTourniquetPosition('upper'); setIvArmFeedback('Жгут расположен выше средней трети плеча. Это не соответствует критерию станции.'); }} className={`absolute left-[31%] top-[31%] h-9 w-[12%] rounded-md border-2 text-[10px] font-bold ${ivArmTourniquetPosition === 'upper' ? 'border-red-500 bg-red-100 text-red-700' : 'border-slate-300 bg-white/90 text-slate-600'}`}>Верхняя</button>
-                  <button onClick={() => { setIvArmTourniquetPosition('middle'); setIvArmFeedback('Жгут наложен на среднюю треть плеча.'); }} className={`absolute left-[47%] top-[31%] h-9 w-[12%] rounded-md border-2 text-[10px] font-bold ${tourniquetCorrect ? 'border-emerald-500 bg-emerald-100 text-emerald-800' : 'border-slate-300 bg-white/90 text-slate-600'}`}>Средняя</button>
-                  <button onClick={() => { setIvArmTourniquetPosition('lower'); setIvArmFeedback('Жгут расположен ниже средней трети плеча. Это не соответствует критерию станции.'); }} className={`absolute left-[63%] top-[31%] h-9 w-[12%] rounded-md border-2 text-[10px] font-bold ${ivArmTourniquetPosition === 'lower' ? 'border-red-500 bg-red-100 text-red-700' : 'border-slate-300 bg-white/90 text-slate-600'}`}>Нижняя</button>
-                  <div className="absolute left-[43%] top-[49%] h-8 w-[14%] rounded-lg border border-sky-300 bg-sky-100/90 flex items-center justify-center text-[10px] font-bold text-sky-800">Зона вены</div>
-                  <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500"><span>Плечо</span><span>Предплечье</span><span>Кисть</span></div>
+                  <div className="absolute left-[24%] right-[24%] top-[30%] flex justify-center gap-2">
+                    {[
+                      { id: 'upper', label: 'Верхняя треть' },
+                      { id: 'middle', label: 'Средняя треть' },
+                      { id: 'lower', label: 'Нижняя треть' },
+                    ].map(zone => (
+                      <button key={zone.id} onClick={() => {
+                        setIvArmTourniquetPosition(zone.id);
+                        setIvArmFeedback(zone.id === 'middle' ? 'Жгут наложен на среднюю треть плеча.' : 'Неверное положение жгута. По критерию требуется средняя треть плеча. Выберите другую зону.');
+                      }} className={`rounded-lg border-2 px-2 py-2 text-[10px] font-bold sm:text-xs ${ivArmTourniquetPosition === zone.id ? (zone.id === 'middle' ? 'border-emerald-500 bg-emerald-100 text-emerald-800' : 'border-red-400 bg-red-50 text-red-700') : 'border-slate-300 bg-white/95 text-slate-600'}`}>{zone.label}</button>
+                    ))}
+                  </div>
+                  <div className="absolute left-[42%] top-[49%] h-8 w-[16%] rounded-lg border border-sky-300 bg-sky-100/90 flex items-center justify-center text-[10px] font-bold text-sky-800">Зона вены</div>
+                  <button disabled={!tourniquetCorrect} onClick={() => { setIvArmPulseChecked(true); setIvArmFeedback('Проверка пульса на лучевой артерии отмечена.'); }} className="absolute bottom-[13%] left-[7%] rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-800 disabled:opacity-40">{ivArmPulseChecked ? 'Пульс проверен ✓' : 'Проверить пульс'}</button>
+                  <button disabled={!ivArmPulseChecked} onClick={() => {
+                    if (!ivArmFirstSkinPrep) { setIvArmFirstSkinPrep(true); setIvArmFeedback('Первая обработка места инъекции выполнена. Повторите обработку отдельным действием.'); }
+                    else if (!ivArmSecondSkinPrep) { setIvArmSecondSkinPrep(true); setIvArmFeedback('Вторая обработка места инъекции выполнена. Теперь выберите зону пункции.'); }
+                  }} className="absolute bottom-[13%] left-[37%] rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-800 disabled:opacity-40">{ivArmSecondSkinPrep ? 'Обработка ×2 ✓' : ivArmFirstSkinPrep ? 'Повторить обработку' : 'Обработать кожу'}</button>
+                  <button disabled={!ivArmSecondSkinPrep} onClick={() => {
+                    if (!ivArmPunctureSiteSelected) { setIvArmPunctureSiteSelected(true); setIvArmFeedback('Зона пункции выбрана. Выполните пункцию для первого подтверждения.'); }
+                    else if (!ivArmFirstBloodReturn) { setIvArmFirstBloodReturn(true); setIvArmFeedback('Первое появление крови смоделировано. Теперь нажмите на жгут, чтобы снять его.'); }
+                    else if (ivArmTourniquetReleased && !ivArmSecondBloodReturn) { setIvArmSecondBloodReturn(true); setIvArmFeedback('Повторное подтверждение после снятия жгута смоделировано. Этап завершён.'); }
+                  }} className="absolute right-[7%] bottom-[13%] rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-800 disabled:opacity-40">{ivArmSecondBloodReturn ? 'Положение подтверждено ✓' : ivArmFirstBloodReturn ? 'Повторная проверка' : ivArmPunctureSiteSelected ? 'Пункция / кровь' : 'Выбрать место пункции'}</button>
+                  <button disabled={!ivArmFirstBloodReturn || ivArmTourniquetReleased} onClick={() => { setIvArmTourniquetReleased(true); setIvArmFeedback('Жгут снят после первого подтверждения нахождения иглы в вене. Повторно проверьте положение иглы.'); }} className="absolute left-[42%] top-[17%] rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 disabled:opacity-40">{ivArmTourniquetReleased ? 'Жгут снят ✓' : 'Снять жгут'}</button>
+                  <div className="absolute bottom-2 left-3 right-3 flex justify-between text-[10px] text-slate-500"><span>Плечо</span><span>Предплечье</span><span>Кисть</span></div>
                 </div>
-                <p className="mt-3 text-xs text-slate-500">Схематичное изображение руки для отработки последовательности, не анатомическая карта вен.</p>
-              </div>
-              <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <h3 className="font-bold">1. Наложение жгута</h3>
-                  <p className="mt-1 text-sm text-slate-600">Средняя треть плеча; жгут накладывается через ткань, салфетку или бинт.</p>
-                  <p className="mt-3 text-sm">{tourniquetCorrect ? '✓ Жгут расположен правильно' : '○ Место наложения не подтверждено'}</p>
-                  <p className="mt-1 text-sm">{ivArmPulseChecked ? '✓ Пульс на лучевой артерии проверен' : '○ Проверка пульса не выполнена'}</p>
-                  <button disabled={!tourniquetCorrect} onClick={() => { setIvArmPulseChecked(true); setIvArmFeedback('Проверка пульса на лучевой артерии отмечена.'); }} className="mt-3 w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-3 text-sm font-bold text-sky-800 disabled:opacity-40">Проверить пульс на лучевой артерии</button>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+                  {[
+                    ['Жгут', tourniquetCorrect],
+                    ['Пульс', ivArmPulseChecked],
+                    ['Обработка ×2', ivArmFirstSkinPrep && ivArmSecondSkinPrep],
+                    ['Пункция и подтверждение', ivArmFirstBloodReturn && ivArmTourniquetReleased && ivArmSecondBloodReturn],
+                  ].map(([label, done]) => <div key={String(label)} className={`rounded-lg border p-2 ${done ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-1">{done ? '✓' : '○'}</span>{String(label)}</div>)}
                 </div>
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <h3 className="font-bold">2. Обработка места инъекции</h3>
-                  <p className="mt-1 text-sm text-slate-600">Выполните обе обработки отдельными действиями.</p>
-                  <button disabled={!ivArmPulseChecked} onClick={() => { setIvArmFirstSkinPrep(true); setIvArmFeedback('Первая обработка поля выполнена в симуляции.'); }} className={`mt-3 w-full rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmFirstSkinPrep ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmFirstSkinPrep ? 'Первая обработка ✓' : 'Выполнить первую обработку'}</button>
-                  <button disabled={!ivArmFirstSkinPrep} onClick={() => { setIvArmSecondSkinPrep(true); setIvArmFeedback('Вторая обработка места пункции выполнена в симуляции.'); }} className={`mt-2 w-full rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmSecondSkinPrep ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmSecondSkinPrep ? 'Вторая обработка ✓' : 'Выполнить вторую обработку'}</button>
-                </div>
-              </div>
-              <div className="mt-4 rounded-xl border border-slate-200 p-4">
-                <h3 className="font-bold">3. Венепункция — подтверждение положения иглы</h3>
-                <p className="mt-1 text-sm text-slate-600">После подготовки кожи смоделируйте пункцию, подтвердите первое появление крови, снимите жгут и выполните повторную проверку после его снятия.</p>
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button disabled={!ivArmSecondSkinPrep} onClick={() => { setIvArmPunctureSiteSelected(true); setIvArmFeedback('Зона пункции выбрана. Можно перейти к подтверждению положения иглы.'); }} className={`rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmPunctureSiteSelected ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmPunctureSiteSelected ? 'Зона пункции выбрана ✓' : 'Выбрать зону пункции'}</button>
-                  <button disabled={!ivArmPunctureSiteSelected || !tourniquetCorrect} onClick={() => { setIvArmFirstBloodReturn(true); setIvArmFeedback('Первое появление крови смоделировано. Теперь снимите жгут.'); }} className={`rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmFirstBloodReturn ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmFirstBloodReturn ? 'Первое подтверждение ✓' : 'Смоделировать первое появление крови'}</button>
-                  <button disabled={!ivArmFirstBloodReturn} onClick={() => { setIvArmTourniquetReleased(true); setIvArmFeedback('Жгут снят после первого подтверждения нахождения иглы в вене.'); }} className={`rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmTourniquetReleased ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmTourniquetReleased ? 'Жгут снят ✓' : 'Снять жгут'}</button>
-                  <button disabled={!ivArmTourniquetReleased} onClick={() => { setIvArmSecondBloodReturn(true); setIvArmFeedback('Повторное подтверждение после снятия жгута смоделировано.'); }} className={`rounded-lg border px-3 py-3 text-sm font-bold disabled:opacity-40 ${ivArmSecondBloodReturn ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}>{ivArmSecondBloodReturn ? 'Повторное подтверждение ✓' : 'Проверить положение после снятия жгута'}</button>
-                </div>
+                <p className="mt-3 text-xs text-slate-500">Схематичное изображение руки для отработки последовательности, не анатомическая карта вен. Симуляция не измеряет реальный угол, глубину, усилие и точность венепункции на фантоме.</p>
               </div>
               {ivArmFeedback && <p aria-live="polite" className="mt-4 rounded-xl bg-sky-50 border border-sky-100 p-3 text-sm text-sky-900">{ivArmFeedback}</p>}
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
