@@ -1467,7 +1467,15 @@ export default function Home() {
         setIvPrepFeedback('Зона гигиены рук. Обработка рук уже выполнена на предыдущем этапе.');
         return;
       }
-      if (['tray', 'syringe', 'needles', 'swabs', 'gloves', 'waste'].includes(id)) {
+      if (id === 'gloves' || id === 'waste') {
+        setIvPrepActiveObject(id);
+        setIvPrepEquipment(prev => prev.includes(id) ? prev : [...prev, id]);
+        setIvPrepFeedback(id === 'gloves'
+          ? 'Смотровые перчатки проверены и подготовлены к использованию.'
+          : 'Контейнер для острых отходов проверен и установлен для безопасной утилизации.');
+        return;
+      }
+      if (['tray', 'syringe', 'needles', 'swabs'].includes(id)) {
         setIvPrepActiveObject(id);
         const item = requiredEquipment.find(entry => entry.id === id);
         if (id === 'syringe') {
