@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, PointerEvent } from 'react';
+import { useState, useEffect, useRef, PointerEvent, type ReactNode } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -362,7 +362,7 @@ function IVRoomScene({
   hotspots?: IVRoomHotspot[];
   onHotspotClick?: (id: string) => void;
   patientSpeech?: string;
-  overlay?: JSX.Element;
+  overlay?: ReactNode;
 }) {
   return (
     <section className="relative mt-5 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-lg">
