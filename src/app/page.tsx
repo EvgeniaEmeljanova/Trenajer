@@ -370,10 +370,10 @@ function IVRoomScene({
 }) {
   return (
     <section className="relative mt-5 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-lg">
-      <div className="absolute left-4 top-4 z-20 rounded-lg border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur">
+      {phase && <div className="absolute left-4 top-4 z-20 rounded-lg border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">Процедурный кабинет</p>
         <p className="mt-0.5 text-sm font-semibold text-slate-800">{phase}</p>
-      </div>
+      </div>}
       <div className="relative w-full overflow-hidden bg-[#e9f1f1]">
         <img
           src={imageSrc}
@@ -1545,7 +1545,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-blue-300">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold text-white">Пациент и подготовка к процедуре</h1></div>
             <div className="rounded-xl border border-gray-600 bg-gray-800 px-4 py-2 text-center"><p className="text-xs text-gray-400">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-blue-300">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="Пациент вошёл · общение · документы · гигиена рук" imageSrc="/iv-patient-entry.png" imageAlt="Пациент только что вошёл в процедурный кабинет" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
+          <IVRoomScene phase="" imageSrc="/iv-patient-entry.png" imageAlt="Пациент только что вошёл в процедурный кабинет" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
           {runMode === 'training' && (
             <div className="fixed bottom-8 left-4 z-40 flex w-[min(92vw,360px)] items-end gap-3">
               <img src="/helper.png" alt="Аккредик" className="h-24 w-24 shrink-0 object-contain drop-shadow-xl" />
