@@ -1415,7 +1415,7 @@ export default function Home() {
       { id: 'sink', label: 'Раковина и дозатор', x: 59, y: 36, w: 20, h: 24 },
     ];
     const handleContactClick = (id: string) => {
-      if ((ivCurrentCriterion === 0 || ivCurrentCriterion === 1) && id === 'patient') {
+      if (ivCurrentCriterion >= 0 && ivCurrentCriterion <= 3 && id === 'patient') {
         if (ivCurrentCriterion === 0) {
           setIvPatientChatMessages([]);
           setIvPatientChatInput('');
@@ -1467,96 +1467,100 @@ export default function Home() {
           </div>
           <IVRoomScene phase="Пациент вошёл · общение · документы · гигиена рук" imageSrc="/iv-patient-entry.png" imageAlt="Пациент только что вошёл в процедурный кабинет" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
           {ivPatientChatOpen && (
-            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 p-4" role="dialog" aria-modal="true" aria-label="Диалог с пациентом">
-              <div className="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-2xl">
-                <div className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-5 py-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Диалог с пациентом</p>
-                    <h3 className="mt-1 font-bold text-slate-900">Пациент</h3>
-                  </div>
-                  <button type="button" onClick={() => setIvPatientChatOpen(false)} aria-label="Закрыть чат" className="rounded-lg px-3 py-2 text-slate-500 hover:bg-white hover:text-slate-900">✕</button>
+            <div className="mx-auto mt-4 max-w-3xl overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-lg">
+              <div className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-4 py-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Разговор с пациентом</p>
+                  <p className="text-sm font-semibold text-slate-800">Обратитесь к Николаю Николаевичу</p>
                 </div>
-                <div className="min-h-36 flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4">
-                  {ivPatientChatMessages.length === 0 && (
-                    <p className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">Пациент ожидает, когда Вы к нему обратитесь.</p>
-                  )}
-                  {ivPatientChatMessages.map((message, index) => (
-                    <div key={index} className={message.sender === 'student' ? 'flex justify-end' : 'flex justify-start'}>
-                      <div className={message.sender === 'student' ? 'max-w-[85%] rounded-2xl rounded-br-sm bg-sky-700 px-4 py-3 text-sm text-white' : 'max-w-[85%] rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800'}>
-                        <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide opacity-70">{message.sender === 'student' ? 'Вы' : 'Пациент'}</span>
-                        {message.text}
-                      </div>
+                <button type="button" onClick={() => setIvPatientChatOpen(false)} className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-white">Свернуть</button>
+              </div>
+              <div className="max-h-56 space-y-3 overflow-y-auto bg-slate-50 p-4">
+                {ivPatientChatMessages.length === 0 && <p className="text-sm text-slate-500">Пациент ожидает, когда Вы к нему обратитесь.</p>}
+                {ivPatientChatMessages.map((message,index) => (
+                  <div key={index} className={message.sender === 'student' ? 'flex justify-end' : 'flex justify-start'}>
+                    <div className={message.sender === 'student' ? 'max-w-[85%] rounded-2xl rounded-br-sm bg-sky-700 px-4 py-3 text-sm text-white' : 'max-w-[85%] rounded-2xl rounded-bl-sm border border-sky-100 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm'}>
+                      <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide opacity-70">{message.sender === 'student' ? 'Вы' : 'Пациент'}</span>
+                      {message.text}
                     </div>
-                  ))}
-                  {ivCurrentCriterion === 1 && ivIdentityResponseReceived && (
-                    <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">Ответ получен. Закройте чат и сверьте ФИО и возраст с медицинской документацией.</p>
-                  )}
-                </div>
-                <form
-                  className="space-y-3 border-t border-slate-100 bg-white p-4"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    const message = ivPatientChatInput.trim();
-                    if (!message) return;
+                  </div>
+                ))}
+              </div>
+              <form className="flex gap-2 border-t border-slate-100 bg-white p-3"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const message = ivPatientChatInput.trim();
+                  if (!message) return;
+                  const normalized = message.toLowerCase();
+                  setIvPatientChatMessages(prev => [...prev, {sender:'student',text:message}]);
+                  setIvPatientChatInput('');
+                  const reply = (text:string, audio?:string) => {
+                    setIvPatientChatMessages(prev => [...prev, {sender:'patient',text}]);
+                    setIvPatientBubble(text);
+                    if (audio) playAudio(audio);
+                  };
+                  if (ivCurrentCriterion === 0) {
                     if (!ivGreetingSent) {
                       if (!/^(здравствуйте|добрый день|доброе утро|добрый вечер)[!. ,]*$/i.test(message)) {
-                        setIvPatientChatMessages(prev => [...prev, { sender: 'student', text: message }, { sender: 'patient', text: 'Пожалуйста, обратитесь ко мне.' }]);
-                        setIvPatientChatInput('');
+                        reply('Здравствуйте. Давайте сначала поздороваемся.');
                         return;
                       }
-                      setIvPatientChatMessages(prev => [...prev, { sender: 'student', text: message }, { sender: 'patient', text: 'Здравствуйте!' }]);
                       setIvGreetingSent(true);
-                      setIvPatientChatInput('');
+                      reply('Здравствуйте!');
                       return;
                     }
-                    const normalized = message.toLowerCase();
-                    setIvPatientChatMessages(prev => [...prev, { sender: 'student', text: message }]);
-                    setIvPatientChatInput('');
-                    if (ivCurrentCriterion === 0) {
-                      const introduced = /(меня зовут|я\s+[а-яё-]+)/i.test(normalized) &&
-                        /(медицинский работник|фельдшер|медицинская сестра|медсестра|врач)/i.test(normalized);
-                      if (!introduced) {
-                        setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Представьтесь, пожалуйста, и скажите, кем Вы работаете.' }]);
-                        return;
-                      }
-                      setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Очень приятно. Как Вас зовут?' }]);
-                      setIvAnswers(prev => ({ ...prev, iv_01: true }));
-                      setIvActionFlags(prev => ({ ...prev, iv_01: true }));
-                      setIvPrepFeedback('Контакт установлен: Вы поздоровались, представились и обозначили свою роль.');
-                      setIvPatientChatOpen(false);
-                      setIvCurrentCriterion(1);
+                    const introduced = /(меня зовут|я\s+[а-яё-]+)/i.test(normalized) &&
+                      /(медицинский работник|фельдшер|медицинская сестра|медсестра|врач)/i.test(normalized);
+                    if (!introduced) {
+                      reply('Представьтесь, пожалуйста, и скажите, кем Вы работаете.');
                       return;
                     }
-                    if (ivCurrentCriterion === 1) {
-                      const askedIdentity = /(как вас зовут|назовите.*(фио|имя)|ваше фио|представьтесь|сколько вам лет|назовите.*возраст|имя и возраст|фио и возраст)/i.test(normalized);
-                      if (!askedIdentity) {
-                        setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Что именно Вы хотели бы у меня уточнить?' }]);
-                        return;
-                      }
-                      setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Николаенко Николай Николаевич, 30 лет.' }]);
-                      setIvPatientBubble('Николаенко Николай Николаевич, 30 лет.');
-                      playAudio('Николаенко Николай Николаевич, тридцать лет.');
-                      setIvIdentityResponseReceived(true);
-                      setIvPatientChatOpen(false);
-                      setIvPrepFeedback('Пациент назвал ФИО и возраст. Теперь сверьте их с медицинской документацией.');
+                    reply('Очень приятно. Я готов ответить на Ваши вопросы.');
+                    setIvAnswers(prev => ({...prev,iv_01:true}));
+                    setIvActionFlags(prev => ({...prev,iv_01:true}));
+                    setIvPrepFeedback('Контакт установлен.');
+                    setIvCurrentCriterion(1);
+                    return;
+                  }
+                  if (ivCurrentCriterion === 1) {
+                    const asked = /(как вас зовут|назовите.*(фио|имя)|ваше фио|представьтесь|сколько вам лет|назовите.*возраст|имя и возраст|фио и возраст)/i.test(normalized);
+                    if (!asked) { reply('Что именно Вы хотели бы у меня уточнить?'); return; }
+                    const answer='Николаенко Николай Николаевич, 30 лет.';
+                    reply(answer,'Николаенко Николай Николаевич, тридцать лет.');
+                    setIvIdentityResponseReceived(true);
+                    setIvPrepFeedback('Пациент назвал ФИО и возраст. Теперь сверьте их с медицинской документацией.');
+                    return;
+                  }
+                  if (ivCurrentCriterion === 2) {
+                    if (!/(самочувств|чувствуете|как вы себя|как себя чувствуете)/i.test(normalized)) {
+                      reply('Вы хотели что-то узнать о моём самочувствии?');
                       return;
                     }
-                  }}
-                >
-                  {runMode === 'training' && !ivGreetingSent && (
-                    <button type="button" onClick={() => setIvPatientChatInput('Здравствуйте!')} className="rounded-full border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-100">Здравствуйте!</button>
-                  )}
-                  <div className="flex gap-2">
-                    <input
-                      value={ivPatientChatInput}
-                      onChange={(event) => setIvPatientChatInput(event.target.value)}
-                      placeholder={ivGreetingSent ? 'Представьтесь и назовите свою роль…' : 'Введите приветствие…'}
-                      className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-3 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-                    />
-                    <button type="submit" disabled={!ivPatientChatInput.trim()} className="rounded-xl bg-sky-700 px-4 py-3 text-sm font-bold text-white hover:bg-sky-800 disabled:opacity-40">Отправить</button>
-                  </div>
-                </form>
-              </div>
+                    reply('Чувствую себя нормально. Спасибо.');
+                    setIvAnswers(prev => ({...prev,iv_03:true}));
+                    setIvActionFlags(prev => ({...prev,iv_03:true}));
+                    setIvPrepFeedback('Самочувствие пациента уточнено.');
+                    setIvCurrentCriterion(3);
+                    return;
+                  }
+                  if (ivCurrentCriterion === 3) {
+                    if (!/(аллерг|реакц|переносимост)/i.test(normalized)) {
+                      reply('Вы хотели уточнить, есть ли у меня аллергия?');
+                      return;
+                    }
+                    reply('Нет, аллергических реакций не было.');
+                    setIvAnswers(prev => ({...prev,iv_04:true}));
+                    setIvActionFlags(prev => ({...prev,iv_04:true}));
+                    setIvPrepFeedback('Аллергологический анамнез уточнён.');
+                    setIvPatientChatOpen(false);
+                    setIvCurrentCriterion(4);
+                  }
+                }}>
+                <input value={ivPatientChatInput} onChange={event => setIvPatientChatInput(event.target.value)}
+                  placeholder={ivCurrentCriterion===0 ? (ivGreetingSent ? 'Представьтесь и назовите свою роль…' : 'Поздоровайтесь с пациентом…') : ivCurrentCriterion===1 ? 'Уточните ФИО и возраст…' : ivCurrentCriterion===2 ? 'Спросите о самочувствии…' : 'Спросите об аллергии…'}
+                  className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-3 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100" />
+                <button type="submit" disabled={!ivPatientChatInput.trim()} className="rounded-xl bg-sky-700 px-5 py-3 text-sm font-bold text-white hover:bg-sky-800 disabled:opacity-40">Отправить</button>
+              </form>
             </div>
           )}
 
