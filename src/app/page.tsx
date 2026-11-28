@@ -414,6 +414,7 @@ export default function Home() {
   const [ivPatientChatMessages, setIvPatientChatMessages] = useState<{ sender: 'patient' | 'student'; text: string }[]>([]);
   const [ivPatientChatInput, setIvPatientChatInput] = useState('');
   const [ivGreetingSent, setIvGreetingSent] = useState(false);
+  const [ivIdentityResponseReceived, setIvIdentityResponseReceived] = useState(false);
   const [ivCurrentCriterion, setIvCurrentCriterion] = useState(0);
   const [ivPrepEquipment, setIvPrepEquipment] = useState<string[]>([]);
   const [ivPrepAmpouleChecked, setIvPrepAmpouleChecked] = useState(false);
@@ -676,6 +677,11 @@ export default function Home() {
       setIvScenarioIndex(Math.floor(Math.random() * IV_SCENARIOS.length));
       setIvAnswers({});
       setIvCurrentCriterion(0);
+      setIvPatientChatOpen(false);
+      setIvPatientChatMessages([]);
+      setIvPatientChatInput('');
+      setIvGreetingSent(false);
+      setIvIdentityResponseReceived(false);
       setIvPrepEquipment([]);
       setIvPrepAmpouleChecked(false);
       setIvPrepAmpouleOpened(false);
@@ -1377,11 +1383,25 @@ export default function Home() {
       { id: 'sink', label: 'Раковина и дозатор', x: 69, y: 31, w: 18, h: 22 },
     ];
     const handleContactClick = (id: string) => {
-      if (ivCurrentCriterion === 0 && id === 'patient') {
-        setIvPatientChatMessages([]);
-        setIvPatientChatInput('');
-        setIvGreetingSent(false);
+      if ((ivCurrentCriterion === 0 || ivCurrentCriterion === 1) && id === 'patient') {
+        if (ivCurrentCriterion === 0) {
+          setIvPatientChatMessages([]);
+          setIvPatientChatInput('');
+          setIvGreetingSent(false);
+          setIvIdentityResponseReceived(false);
+        }
         setIvPatientChatOpen(true);
+        return;
+      }
+      if (ivCurrentCriterion === 1 && id === 'documents') {
+        if (!ivIdentityResponseReceived) {
+          setIvPrepFeedback('Сначала попросите пациента назвать ФИО и возраст. Затем откройте документы для сверки.');
+          return;
+        }
+        setIvAnswers(prev => ({ ...prev, iv_02: true }));
+        setIvActionFlags(prev => ({ ...prev, iv_02: true }));
+        setIvPrepFeedback('ФИО и возраст пациента сверены с медицинской документацией. Критерий № 2 выполнен.');
+        setIvCurrentCriterion(2);
         return;
       }
       if (id !== step.object) {
@@ -1419,7 +1439,7 @@ export default function Home() {
                 <div className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-5 py-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Диалог с пациентом</p>
-                    <h3 className="mt-1 font-bold text-slate-900">Николаенко Николай Николаевич</h3>
+                    <h3 className="mt-1 font-bold text-slate-900">Пациент</h3>
                   </div>
                   <button type="button" onClick={() => setIvPatientChatOpen(false)} aria-label="Закрыть чат" className="rounded-lg px-3 py-2 text-slate-500 hover:bg-white hover:text-slate-900">✕</button>
                 </div>
@@ -1435,8 +1455,8 @@ export default function Home() {
                       </div>
                     </div>
                   ))}
-                  {ivGreetingSent && (
-                    <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">Приветствие принято. Продолжите знакомство: представьтесь и назовите свою роль.</p>
+                  {ivCurrentCriterion === 1 && ivIdentityResponseReceived && (
+                    <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">Ответ получен. Закройте чат и сверьте ФИО и возраст с медицинской документацией.</p>
                   )}
                 </div>
                 <form
@@ -1457,20 +1477,35 @@ export default function Home() {
                       return;
                     }
                     const normalized = message.toLowerCase();
-                    const introduced = normalized.includes('меня зовут') &&
-                      /(медицинский работник|фельдшер|медицинская сестра|медсестра|врач)/i.test(normalized);
                     setIvPatientChatMessages(prev => [...prev, { sender: 'student', text: message }]);
                     setIvPatientChatInput('');
-                    if (!introduced) {
-                      setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Представьтесь, пожалуйста, и скажите, кем Вы работаете.' }]);
+                    if (ivCurrentCriterion === 0) {
+                      const introduced = /(меня зовут|я\s+[а-яё-]+)/i.test(normalized) &&
+                        /(медицинский работник|фельдшер|медицинская сестра|медсестра|врач)/i.test(normalized);
+                      if (!introduced) {
+                        setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Представьтесь, пожалуйста, и скажите, кем Вы работаете.' }]);
+                        return;
+                      }
+                      setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Очень приятно. Как Вас зовут?' }]);
+                      setIvAnswers(prev => ({ ...prev, iv_01: true }));
+                      setIvActionFlags(prev => ({ ...prev, iv_01: true }));
+                      setIvPrepFeedback('Контакт установлен: Вы поздоровались, представились и обозначили свою роль.');
+                      setIvPatientChatOpen(false);
+                      setIvCurrentCriterion(1);
                       return;
                     }
-                    setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Очень приятно. Чем Вы мне поможете?' }]);
-                    setIvAnswers(prev => ({ ...prev, iv_01: true }));
-                    setIvActionFlags(prev => ({ ...prev, iv_01: true }));
-                    setIvPrepFeedback('Контакт установлен: Вы поздоровались, представились и обозначили свою роль.');
-                    setIvPatientChatOpen(false);
-                    setIvCurrentCriterion(1);
+                    if (ivCurrentCriterion === 1) {
+                      const askedIdentity = /(как вас зовут|назовите.*(фио|имя)|ваше фио|представьтесь|сколько вам лет|назовите.*возраст|имя и возраст|фио и возраст)/i.test(normalized);
+                      if (!askedIdentity) {
+                        setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Что именно Вы хотели бы у меня уточнить?' }]);
+                        return;
+                      }
+                      setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Николаенко Николай Николаевич, 30 лет.' }]);
+                      setIvIdentityResponseReceived(true);
+                      setIvPatientChatOpen(false);
+                      setIvPrepFeedback('Пациент назвал ФИО и возраст. Теперь сверьте их с медицинской документацией.');
+                      return;
+                    }
                   }}
                 >
                   {runMode === 'training' && !ivGreetingSent && (
@@ -1494,7 +1529,6 @@ export default function Home() {
               <p className="text-sm font-semibold text-sky-700">ДЕЙСТВИЕ {ivCurrentCriterion + 1} ИЗ 6</p>
               <h2 className="mt-2 text-xl font-bold">{step.title}</h2>
               <p className="mt-3 text-slate-600">{step.detail}</p>
-              {runMode === 'training' && ivCurrentCriterion === 1 && <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm">Данные для сверки: Николаенко Николай Николаевич, 30 лет.</p>}
               {runMode === 'training' && ivCurrentCriterion === 2 && <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm">Ответ пациента появится после обращения.</p>}
               {runMode === 'training' && ivCurrentCriterion === 3 && <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm">Уточните аллергию в анамнезе и реакцию на назначенный препарат.</p>}
               {ivPrepFeedback && <p className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-800">{ivPrepFeedback}</p>}
@@ -1988,7 +2022,7 @@ export default function Home() {
           <h1 className="mt-2 text-center text-2xl font-bold text-slate-900">Внутривенная инъекция</h1>
           <div className="mt-5 text-center"><p className={`text-6xl font-bold ${passed ? 'text-green-600' : 'text-red-600'}`}>{scoreIv}%</p><p className={`mt-2 text-xl font-bold ${passed ? 'text-green-700' : 'text-red-700'}`}>{passed ? 'ЭКЗАМЕН СДАН' : 'ЭКЗАМЕН НЕ СДАН'}</p><p className="mt-1 text-sm text-slate-500">{completed} из 24 · проходной порог 70%</p></div>
           <div className="mt-6 space-y-2">{IV_CRITERIA.map((item, index) => { const yes = ivAnswers[item.id] === true; return <div key={item.id} className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${yes ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}><span className="text-sm text-slate-800">{index + 1}. {item.title}</span><strong className={yes ? 'text-green-700' : 'text-red-700'}>{yes ? 'Да' : 'Нет'}</strong></div>; })}</div>
-          <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => { setIvAnswers({}); setIvActionFlags({}); setIvInjectedVolume(0); setIvSyringeNeedleDetached(false); setIvCottonPressed(false); setIvCurrentCriterion(0); setTimeLeft(600); setStage('iv_briefing'); }} className="rounded-xl bg-sky-700 px-6 py-3 font-bold text-white">Повторить станцию</button><button onClick={() => setStage('station_select')} className="rounded-xl bg-slate-100 px-6 py-3 font-bold text-slate-700">К выбору станций</button></div>
+          <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => { setIvAnswers({}); setIvActionFlags({}); setIvPatientChatOpen(false); setIvPatientChatMessages([]); setIvPatientChatInput(''); setIvGreetingSent(false); setIvIdentityResponseReceived(false); setIvInjectedVolume(0); setIvSyringeNeedleDetached(false); setIvCottonPressed(false); setIvCurrentCriterion(0); setTimeLeft(600); setStage('iv_briefing'); }} className="rounded-xl bg-sky-700 px-6 py-3 font-bold text-white">Повторить станцию</button><button onClick={() => setStage('station_select')} className="rounded-xl bg-slate-100 px-6 py-3 font-bold text-slate-700">К выбору станций</button></div>
         </div>
       </div>
     );
