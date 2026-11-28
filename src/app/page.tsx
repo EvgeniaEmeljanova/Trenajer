@@ -430,6 +430,8 @@ export default function Home() {
   const [ivArmFeedback, setIvArmFeedback] = useState('');
   const [ivActionFlags, setIvActionFlags] = useState<Record<string, boolean>>({});
   const [ivInjectedVolume, setIvInjectedVolume] = useState(0);
+  const [ivSyringeNeedleDetached, setIvSyringeNeedleDetached] = useState(false);
+  const [ivCottonPressed, setIvCottonPressed] = useState(false);
   const [scenario, setScenario] = useState<ScenarioType>('OKS1');
   const [actions, setActions] = useState<Record<string, boolean>>({});
   const actionsRef = useRef<Record<string, boolean>>({});
@@ -1348,7 +1350,7 @@ export default function Home() {
             </div>
             <p className="text-xs text-slate-500 mt-2">В экзамене подсказки скрыты. Оценивание проводится по 24 официальным критериям.</p>
           </div>
-          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback(''); setIvActionFlags({}); setIvPrepFeedback(''); setTimeLeft(600); setStage('iv_contact'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать подготовку препарата</button>
+          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback(''); setIvActionFlags({}); setIvSyringeNeedleDetached(false); setIvCottonPressed(false); setIvInjectedVolume(0); setIvPrepFeedback(''); setTimeLeft(600); setStage('iv_contact'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать подготовку препарата</button>
         </div>
       </div>
     );
@@ -1715,6 +1717,9 @@ export default function Home() {
       { id: 'patient', label: 'Пациент · диалог', x: 52, y: 48, w: 31, h: 48 },
       { id: 'documents', label: 'Документы', x: 17, y: 81, w: 22, h: 18 },
       { id: 'sink', label: 'Гигиена рук', x: 69, y: 31, w: 18, h: 22 },
+    ] : ivCurrentCriterion === 16 ? [
+      { id: 'syringe', label: 'Шприц · снять иглу безопасным устройством', x: 49, y: 77, done: ivSyringeNeedleDetached },
+      postProcedureHotspotByCriterion[16],
     ] : ivCurrentCriterion >= 14 && ivCurrentCriterion <= 23 ? [postProcedureHotspotByCriterion[ivCurrentCriterion]] : [];
     const handleIVInteraction = (id: string) => {
       if (ivCurrentCriterion >= 14 && ivCurrentCriterion <= 23) {
@@ -1722,7 +1727,8 @@ export default function Home() {
           14: 'syringe', 15: 'patient', 16: 'waste', 17: 'arm', 18: 'patient',
           19: 'tray', 20: 'patient', 21: 'gloves', 22: 'sink', 23: 'documents',
         };
-        if (id !== expectedByCriterion[ivCurrentCriterion]) {
+        const allowedIds = ivCurrentCriterion === 16 ? ['syringe', 'waste'] : [expectedByCriterion[ivCurrentCriterion]];
+        if (!allowedIds.includes(id)) {
           setIvPrepFeedback('Сейчас требуется взаимодействовать с другим предметом или пациентом. Следуйте текущему этапу процедуры.');
           return;
         }
@@ -1737,6 +1743,20 @@ export default function Home() {
           } else {
             setIvPrepFeedback(`Введение продолжается: ${nextVolume.toFixed(1).replace('.', ',')} мл из ${ivScenario.dose}. Нажмите на шприц ещё раз для продолжения.`);
           }
+          return;
+        }
+        if (ivCurrentCriterion === 16 && id === 'syringe' && !ivSyringeNeedleDetached) {
+          setIvSyringeNeedleDetached(true);
+          setIvPrepFeedback('Игла безопасно снята с помощью предусмотренного устройства. Теперь поместите использованный шприц и острые отходы в контейнер.');
+          return;
+        }
+        if (ivCurrentCriterion === 16 && id === 'waste' && !ivSyringeNeedleDetached) {
+          setIvPrepFeedback('Сначала выполните безопасное снятие иглы с помощью предусмотренного устройства.');
+          return;
+        }
+        if (ivCurrentCriterion === 17 && !ivCottonPressed) {
+          setIvCottonPressed(true);
+          setIvPrepFeedback('Место инъекции прижато ватным шариком. Теперь наложите давящую повязку.');
           return;
         }
         const criterionId = IV_CRITERIA[ivCurrentCriterion].id;
@@ -1754,6 +1774,8 @@ export default function Home() {
           23: 'Запись о процедуре внесена в медицинскую документацию.',
         };
         setIvPrepFeedback(responseByCriterion[ivCurrentCriterion]);
+        if (ivCurrentCriterion === 16) setIvSyringeNeedleDetached(false);
+        if (ivCurrentCriterion === 17) setIvCottonPressed(false);
         return;
       }
       const expected = ivCurrentCriterion <= 3 ? 'patient' : ivCurrentCriterion === 4 ? 'documents' : 'sink';
@@ -1850,7 +1872,7 @@ export default function Home() {
           <h1 className="mt-2 text-center text-2xl font-bold text-slate-900">Внутривенная инъекция</h1>
           <div className="mt-5 text-center"><p className={`text-6xl font-bold ${passed ? 'text-green-600' : 'text-red-600'}`}>{scoreIv}%</p><p className={`mt-2 text-xl font-bold ${passed ? 'text-green-700' : 'text-red-700'}`}>{passed ? 'ЭКЗАМЕН СДАН' : 'ЭКЗАМЕН НЕ СДАН'}</p><p className="mt-1 text-sm text-slate-500">{completed} из 24 · проходной порог 70%</p></div>
           <div className="mt-6 space-y-2">{IV_CRITERIA.map((item, index) => { const yes = ivAnswers[item.id] === true; return <div key={item.id} className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${yes ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}><span className="text-sm text-slate-800">{index + 1}. {item.title}</span><strong className={yes ? 'text-green-700' : 'text-red-700'}>{yes ? 'Да' : 'Нет'}</strong></div>; })}</div>
-          <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => { setIvAnswers({}); setIvActionFlags({}); setIvInjectedVolume(0); setIvCurrentCriterion(0); setTimeLeft(600); setStage('iv_briefing'); }} className="rounded-xl bg-sky-700 px-6 py-3 font-bold text-white">Повторить станцию</button><button onClick={() => setStage('station_select')} className="rounded-xl bg-slate-100 px-6 py-3 font-bold text-slate-700">К выбору станций</button></div>
+          <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => { setIvAnswers({}); setIvActionFlags({}); setIvInjectedVolume(0); setIvSyringeNeedleDetached(false); setIvCottonPressed(false); setIvCurrentCriterion(0); setTimeLeft(600); setStage('iv_briefing'); }} className="rounded-xl bg-sky-700 px-6 py-3 font-bold text-white">Повторить станцию</button><button onClick={() => setStage('station_select')} className="rounded-xl bg-slate-100 px-6 py-3 font-bold text-slate-700">К выбору станций</button></div>
         </div>
       </div>
     );
