@@ -355,10 +355,12 @@ function IVRoomScene({
   phase,
   hotspots = [],
   onHotspotClick,
+  patientSpeech,
 }: {
   phase: string;
   hotspots?: IVRoomHotspot[];
   onHotspotClick?: (id: string) => void;
+  patientSpeech?: string;
 }) {
   return (
     <section className="relative mt-5 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-lg">
@@ -373,6 +375,13 @@ function IVRoomScene({
           draggable={false}
           className="block h-auto w-full object-contain"
         />
+        {patientSpeech && (
+          <div className="pointer-events-none absolute left-[49%] top-[25%] z-30 w-[min(42%,320px)] -translate-x-1/2 rounded-2xl border border-sky-200 bg-white/95 px-4 py-3 text-sm font-medium leading-relaxed text-slate-800 shadow-xl backdrop-blur-sm">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-sky-700">Пациент говорит</span>
+            {patientSpeech}
+            <span className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-b border-r border-sky-200 bg-white" />
+          </div>
+        )}
         {hotspots.length > 0 && (
           <div className="absolute inset-0">
             {hotspots.map((spot) => (
@@ -415,6 +424,7 @@ export default function Home() {
   const [ivPatientChatInput, setIvPatientChatInput] = useState('');
   const [ivGreetingSent, setIvGreetingSent] = useState(false);
   const [ivIdentityResponseReceived, setIvIdentityResponseReceived] = useState(false);
+  const [ivPatientBubble, setIvPatientBubble] = useState('');
   const [ivCurrentCriterion, setIvCurrentCriterion] = useState(0);
   const [ivPrepEquipment, setIvPrepEquipment] = useState<string[]>([]);
   const [ivPrepAmpouleChecked, setIvPrepAmpouleChecked] = useState(false);
@@ -682,6 +692,7 @@ export default function Home() {
       setIvPatientChatInput('');
       setIvGreetingSent(false);
       setIvIdentityResponseReceived(false);
+      setIvPatientBubble('');
       setIvPrepEquipment([]);
       setIvPrepAmpouleChecked(false);
       setIvPrepAmpouleOpened(false);
@@ -1394,6 +1405,7 @@ export default function Home() {
         return;
       }
       if (ivCurrentCriterion === 1 && id === 'documents') {
+        setIvPatientBubble('');
         if (!ivIdentityResponseReceived) {
           setIvPrepFeedback('Сначала попросите пациента назвать ФИО и возраст. Затем откройте документы для сверки.');
           return;
@@ -1432,7 +1444,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold">Пациент и подготовка к процедуре</h1></div>
             <div className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-center"><p className="text-xs text-slate-500">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-sky-800">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="Общение с пациентом · документы · гигиена рук" hotspots={contactHotspots} onHotspotClick={handleContactClick} />
+          <IVRoomScene phase="Общение с пациентом · документы · гигиена рук" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} />
           {ivPatientChatOpen && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 p-4" role="dialog" aria-modal="true" aria-label="Диалог с пациентом">
               <div className="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-2xl">
@@ -1501,6 +1513,8 @@ export default function Home() {
                         return;
                       }
                       setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Николаенко Николай Николаевич, 30 лет.' }]);
+                      setIvPatientBubble('Николаенко Николай Николаевич, 30 лет.');
+                      playAudio('Николаенко Николай Николаевич, тридцать лет.');
                       setIvIdentityResponseReceived(true);
                       setIvPatientChatOpen(false);
                       setIvPrepFeedback('Пациент назвал ФИО и возраст. Теперь сверьте их с медицинской документацией.');
