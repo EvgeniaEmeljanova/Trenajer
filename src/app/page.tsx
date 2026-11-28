@@ -396,16 +396,10 @@ function IVRoomScene({
                 type="button"
                 onClick={() => onHotspotClick?.(spot.id)}
                 aria-label={spot.label}
-                title={spot.label}
-                className={`group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1 focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-300 ${spot.w && spot.h ? 'rounded-xl' : ''}`}
+                className={`group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-300 ${spot.w && spot.h ? '' : 'h-10 w-10'}`}
                 style={{ left: `${spot.x}%`, top: `${spot.y}%`, ...(spot.w && spot.h ? { width: `${spot.w}%`, height: `${spot.h}%` } : {}) }}
               >
-                <span className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-sm font-black text-white shadow-lg transition group-hover:scale-110 ${spot.done ? 'bg-emerald-600' : 'bg-sky-700'}`}>
-                  {spot.done ? '✓' : '+'}
-                </span>
-                <span className="max-w-28 rounded-md border border-white/80 bg-white/95 px-2 py-1 text-center text-[10px] font-bold leading-tight text-slate-700 shadow-md transition group-hover:bg-sky-50">
-                  {spot.label}
-                </span>
+                <span className={`h-5 w-5 rounded-full border-[3px] border-white shadow-lg transition group-hover:scale-125 group-hover:ring-4 group-hover:ring-sky-300/40 ${spot.done ? 'bg-emerald-500' : 'bg-sky-600'}`} />
               </button>
             ))}
           </div>
