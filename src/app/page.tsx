@@ -382,10 +382,10 @@ function IVRoomScene({
           className="block h-auto w-full object-contain"
         />
         {patientSpeech && (
-          <div className="pointer-events-none absolute left-[38%] top-[5%] z-30 w-[min(42%,320px)] -translate-x-1/2 rounded-2xl border border-sky-200 bg-white/95 px-4 py-3 text-sm font-medium leading-relaxed text-slate-800 shadow-xl backdrop-blur-sm">
+          <div className="pointer-events-none absolute right-[3%] top-[5%] z-30 w-[min(30%,260px)] rounded-2xl border border-sky-200 bg-white/95 px-4 py-3 text-sm font-medium leading-relaxed text-slate-800 shadow-xl backdrop-blur-sm">
             <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-sky-700">Пациент говорит</span>
             {patientSpeech}
-            <span className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-b border-r border-sky-200 bg-white" />
+            <span className="absolute -bottom-2 left-6 h-4 w-4 rotate-45 border-b border-r border-sky-200 bg-white" />
           </div>
         )}
         {hotspots.length > 0 && (
@@ -1531,7 +1531,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-blue-300">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold text-white">Пациент и подготовка к процедуре</h1></div>
             <div className="rounded-xl border border-gray-600 bg-gray-800 px-4 py-2 text-center"><p className="text-xs text-gray-400">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-blue-300">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="" imageSrc={ivPatientSeated ? "/iv-procedure-room.png" : "/iv-patient-entry.png"} imageAlt={ivPatientSeated ? "Пациент сидит в процедурном кресле" : "Пациент только что вошёл в процедурный кабинет"} hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{ivPatientSeated ? (runMode === 'training' ? step.title : 'Продолжите общение с пациентом') : (runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом')}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
+          <IVRoomScene phase="" imageSrc={ivPatientSeated ? "/iv-procedure-room.png" : "/iv-patient-entry.png"} imageAlt={ivPatientSeated ? "Пациент сидит в процедурном кресле" : "Пациент только что вошёл в процедурный кабинет"} hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<>{ivPatientChatOpen && <div className="rounded-xl border border-sky-300/70 bg-slate-900/95 p-3 shadow-xl"><div className="flex flex-wrap gap-2">{patientOptions.map((option,index) => <button key={index} type="button" onClick={() => handlePatientOption(option)} className="rounded-lg border border-sky-400/50 bg-slate-700 px-3 py-2 text-left text-xs font-medium text-white transition hover:border-sky-300 hover:bg-slate-600">{option}</button>)}</div></div>}{ivPrepFeedback && <div className="mt-2 rounded-lg bg-white/95 px-3 py-2 text-xs font-medium text-emerald-800 shadow">{ivPrepFeedback}</div>}</>} />
           {runMode === 'training' && (
             <div className="fixed bottom-8 left-4 z-40 flex w-[min(92vw,360px)] items-end gap-3">
               <img src="/helper.png" alt="Аккредик" className="h-24 w-24 shrink-0 object-contain drop-shadow-xl" />
@@ -1628,25 +1628,7 @@ export default function Home() {
               </div>
             </div>
           )}
-          {ivPatientChatOpen && (
-            <div className="mx-auto mt-3 max-w-5xl rounded-2xl border border-slate-600 bg-slate-800/95 p-3 shadow-xl md:p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-sky-300">Выберите фразу врача</p>
-                  <p className="mt-1 text-sm text-slate-200">Нажмите на подходящую реплику. Ответ пациента появится облаком на изображении.</p>
-                </div>
-                <button type="button" onClick={() => setIvPatientChatOpen(false)} className="shrink-0 rounded-lg border border-slate-500 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700">Свернуть</button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {patientOptions.map((option,index) => (
-                  <button key={index} type="button" onClick={() => handlePatientOption(option)}
-                    className="rounded-xl border border-sky-400/50 bg-slate-700 px-3 py-2.5 text-left text-sm font-medium text-white transition hover:border-sky-300 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-300">
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+
 
         </div>
       </div>
