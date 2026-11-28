@@ -421,6 +421,7 @@ export default function Home() {
   const [ivPatientChatInput, setIvPatientChatInput] = useState('');
   const [ivGreetingSent, setIvGreetingSent] = useState(false);
   const [ivIdentityResponseReceived, setIvIdentityResponseReceived] = useState(false);
+  const [ivPatientSeated, setIvPatientSeated] = useState(false);
   const [ivPatientBubble, setIvPatientBubble] = useState('');
   const [ivAkkredikHint, setIvAkkredikHint] = useState(false);
   const [ivCurrentCriterion, setIvCurrentCriterion] = useState(0);
@@ -1515,7 +1516,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-blue-300">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold text-white">Пациент и подготовка к процедуре</h1></div>
             <div className="rounded-xl border border-gray-600 bg-gray-800 px-4 py-2 text-center"><p className="text-xs text-gray-400">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-blue-300">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="" imageSrc="/iv-patient-entry.png" imageAlt="Пациент только что вошёл в процедурный кабинет" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
+          <IVRoomScene phase="" imageSrc={ivPatientSeated ? "/iv-procedure-room.png" : "/iv-patient-entry.png"} imageAlt={ivPatientSeated ? "Пациент сидит в процедурном кресле" : "Пациент только что вошёл в процедурный кабинет"} hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{ivPatientSeated ? (runMode === 'training' ? step.title : 'Продолжите общение с пациентом') : (runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом')}</p>{!ivPatientSeated && ivCurrentCriterion === 2 && <button type="button" onClick={() => { setIvPatientSeated(true); setIvPatientBubble('Спасибо, я присяду.'); setIvPrepFeedback('Пациент приглашён присесть и теперь находится в процедурном кресле.'); }} className="mt-3 rounded-xl bg-sky-700 px-4 py-2.5 text-sm font-bold text-white shadow hover:bg-sky-800">Предложить пациенту присесть</button>}{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
           {runMode === 'training' && (
             <div className="fixed bottom-8 left-4 z-40 flex w-[min(92vw,360px)] items-end gap-3">
               <img src="/helper.png" alt="Аккредик" className="h-24 w-24 shrink-0 object-contain drop-shadow-xl" />
@@ -1557,7 +1558,9 @@ export default function Home() {
                     setIvPrescriptionOpen(false);
                     setIvAnswers(prev => ({ ...prev, iv_02: true }));
                     setIvActionFlags(prev => ({ ...prev, iv_02: true }));
-                    setIvPrepFeedback('ФИО и возраст пациента сверены с листом назначения. Критерий № 2 выполнен.');
+                    setIvPrepFeedback('Данные совпадают. Предложите пациенту присесть на процедурное кресло.');
+                    setIvPatientSeated(false);
+                    setIvPatientBubble('');
                     setIvCurrentCriterion(2);
                   }} className="rounded-xl bg-sky-700 px-5 py-3 font-bold text-white hover:bg-sky-800">Данные совпадают — подтвердить</button>
                 </div>
