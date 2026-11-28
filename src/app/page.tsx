@@ -1713,69 +1713,99 @@ export default function Home() {
       22: { id: 'sink', label: 'Раковина · гигиена рук', x: 57, y: 34, w: 25, h: 23, done: ivActionFlags.iv_23 },
       23: { id: 'documents', label: 'Медицинская документация', x: 9, y: 79, w: 19, h: 23, done: ivActionFlags.iv_24 },
     };
-    const ivInteractionHotspots: IVRoomHotspot[] = ivCurrentCriterion < 6 ? [
+    const ivInteractionHotspots: IVRoomHotspot[] = ivCurrentCriterion >= 14 ? [
+      { id: 'patient', label: ivCurrentCriterion === 15 ? 'Спросить о самочувствии' : ivCurrentCriterion === 18 ? 'Уточнить состояние после процедуры' : ivCurrentCriterion === 20 ? 'Сообщить о снятии повязки' : 'Пациент', x: 43, y: 40, w: 25, h: 48, done: [15,18,20].includes(ivCurrentCriterion) && ivActionFlags[IV_CRITERIA[ivCurrentCriterion].id] },
+      { id: 'syringe', label: ivCurrentCriterion === 16 ? 'Безопасно снять иглу' : 'Шприц · введение препарата', x: 49, y: 77, done: ivCurrentCriterion === 16 ? ivSyringeNeedleDetached : ivActionFlags.iv_15 },
+      { id: 'swabs', label: 'Ватный шарик · прижать место инъекции', x: 66, y: 71, done: ivCottonPressed },
+      { id: 'arm', label: 'Рука пациента · наложить повязку', x: 47, y: 58, w: 20, h: 20, done: ivActionFlags.iv_18 },
+      { id: 'waste', label: 'Контейнер для острых отходов', x: 92, y: 81, done: ivActionFlags.iv_17 },
+      { id: 'tray', label: 'Лоток · передать на обработку', x: 75, y: 80, done: ivActionFlags.iv_20 },
+      { id: 'gloves', label: 'Перчатки · снять и утилизировать', x: 80, y: 86, done: ivActionFlags.iv_22 },
+      { id: 'sink', label: 'Раковина · гигиена рук', x: 57, y: 34, w: 25, h: 23, done: ivActionFlags.iv_23 },
+      { id: 'documents', label: 'Медицинская документация', x: 9, y: 79, w: 19, h: 23, done: ivActionFlags.iv_24 },
+    ] : [
       { id: 'patient', label: 'Пациент · диалог', x: 52, y: 48, w: 31, h: 48 },
       { id: 'documents', label: 'Документы', x: 17, y: 81, w: 22, h: 18 },
       { id: 'sink', label: 'Гигиена рук', x: 69, y: 31, w: 18, h: 22 },
-    ] : ivCurrentCriterion === 16 ? [
-      { id: 'syringe', label: 'Шприц · снять иглу безопасным устройством', x: 49, y: 77, done: ivSyringeNeedleDetached },
-      postProcedureHotspotByCriterion[16],
-    ] : ivCurrentCriterion >= 14 && ivCurrentCriterion <= 23 ? [postProcedureHotspotByCriterion[ivCurrentCriterion]] : [];
+    ];
     const handleIVInteraction = (id: string) => {
       if (ivCurrentCriterion >= 14 && ivCurrentCriterion <= 23) {
-        const expectedByCriterion: Record<number, string> = {
-          14: 'syringe', 15: 'patient', 16: 'waste', 17: 'arm', 18: 'patient',
-          19: 'tray', 20: 'patient', 21: 'gloves', 22: 'sink', 23: 'documents',
+        const finishCriterion = (criterionId: string, message: string) => {
+          setIvActionFlags(prev => ({ ...prev, [criterionId]: true }));
+          setIvAnswers(prev => ({ ...prev, [criterionId]: true }));
+          setIvPrepFeedback(message);
+          if (ivCurrentCriterion === 23) {
+            setStage('iv_finished');
+          } else {
+            setIvCurrentCriterion(prev => Math.min(prev + 1, 23));
+          }
         };
-        const allowedIds = ivCurrentCriterion === 16 ? ['syringe', 'waste'] : [expectedByCriterion[ivCurrentCriterion]];
-        if (!allowedIds.includes(id)) {
-          setIvPrepFeedback('Сейчас требуется взаимодействовать с другим предметом или пациентом. Следуйте текущему этапу процедуры.');
-          return;
-        }
         if (ivCurrentCriterion === 14) {
+          if (id !== 'syringe') {
+            setIvPrepFeedback('Для введения препарата взаимодействуйте со шприцем.');
+            return;
+          }
           const prescribed = Number.parseFloat(ivScenario.dose);
           const nextVolume = Math.min(prescribed, Number((ivInjectedVolume + 0.5).toFixed(1)));
           setIvInjectedVolume(nextVolume);
           if (nextVolume >= prescribed) {
-            setIvActionFlags(prev => ({ ...prev, iv_15: true }));
-            setIvAnswers(prev => ({ ...prev, iv_15: true }));
-            setIvPrepFeedback(`Назначенный объём ${ivScenario.dose} введён. Теперь оцените самочувствие пациента во время введения.`);
+            finishCriterion('iv_15', `Назначенный объём ${ivScenario.dose} введён в симуляции.`);
           } else {
-            setIvPrepFeedback(`Введение продолжается: ${nextVolume.toFixed(1).replace('.', ',')} мл из ${ivScenario.dose}. Нажмите на шприц ещё раз для продолжения.`);
+            setIvPrepFeedback(`Введение продолжается: ${nextVolume.toFixed(1).replace('.', ',')} мл из ${ivScenario.dose}. Продолжайте взаимодействовать со шприцем.`);
           }
           return;
         }
-        if (ivCurrentCriterion === 16 && id === 'syringe' && !ivSyringeNeedleDetached) {
-          setIvSyringeNeedleDetached(true);
-          setIvPrepFeedback('Игла безопасно снята с помощью предусмотренного устройства. Теперь поместите использованный шприц и острые отходы в контейнер.');
+        if (ivCurrentCriterion === 15) {
+          if (id !== 'patient') { setIvPrepFeedback('Обратитесь к пациенту и уточните самочувствие во время введения.'); return; }
+          finishCriterion('iv_16', 'Пациент отвечает: «Чувствую себя как обычно».');
           return;
         }
-        if (ivCurrentCriterion === 16 && id === 'waste' && !ivSyringeNeedleDetached) {
-          setIvPrepFeedback('Сначала выполните безопасное снятие иглы с помощью предусмотренного устройства.');
+        if (ivCurrentCriterion === 16) {
+          if (id === 'syringe' && !ivSyringeNeedleDetached) {
+            setIvSyringeNeedleDetached(true);
+            setIvPrepFeedback('Игла безопасно отсоединена с помощью предусмотренного устройства. Теперь поместите использованный шприц и острые отходы в контейнер.');
+            return;
+          }
+          if (id === 'waste' && ivSyringeNeedleDetached) {
+            finishCriterion('iv_17', 'Шприц и острые отходы помещены в непрокалываемый контейнер.');
+            setIvSyringeNeedleDetached(false);
+            return;
+          }
+          setIvPrepFeedback(id === 'waste'
+            ? 'Сначала безопасно отсоедините иглу с помощью предусмотренного устройства.'
+            : 'Сейчас требуется безопасно отсоединить иглу от шприца.');
           return;
         }
-        if (ivCurrentCriterion === 17 && !ivCottonPressed) {
-          setIvCottonPressed(true);
-          setIvPrepFeedback('Место инъекции прижато ватным шариком. Теперь наложите давящую повязку.');
+        if (ivCurrentCriterion === 17) {
+          if (id === 'swabs' && !ivCottonPressed) {
+            setIvCottonPressed(true);
+            setIvPrepFeedback('Место инъекции прижато ватным шариком. Теперь наложите давящую повязку на руку пациента.');
+            return;
+          }
+          if (id === 'arm' && ivCottonPressed) {
+            finishCriterion('iv_18', 'Давящая повязка наложена после прижатия места инъекции.');
+            setIvCottonPressed(false);
+            return;
+          }
+          setIvPrepFeedback(id === 'arm'
+            ? 'Сначала прижмите место инъекции ватным шариком.'
+            : 'Сейчас возьмите ватный шарик и прижмите место инъекции.');
           return;
         }
-        const criterionId = IV_CRITERIA[ivCurrentCriterion].id;
-        setIvActionFlags(prev => ({ ...prev, [criterionId]: true }));
-        setIvAnswers(prev => ({ ...prev, [criterionId]: true }));
-        const responseByCriterion: Record<number, string> = {
-          15: 'Во время введения пациент отвечает: «Чувствую себя как обычно».',
-          16: 'Использованный шприц помещён в контейнер для острых отходов.',
-          17: 'Давящая повязка наложена на место инъекции.',
-          18: 'После введения пациент отвечает: «Всё хорошо, спасибо, доктор».',
-          19: 'Использованный лоток передан на дезинфекцию и последующую стерилизацию.',
-          20: 'Пациенту сообщено о необходимости снять повязку через 15–20 минут.',
-          21: 'Смотровые перчатки сняты и утилизированы.',
-          22: 'После манипуляции выполнена гигиеническая обработка рук.',
-          23: 'Запись о процедуре внесена в медицинскую документацию.',
+        const expectedByCriterion: Record<number, { id: string; message: string }> = {
+          18: { id: 'patient', message: 'Пациент отвечает: «Всё хорошо, спасибо, доктор».' },
+          19: { id: 'tray', message: 'Лоток передан на дезинфекцию и последующую стерилизацию.' },
+          20: { id: 'patient', message: 'Пациенту сообщено о необходимости снять повязку через 15–20 минут.' },
+          21: { id: 'gloves', message: 'Смотровые перчатки сняты и утилизированы.' },
+          22: { id: 'sink', message: 'После манипуляции выполнена гигиеническая обработка рук.' },
+          23: { id: 'documents', message: 'Отметка о выполненной процедуре внесена в медицинскую документацию.' },
         };
-        setIvPrepFeedback(responseByCriterion[ivCurrentCriterion]);
-        if (ivCurrentCriterion === 16) setIvSyringeNeedleDetached(false);
-        if (ivCurrentCriterion === 17) setIvCottonPressed(false);
+        const expected = expectedByCriterion[ivCurrentCriterion];
+        if (!expected || id !== expected.id) {
+          setIvPrepFeedback('Выберите соответствующий предмет в процедурном кабинете для текущего действия.');
+          return;
+        }
+        finishCriterion(IV_CRITERIA[ivCurrentCriterion].id, expected.message);
         return;
       }
       const expected = ivCurrentCriterion <= 3 ? 'patient' : ivCurrentCriterion === 4 ? 'documents' : 'sink';
@@ -1843,9 +1873,8 @@ export default function Home() {
                 <button onClick={() => setIvAnswers(prev => ({ ...prev, [current.id]: true }))} className={`rounded-xl border-2 py-4 font-bold transition ${ivAnswers[current.id] === true ? 'border-green-500 bg-green-50 text-green-800' : 'border-slate-200 bg-white hover:border-green-400'}`}>✓ Да, выполнено</button>
                 <button onClick={() => setIvAnswers(prev => ({ ...prev, [current.id]: false }))} className={`rounded-xl border-2 py-4 font-bold transition ${ivAnswers[current.id] === false ? 'border-red-400 bg-red-50 text-red-800' : 'border-slate-200 bg-white hover:border-red-300'}`}>Нет, не выполнено</button>
               </div>}
-              <div className="mt-6 flex flex-wrap justify-between gap-3">
-                <button disabled={ivCurrentCriterion === 0} onClick={() => setIvCurrentCriterion(v => Math.max(0, v - 1))} className="rounded-lg bg-slate-100 px-5 py-3 font-semibold text-slate-700 disabled:opacity-40">← Назад</button>
-                {ivCurrentCriterion < IV_CRITERIA.length - 1 ? <button disabled={ivAnswers[current.id] === undefined} onClick={() => setIvCurrentCriterion(v => Math.min(IV_CRITERIA.length - 1, v + 1))} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Следующий критерий →</button> : <button disabled={answered < IV_CRITERIA.length} onClick={() => setStage('iv_finished')} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Завершить станцию</button>}
+              <div className="mt-6 rounded-xl border border-sky-100 bg-slate-50 p-4 text-sm text-slate-600">
+                Выполняйте действия непосредственно в процедурном кабинете. После правильного действия тренажёр автоматически перейдёт к следующему этапу и отметит соответствующий критерий.
               </div>
               <p className="mt-4 text-xs text-slate-400">Критерии 1–6 и 7–15 фиксируются по последовательности интерактивных действий. Критерии 16–24 выполняются отдельными действиями в симуляции. Реальная техника на фантоме датчиками не измеряется.</p>
             </section>
