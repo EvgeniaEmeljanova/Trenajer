@@ -1386,15 +1386,6 @@ export default function Home() {
               <p className="mt-1 font-semibold text-white">10 минут</p>
             </div>
           </div>
-          <div className="mt-4 rounded-xl border border-gray-700 bg-gray-800 p-4">
-            <p className="font-semibold text-white">Распределение времени</p>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
-              <div className="rounded-lg bg-slate-700 p-3"><p className="text-lg font-bold text-blue-200">30 сек</p><p className="mt-1 text-gray-300">Брифинг</p></div>
-              <div className="rounded-lg bg-slate-700 p-3"><p className="text-lg font-bold text-blue-200">8 мин 30 сек</p><p className="mt-1 text-gray-300">Практическая часть</p></div>
-              <div className="rounded-lg bg-slate-700 p-3"><p className="text-lg font-bold text-blue-200">1 мин</p><p className="mt-1 text-gray-300">Переход</p></div>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-gray-400">В тренажёре отображается общее время станции — 10 минут.</p>
-          </div>
           <div className="mt-5 rounded-xl border border-amber-400/40 bg-amber-950/40 p-4">
             <p className="font-semibold text-amber-200">Обратите внимание</p>
             <p className="mt-1 text-sm leading-relaxed text-amber-100">Оценивание проводится по 24 критериям. Для успешного прохождения необходимо набрать не менее 70%. В экзаменационном режиме подсказки Аккредика недоступны.</p>
