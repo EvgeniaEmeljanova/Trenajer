@@ -410,6 +410,10 @@ export default function Home() {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [ivScenarioIndex, setIvScenarioIndex] = useState(0);
   const [ivAnswers, setIvAnswers] = useState<Record<string, boolean>>({});
+  const [ivPatientChatOpen, setIvPatientChatOpen] = useState(false);
+  const [ivPatientChatMessages, setIvPatientChatMessages] = useState<{ sender: 'patient' | 'student'; text: string }[]>([]);
+  const [ivPatientChatInput, setIvPatientChatInput] = useState('');
+  const [ivGreetingSent, setIvGreetingSent] = useState(false);
   const [ivCurrentCriterion, setIvCurrentCriterion] = useState(0);
   const [ivPrepEquipment, setIvPrepEquipment] = useState<string[]>([]);
   const [ivPrepAmpouleChecked, setIvPrepAmpouleChecked] = useState(false);
@@ -1359,7 +1363,7 @@ export default function Home() {
 
   if (stage === 'iv_contact') {
     const contactSteps = [
-      { title: 'Установить контакт с пациентом', detail: 'Нажмите на пациента, чтобы обратиться к нему: поздоровайтесь, представьтесь и обозначьте свою роль.', object: 'patient' },
+      { title: 'Установить контакт с пациентом', detail: 'Нажмите на пациента. Откроется чат, в котором нужно поздороваться, представиться и обозначить свою роль.', object: 'patient' },
       { title: 'Идентифицировать пациента', detail: 'Повторно нажмите на пациента, попросите назвать ФИО и возраст и сверьте ответ с данными задания.', object: 'patient' },
       { title: 'Уточнить самочувствие', detail: 'Обратитесь к пациенту по имени и отчеству и спросите о самочувствии.', object: 'patient' },
       { title: 'Уточнить аллергологический анамнез', detail: 'Спросите пациента об аллергии в анамнезе и на назначенное лекарство.', object: 'patient' },
@@ -1373,6 +1377,13 @@ export default function Home() {
       { id: 'sink', label: 'Раковина и дозатор', x: 69, y: 31, w: 18, h: 22 },
     ];
     const handleContactClick = (id: string) => {
+      if (ivCurrentCriterion === 0 && id === 'patient') {
+        setIvPatientChatMessages([]);
+        setIvPatientChatInput('');
+        setIvGreetingSent(false);
+        setIvPatientChatOpen(true);
+        return;
+      }
       if (id !== step.object) {
         setIvPrepFeedback('Сейчас выполните действие с нужным объектом: ' + (step.object === 'patient' ? 'пациентом' : step.object === 'documents' ? 'планшетом с документами' : 'дозатором у раковины') + '.');
         return;
@@ -1402,6 +1413,82 @@ export default function Home() {
             <div className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-center"><p className="text-xs text-slate-500">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-sky-800">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
           <IVRoomScene phase="Общение с пациентом · документы · гигиена рук" hotspots={contactHotspots} onHotspotClick={handleContactClick} />
+          {ivPatientChatOpen && (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 p-4" role="dialog" aria-modal="true" aria-label="Диалог с пациентом">
+              <div className="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-5 py-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Диалог с пациентом</p>
+                    <h3 className="mt-1 font-bold text-slate-900">Николаенко Николай Николаевич</h3>
+                  </div>
+                  <button type="button" onClick={() => setIvPatientChatOpen(false)} aria-label="Закрыть чат" className="rounded-lg px-3 py-2 text-slate-500 hover:bg-white hover:text-slate-900">✕</button>
+                </div>
+                <div className="min-h-36 flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4">
+                  {ivPatientChatMessages.length === 0 && (
+                    <p className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">Пациент ожидает, когда Вы к нему обратитесь.</p>
+                  )}
+                  {ivPatientChatMessages.map((message, index) => (
+                    <div key={index} className={message.sender === 'student' ? 'flex justify-end' : 'flex justify-start'}>
+                      <div className={message.sender === 'student' ? 'max-w-[85%] rounded-2xl rounded-br-sm bg-sky-700 px-4 py-3 text-sm text-white' : 'max-w-[85%] rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800'}>
+                        <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide opacity-70">{message.sender === 'student' ? 'Вы' : 'Пациент'}</span>
+                        {message.text}
+                      </div>
+                    </div>
+                  ))}
+                  {ivGreetingSent && (
+                    <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">Приветствие принято. Продолжите знакомство: представьтесь и назовите свою роль.</p>
+                  )}
+                </div>
+                <form
+                  className="space-y-3 border-t border-slate-100 bg-white p-4"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const message = ivPatientChatInput.trim();
+                    if (!message) return;
+                    if (!ivGreetingSent) {
+                      if (!/^(здравствуйте|добрый день|доброе утро|добрый вечер)[!. ,]*$/i.test(message)) {
+                        setIvPatientChatMessages(prev => [...prev, { sender: 'student', text: message }, { sender: 'patient', text: 'Пожалуйста, обратитесь ко мне.' }]);
+                        setIvPatientChatInput('');
+                        return;
+                      }
+                      setIvPatientChatMessages(prev => [...prev, { sender: 'student', text: message }, { sender: 'patient', text: 'Здравствуйте!' }]);
+                      setIvGreetingSent(true);
+                      setIvPatientChatInput('');
+                      return;
+                    }
+                    const normalized = message.toLowerCase();
+                    const introduced = normalized.includes('меня зовут') &&
+                      /(медицинский работник|фельдшер|медицинская сестра|медсестра|врач)/i.test(normalized);
+                    setIvPatientChatMessages(prev => [...prev, { sender: 'student', text: message }]);
+                    setIvPatientChatInput('');
+                    if (!introduced) {
+                      setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Представьтесь, пожалуйста, и скажите, кем Вы работаете.' }]);
+                      return;
+                    }
+                    setIvPatientChatMessages(prev => [...prev, { sender: 'patient', text: 'Очень приятно. Чем Вы мне поможете?' }]);
+                    setIvAnswers(prev => ({ ...prev, iv_01: true }));
+                    setIvActionFlags(prev => ({ ...prev, iv_01: true }));
+                    setIvPrepFeedback('Контакт установлен: Вы поздоровались, представились и обозначили свою роль.');
+                    setIvPatientChatOpen(false);
+                    setIvCurrentCriterion(1);
+                  }}
+                >
+                  {runMode === 'training' && !ivGreetingSent && (
+                    <button type="button" onClick={() => setIvPatientChatInput('Здравствуйте!')} className="rounded-full border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-100">Здравствуйте!</button>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      value={ivPatientChatInput}
+                      onChange={(event) => setIvPatientChatInput(event.target.value)}
+                      placeholder={ivGreetingSent ? 'Представьтесь и назовите свою роль…' : 'Введите приветствие…'}
+                      className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-3 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                    />
+                    <button type="submit" disabled={!ivPatientChatInput.trim()} className="rounded-xl bg-sky-700 px-4 py-3 text-sm font-bold text-white hover:bg-sky-800 disabled:opacity-40">Отправить</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
           <div className="mt-5 grid gap-5 md:grid-cols-[1fr_280px]">
             <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
               <p className="text-sm font-semibold text-sky-700">ДЕЙСТВИЕ {ivCurrentCriterion + 1} ИЗ 6</p>
