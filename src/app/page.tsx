@@ -433,6 +433,7 @@ export default function Home() {
   const [ivPrepNeedleChanged, setIvPrepNeedleChanged] = useState(false);
   const [ivPrepFeedback, setIvPrepFeedback] = useState('');
   const [ivPrepActiveObject, setIvPrepActiveObject] = useState<string | null>(null);
+  const [ivPrescriptionOpen, setIvPrescriptionOpen] = useState(false);
   const [ivArmTourniquetPosition, setIvArmTourniquetPosition] = useState('');
   const [ivArmPulseChecked, setIvArmPulseChecked] = useState(false);
   const [ivArmFirstSkinPrep, setIvArmFirstSkinPrep] = useState(false);
@@ -1371,9 +1372,8 @@ export default function Home() {
             <p className="font-semibold">Задание</p>
             <p className="mt-2">В процедурном кабинете Вас ожидает пациент, которому необходимо провести внутривенную инъекцию препарата, указанного в листе назначения. Озвучивайте свои действия.</p>
             <div className="mt-4 rounded-lg bg-white p-4 border border-sky-100">
-              <p className="text-sm text-slate-500">Назначение (случайный сценарий)</p>
-              <p className="mt-1 text-lg font-bold">{ivScenario.title}</p>
-              <p className="text-sky-800 font-semibold">{ivScenario.prescription}</p>
+              <p className="text-sm text-slate-500">Лист назначения</p>
+              <p className="mt-1 font-semibold text-slate-800">На процедурном столике находится лист назначения. Откройте его в кабинете и самостоятельно определите препарат и необходимую дозу.</p>
             </div>
           </div>
           <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
@@ -1596,7 +1596,7 @@ export default function Home() {
       }
       if (id === 'documents') {
         setIvPrepActiveObject('documents');
-        setIvPrepFeedback(`Лист назначения: ${ivScenario.title}. Назначено ${ivScenario.dose}. Сверьте препарат и дозу с ампулой.`);
+        setIvPrescriptionOpen(true);
         return;
       }
       if (id === 'sink') {
@@ -1653,6 +1653,43 @@ export default function Home() {
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
           <IVRoomScene phase="Подготовка препарата" hotspots={prepHotspots} onHotspotClick={handlePrepRoomClick} overlay={<div className="space-y-2">{ivPrepFeedback && <div className="rounded-xl border border-sky-200 bg-white/95 p-3 text-xs font-medium text-slate-800 shadow-lg backdrop-blur">{ivPrepFeedback}</div>}{ivPrepActiveObject === 'syringe' && ivPrepAmpouleOpened && <div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-slate-900">Выберите объём шприца по назначению</p><div className="mt-2 flex flex-wrap gap-2">{['1 мл','2 мл','5 мл'].map(volume => <button key={volume} type="button" onClick={() => { setIvPrepSelectedVolume(volume); setIvPrepSyringeFilled(false); setIvPrepFeedback('Выбран объём '+volume+'. Подтвердите набор назначенной дозы.'); }} className={`rounded-lg border px-4 py-2 text-sm font-bold ${ivPrepSelectedVolume===volume?'border-sky-600 bg-sky-100 text-sky-900':'border-slate-200 bg-white text-slate-700'}`}>{volume}</button>)}</div><button type="button" disabled={!ivPrepSelectedVolume} onClick={() => { if(ivPrepSelectedVolume===correctVolume){setIvPrepSyringeFilled(true);setIvPrepFeedback('В шприц набран назначенный объём: '+correctVolume+'.');}else{setIvPrepSyringeFilled(false);setIvPrepFeedback('Объём не соответствует назначению. Сверьте лист назначения.');}}} className="mt-2 rounded-lg bg-sky-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Набрать препарат</button></div>}<div className="rounded-xl border border-white/80 bg-slate-900/75 px-3 py-2 text-xs text-white shadow-lg">Проверено: {ivPrepEquipment.length} из 6 · ампула {ivPrepAmpouleOpened?'вскрыта':'не вскрыта'} · шприц {ivPrepSyringeFilled?'наполнен':'не наполнен'} · игла {ivPrepNeedleChanged?'заменена':'не заменена'}</div></div>} />
+          {ivPrescriptionOpen && (
+            <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-label="Лист назначения">
+              <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-5 py-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-sky-700">Медицинская документация</p>
+                    <h2 className="mt-1 text-xl font-bold text-slate-900">Лист назначения</h2>
+                  </div>
+                  <button type="button" onClick={() => setIvPrescriptionOpen(false)} aria-label="Закрыть лист назначения" className="rounded-lg px-3 py-2 text-xl text-slate-500 hover:bg-white hover:text-slate-900">✕</button>
+                </div>
+                <div className="p-5 md:p-8">
+                  <div className="border border-slate-300 bg-white p-5 md:p-7 text-slate-900 shadow-inner">
+                    <div className="border-b-2 border-slate-800 pb-3 text-center">
+                      <p className="text-xs font-semibold uppercase tracking-wide">Медицинская документация</p>
+                      <h3 className="mt-1 text-lg font-bold">Лист врачебных назначений</h3>
+                    </div>
+                    <div className="mt-5 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                      <p><span className="text-slate-500">Пациент:</span><br/><strong>Николаенко Николай Николаевич</strong></p>
+                      <p><span className="text-slate-500">Возраст:</span><br/><strong>30 лет</strong></p>
+                      <p><span className="text-slate-500">Медицинская карта:</span><br/><strong>№ {ivScenario.id === 'ascorbic' ? '110' : ivScenario.id === 'furosemide' ? '111' : '112'}</strong></p>
+                      <p><span className="text-slate-500">Путь введения:</span><br/><strong>Внутривенно</strong></p>
+                    </div>
+                    <div className="mt-6 rounded-lg border-2 border-slate-400 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Назначено</p>
+                      <p className="mt-2 text-xl font-bold">{ivScenario.title}</p>
+                      <p className="mt-1 text-lg font-semibold">{ivScenario.prescription}</p>
+                      <p className="mt-3 text-sm">Ввести внутривенно: <strong>{ivScenario.dose}</strong></p>
+                    </div>
+                    <p className="mt-5 text-xs text-slate-500">Перед выполнением процедуры сверьте назначение с маркировкой ампулы.</p>
+                  </div>
+                </div>
+                <div className="flex justify-end border-t border-sky-100 bg-slate-50 px-5 py-4">
+                  <button type="button" onClick={() => setIvPrescriptionOpen(false)} className="rounded-xl bg-sky-700 px-6 py-3 font-bold text-white hover:bg-sky-800">Закрыть документ</button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
