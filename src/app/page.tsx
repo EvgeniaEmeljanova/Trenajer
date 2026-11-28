@@ -1366,48 +1366,47 @@ export default function Home() {
 
   if (stage === 'iv_briefing') {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8 flex items-center justify-center">
-        <div className="w-full max-w-3xl rounded-2xl border border-sky-200 bg-white p-6 md:p-8 shadow-xl">
-          <button onClick={() => setStage('station_select')} className="mb-5 text-sky-700 hover:text-sky-900">← К выбору станций</button>
-          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Первичная аккредитация · Лечебное дело · Станция 3</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">Внутривенная инъекция</h1>
-          <IVRoomScene phase="Брифинг перед началом практического задания" imageSrc="/iv-patient-entry.png" imageAlt="Пациент ожидает в процедурном кабинете; рядом медицинское кресло и оборудование" />
-          <div className="mt-5 rounded-xl border border-sky-100 bg-sky-50 p-5">
-            <p className="font-bold text-slate-900">Вводная информация</p>
-            <p className="mt-2 leading-relaxed">В процедурном кабинете Вас ожидает пациент, которому необходимо провести внутривенную инъекцию лекарственного препарата, указанного в листе назначения. Озвучивайте все действия, которые считаете необходимыми.</p>
-            <p className="mt-3 leading-relaxed">Перед выполнением манипуляции ознакомьтесь с листом назначения и медицинской документацией. Самостоятельно определите назначенный препарат и необходимую дозу.</p>
+      <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8 flex items-center justify-center">
+        <div className="w-full max-w-3xl rounded-2xl border border-blue-400/40 bg-gray-900 p-6 md:p-8 shadow-2xl">
+          <button onClick={() => setStage('station_select')} className="mb-5 text-blue-300 hover:text-blue-100">← К выбору станций</button>
+          <p className="text-sm font-semibold uppercase tracking-wide text-blue-300">Первичная аккредитация · Лечебное дело · Станция 3</p>
+          <h1 className="mt-2 text-3xl font-bold text-white">Внутривенная инъекция</h1>
+          <div className="mt-5 rounded-xl border border-blue-400/30 bg-slate-800 p-5">
+            <p className="font-bold text-blue-200">Вводная информация</p>
+            <p className="mt-2 leading-relaxed text-gray-100">В процедурном кабинете Вас ожидает пациент, которому необходимо провести внутривенную инъекцию лекарственного препарата, указанного в листе назначения. Озвучивайте все действия, которые считаете необходимыми.</p>
+            <p className="mt-3 leading-relaxed text-gray-100">Перед выполнением манипуляции ознакомьтесь с листом назначения и медицинской документацией. Самостоятельно определите назначенный препарат и необходимую дозу.</p>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Пациент</p>
-              <p className="mt-1 font-semibold text-slate-900">Николаенко Николай Николаевич, 30 лет</p>
+            <div className="rounded-xl border border-gray-700 bg-gray-800 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Пациент</p>
+              <p className="mt-1 font-semibold text-white">Николаенко Николай Николаевич, 30 лет</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Продолжительность станции</p>
-              <p className="mt-1 font-semibold text-slate-900">10 минут</p>
+            <div className="rounded-xl border border-gray-700 bg-gray-800 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Продолжительность станции</p>
+              <p className="mt-1 font-semibold text-white">10 минут</p>
             </div>
           </div>
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="font-semibold text-slate-800">Распределение времени</p>
+          <div className="mt-4 rounded-xl border border-gray-700 bg-gray-800 p-4">
+            <p className="font-semibold text-white">Распределение времени</p>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
-              <div className="rounded-lg bg-white p-3"><p className="text-lg font-bold text-sky-800">30 сек</p><p className="mt-1 text-slate-600">Брифинг</p></div>
-              <div className="rounded-lg bg-white p-3"><p className="text-lg font-bold text-sky-800">8 мин 30 сек</p><p className="mt-1 text-slate-600">Практическая часть</p></div>
-              <div className="rounded-lg bg-white p-3"><p className="text-lg font-bold text-sky-800">1 мин</p><p className="mt-1 text-slate-600">Переход</p></div>
+              <div className="rounded-lg bg-slate-700 p-3"><p className="text-lg font-bold text-blue-200">30 сек</p><p className="mt-1 text-gray-300">Брифинг</p></div>
+              <div className="rounded-lg bg-slate-700 p-3"><p className="text-lg font-bold text-blue-200">8 мин 30 сек</p><p className="mt-1 text-gray-300">Практическая часть</p></div>
+              <div className="rounded-lg bg-slate-700 p-3"><p className="text-lg font-bold text-blue-200">1 мин</p><p className="mt-1 text-gray-300">Переход</p></div>
             </div>
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">В тренажёре отображается общее время станции — 10 минут.</p>
+            <p className="mt-3 text-xs leading-relaxed text-gray-400">В тренажёре отображается общее время станции — 10 минут.</p>
           </div>
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <p className="font-semibold text-amber-900">Обратите внимание</p>
-            <p className="mt-1 text-sm leading-relaxed text-amber-900">Оценивание проводится по 24 критериям. Для успешного прохождения необходимо набрать не менее 70%. В экзаменационном режиме подсказки Аккредика недоступны.</p>
+          <div className="mt-5 rounded-xl border border-amber-400/40 bg-amber-950/40 p-4">
+            <p className="font-semibold text-amber-200">Обратите внимание</p>
+            <p className="mt-1 text-sm leading-relaxed text-amber-100">Оценивание проводится по 24 критериям. Для успешного прохождения необходимо набрать не менее 70%. В экзаменационном режиме подсказки Аккредика недоступны.</p>
           </div>
           <div className="mt-5">
-            <p className="font-semibold text-slate-700 mb-2">Режим прохождения</p>
+            <p className="mb-2 font-semibold text-gray-200">Режим прохождения</p>
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setRunMode('training')} className={`rounded-xl border-2 px-4 py-3 font-bold ${runMode === 'training' ? 'border-sky-500 bg-sky-100 text-sky-900' : 'border-slate-200 bg-white text-slate-600'}`}>Обучение</button>
-              <button onClick={() => setRunMode('exam')} className={`rounded-xl border-2 px-4 py-3 font-bold ${runMode === 'exam' ? 'border-amber-500 bg-amber-50 text-amber-900' : 'border-slate-200 bg-white text-slate-600'}`}>Экзамен</button>
+              <button onClick={() => setRunMode('training')} className={`rounded-xl border-2 px-4 py-3 font-bold ${runMode === 'training' ? 'border-blue-400 bg-blue-900/60 text-blue-100' : 'border-gray-600 bg-gray-800 text-gray-300'}`}>Обучение</button>
+              <button onClick={() => setRunMode('exam')} className={`rounded-xl border-2 px-4 py-3 font-bold ${runMode === 'exam' ? 'border-amber-400 bg-amber-900/40 text-amber-100' : 'border-gray-600 bg-gray-800 text-gray-300'}`}>Экзамен</button>
             </div>
           </div>
-          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback(''); setIvActionFlags({}); setIvSyringeNeedleDetached(false); setIvCottonPressed(false); setIvInjectedVolume(0); setIvPrepFeedback(''); setTimeLeft(600); setStage('iv_contact'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать станцию</button>
+          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback(''); setIvActionFlags({}); setIvSyringeNeedleDetached(false); setIvCottonPressed(false); setIvInjectedVolume(0); setIvPrepFeedback(''); setTimeLeft(600); setStage('iv_contact'); }} className="mt-7 w-full rounded-xl bg-blue-600 hover:bg-blue-500 py-4 font-bold text-white shadow-lg">Приступить к станции</button>
         </div>
       </div>
     );
