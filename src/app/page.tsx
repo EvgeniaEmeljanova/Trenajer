@@ -1629,35 +1629,21 @@ export default function Home() {
             </div>
           )}
           {ivPatientChatOpen && (
-            <div className="mx-auto mt-4 max-w-3xl overflow-hidden rounded-2xl border border-gray-600 bg-gray-800 shadow-lg">
-              <div className="flex items-center justify-between border-b border-gray-600 bg-gray-700 px-4 py-3">
+            <div className="mx-auto mt-3 max-w-5xl rounded-2xl border border-slate-600 bg-slate-800/95 p-3 shadow-xl md:p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-blue-300">Разговор с пациентом</p>
-                  <p className="text-sm font-semibold text-white">Обратитесь к Николаю Николаевичу</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-sky-300">Выберите фразу врача</p>
+                  <p className="mt-1 text-sm text-slate-200">Нажмите на подходящую реплику. Ответ пациента появится облаком на изображении.</p>
                 </div>
-                <button type="button" onClick={() => setIvPatientChatOpen(false)} className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-white">Свернуть</button>
+                <button type="button" onClick={() => setIvPatientChatOpen(false)} className="shrink-0 rounded-lg border border-slate-500 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700">Свернуть</button>
               </div>
-              <div className="max-h-56 space-y-3 overflow-y-auto bg-gray-900 p-4">
-                {ivPatientChatMessages.length === 0 && <p className="text-sm text-slate-500">Пациент ожидает, когда Вы к нему обратитесь.</p>}
-                {ivPatientChatMessages.map((message,index) => (
-                  <div key={index} className={message.sender === 'student' ? 'flex justify-end' : 'flex justify-start'}>
-                    <div className={message.sender === 'student' ? 'max-w-[85%] rounded-2xl rounded-br-sm bg-sky-700 px-4 py-3 text-sm text-white' : 'max-w-[85%] rounded-2xl rounded-bl-sm border border-sky-100 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm'}>
-                      <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide opacity-70">{message.sender === 'student' ? 'Вы' : 'Пациент'}</span>
-                      {message.text}
-                    </div>
-                  </div>
+              <div className="flex flex-wrap gap-2">
+                {patientOptions.map((option,index) => (
+                  <button key={index} type="button" onClick={() => handlePatientOption(option)}
+                    className="rounded-xl border border-sky-400/50 bg-slate-700 px-3 py-2.5 text-left text-sm font-medium text-white transition hover:border-sky-300 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-300">
+                    {option}
+                  </button>
                 ))}
-              </div>
-              <div className="border-t border-gray-600 bg-gray-800 p-3">
-                <p className="mb-2 text-xs font-semibold text-gray-300">Выберите реплику</p>
-                <div className="flex flex-wrap gap-2">
-                  {patientOptions.map((option,index) => (
-                    <button key={index} type="button" onClick={() => handlePatientOption(option)}
-                      className="rounded-xl border border-blue-400/50 bg-gray-700 px-3 py-2.5 text-left text-sm font-medium text-white transition hover:border-blue-300 hover:bg-gray-600">
-                      {option}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
           )}
