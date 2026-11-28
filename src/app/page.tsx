@@ -356,11 +356,13 @@ function IVRoomScene({
   hotspots = [],
   onHotspotClick,
   patientSpeech,
+  overlay,
 }: {
   phase: string;
   hotspots?: IVRoomHotspot[];
   onHotspotClick?: (id: string) => void;
   patientSpeech?: string;
+  overlay?: JSX.Element;
 }) {
   return (
     <section className="relative mt-5 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-lg">
@@ -405,10 +407,7 @@ function IVRoomScene({
           </div>
         )}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-sky-100 bg-white px-4 py-2.5 text-xs text-slate-500">
-        <span>Пациент · документы · процедурный столик · раковина · контейнер для отходов</span>
-        <span className="font-semibold text-sky-800">{hotspots.length ? 'Нажимайте на предметы в комнате' : 'Единое пространство станции'}</span>
-      </div>
+      {overlay && <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 p-3 sm:p-4"><div className="pointer-events-auto mx-auto max-w-2xl">{overlay}</div></div>}
     </section>
   );
 }
@@ -545,6 +544,24 @@ export default function Home() {
       if (onEnd) onEnd();
     }
   };
+
+  useEffect(() => {
+    if (stage !== 'iv_prep') return;
+    const ready = ['tray','syringe','needles','swabs','gloves','waste'].every(id => ivPrepEquipment.includes(id)) &&
+      ivPrepAmpouleChecked && ivPrepAmpouleOpened && ivPrepSyringeFilled && ivPrepNeedleChanged;
+    if (!ready) return;
+    setIvAnswers(prev => ({ ...prev, iv_07: true, iv_08: true, iv_09: true, iv_10: true }));
+    setIvArmTourniquetPosition('');
+    setIvArmPulseChecked(false);
+    setIvArmFirstSkinPrep(false);
+    setIvArmSecondSkinPrep(false);
+    setIvArmPunctureSiteSelected(false);
+    setIvArmFirstBloodReturn(false);
+    setIvArmTourniquetReleased(false);
+    setIvArmSecondBloodReturn(false);
+    setIvArmFeedback('');
+    setStage('iv_arm');
+  }, [stage, ivPrepEquipment, ivPrepAmpouleChecked, ivPrepAmpouleOpened, ivPrepSyringeFilled, ivPrepNeedleChanged]);
 
   useEffect(() => {
     if (stage !== 'iv_playing' && stage !== 'iv_prep' && stage !== 'iv_arm') return;
@@ -1444,7 +1461,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold">Пациент и подготовка к процедуре</h1></div>
             <div className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-center"><p className="text-xs text-slate-500">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-sky-800">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="Общение с пациентом · документы · гигиена рук" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} />
+          <IVRoomScene phase="Общение с пациентом · документы · гигиена рук" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
           {ivPatientChatOpen && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 p-4" role="dialog" aria-modal="true" aria-label="Диалог с пациентом">
               <div className="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-2xl">
@@ -1538,23 +1555,7 @@ export default function Home() {
               </div>
             </div>
           )}
-          <div className="mt-5 grid gap-5 md:grid-cols-[1fr_280px]">
-            <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
-              <p className="text-sm font-semibold text-sky-700">ДЕЙСТВИЕ {ivCurrentCriterion + 1} ИЗ 6</p>
-              <h2 className="mt-2 text-xl font-bold">{step.title}</h2>
-              <p className="mt-3 text-slate-600">{step.detail}</p>
-              {runMode === 'training' && ivCurrentCriterion === 2 && <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm">Ответ пациента появится после обращения.</p>}
-              {runMode === 'training' && ivCurrentCriterion === 3 && <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm">Уточните аллергию в анамнезе и реакцию на назначенный препарат.</p>}
-              {ivPrepFeedback && <p className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-800">{ivPrepFeedback}</p>}
-              <p className="mt-4 text-xs text-slate-500">Действие засчитывается только при нажатии на соответствующий объект в комнате. После завершения шести действий откроется подготовка препарата.</p>
-            </section>
-            <aside className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
-              <h3 className="font-bold">Ход выполнения</h3>
-              <div className="mt-3 space-y-2 text-sm">
-                {contactSteps.map((item, index) => <div key={item.title} className="flex gap-2"><span className={ivAnswers[IV_CRITERIA[index].id] ? 'font-bold text-emerald-600' : 'text-slate-300'}>{ivAnswers[IV_CRITERIA[index].id] ? '✓' : '○'}</span><span className={ivAnswers[IV_CRITERIA[index].id] ? 'text-emerald-800' : 'text-slate-600'}>{item.title}</span></div>)}
-              </div>
-            </aside>
-          </div>
+
         </div>
       </div>
     );
@@ -1574,7 +1575,6 @@ export default function Home() {
     const correctAmpoule = ivScenario.id === 'ascorbic' ? 'ascorbic' : ivScenario.id === 'furosemide' ? 'furosemide' : 'tranexamic';
     const correctVolume = ivScenario.dose;
     const prepComplete = equipmentReady && ivPrepAmpouleChecked && ivPrepAmpouleOpened && ivPrepSyringeFilled && ivPrepNeedleChanged;
-    const toggleEquipment = (id: string) => setIvPrepEquipment(prev => prev.includes(id) ? prev : [...prev, id]);
     const prepHotspots: IVRoomHotspot[] = [
       // Координаты привязаны к реальным предметам на изображении кабинета.
       { id: 'patient', label: 'Пациент', x: 43, y: 40, w: 25, h: 48 },
@@ -1652,75 +1652,8 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ИНТЕРАКТИВНЫЙ ЭТАП 1</p><h1 className="text-2xl md:text-3xl font-bold">Подготовка препарата</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="Подготовка препарата" hotspots={prepHotspots} onHotspotClick={handlePrepRoomClick} />
-          <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
-            <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
-              <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-bold">Процедурный столик</h2><span className="text-xs text-slate-500">Выбирайте предметы по ходу работы</span></div>
-              <p className="mt-2 text-sm text-slate-600">{runMode === 'training' ? 'Отметьте проверенные предметы, затем сверьте ампулу с назначением и выполните подготовку шприца.' : 'Выполните подготовку препарата самостоятельно. Подсказки отключены.'}</p>
-              <div className="mt-5 rounded-2xl border border-sky-100 bg-sky-50/60 p-4 md:p-6">
-                <h3 className="font-bold text-slate-800">Подготовка на процедурном столике</h3>
-                <p className="mt-1 text-sm text-slate-600">Взаимодействуйте с предметами непосредственно в комнате. Проверенные предметы отмечаются галочкой.</p>
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-                  {requiredEquipment.map(item => (
-                    <button type="button" key={item.id} onClick={() => handlePrepRoomClick(item.id)} className={`w-full text-left rounded-lg border px-3 py-3 transition hover:border-sky-400 hover:bg-sky-50 ${ivPrepEquipment.includes(item.id) ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-600'}`}>
-                      <span className="mr-2">{ivPrepEquipment.includes(item.id) ? '✓' : '○'}</span>{item.label}
-                      <span className="block mt-1 text-xs opacity-70">{item.id === 'syringe' ? 'Нажмите, чтобы выбрать шприц и объём' : item.id === 'needles' ? (ivPrepNeedleChanged ? 'Игла заменена' : 'Нажмите после набора препарата') : 'Нажмите, чтобы проверить предмет'}</span>
-                    </button>
-                  ))}
-                  <div className={`rounded-lg border px-3 py-2 ${ivPrepAmpouleChecked ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-2">{ivPrepAmpouleChecked ? '✓' : '○'}</span>Маркировка ампулы</div>
-                  <div className={`rounded-lg border px-3 py-2 ${ivPrepAmpouleOpened ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-2">{ivPrepAmpouleOpened ? '✓' : '○'}</span>Ампула вскрыта</div>
-                  <div className={`rounded-lg border px-3 py-2 ${ivPrepSyringeFilled ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-2">{ivPrepSyringeFilled ? '✓' : '○'}</span>Препарат набран</div>
-                  <div className={`rounded-lg border px-3 py-2 ${ivPrepNeedleChanged ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-2">{ivPrepNeedleChanged ? '✓' : '○'}</span>Игла заменена</div>
-                </div>
-                {ivPrepActiveObject === 'syringe' && ivPrepAmpouleOpened && (
-                  <div className="mt-4 rounded-xl border border-sky-200 bg-white p-4">
-                    <p className="font-semibold">Шприц: выберите объём согласно листу назначения</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {['1 мл', '2 мл', '5 мл'].map(volume => (
-                        <button key={volume} onClick={() => { setIvPrepSelectedVolume(volume); setIvPrepSyringeFilled(false); setIvPrepFeedback(`Выбран объём ${volume}. Проверьте соответствие назначению.`); }} className={`rounded-lg border px-4 py-2 text-sm font-bold ${ivPrepSelectedVolume === volume ? 'border-sky-500 bg-sky-100 text-sky-900' : 'border-slate-200 bg-white'}`}>{volume}</button>
-                      ))}
-                    </div>
-                    <button onClick={() => {
-                      if (ivPrepSelectedVolume === correctVolume) {
-                        setIvPrepSyringeFilled(true);
-                        setIvPrepFeedback(`В шприц набран назначенный объём: ${correctVolume}.`);
-                      } else {
-                        setIvPrepSyringeFilled(false);
-                        setIvPrepFeedback('Объём не соответствует назначению. Сверьте лист назначения.');
-                      }
-                    }} disabled={!ivPrepSelectedVolume} className="mt-3 w-full rounded-lg bg-sky-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-40">Выполнить набор препарата</button>
-                  </div>
-                )}
-              </div>
-              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-sm font-bold text-slate-800">Назначение для текущего сценария</p>
-                <p className="mt-1 text-sm text-slate-700">{ivScenario.ampoule}</p>
-                <p className="mt-1 text-xs text-slate-500">Объём ампулы: {ivScenario.ampouleVolume} · Срок годности на маркировке: {ivScenario.expiry} · Набрать: {ivScenario.dose}</p>
-              </div>
-              {ivPrepFeedback && <p aria-live="polite" className="mt-4 rounded-xl bg-sky-50 border border-sky-100 p-3 text-sm text-sky-900">{ivPrepFeedback}</p>}
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-                <button onClick={() => setStage('iv_briefing')} className="rounded-lg bg-slate-100 px-5 py-3 font-semibold text-slate-700">← К вводной</button>
-                <button disabled={!prepComplete} onClick={() => {
-                  setIvAnswers(prev => ({ ...prev, iv_07: true, iv_08: true, iv_09: true, iv_10: true }));
-                  setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback('');
-                  setStage('iv_arm');
-                }} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Продолжить станцию →</button>
-              </div>
-              <p className="mt-3 text-xs text-slate-400">Это учебная 2D-симуляция последовательности действий. Она фиксирует выборы и порядок действий, но не измеряет реальную технику работы с медицинским фантомом.</p>
-            </section>
-            <aside className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
-              <h3 className="font-bold">Ход подготовки</h3>
-              <div className="mt-3 space-y-3 text-sm">
-                <div className="flex justify-between"><span>Проверка оборудования</span><strong>{ivPrepEquipment.length}/{requiredEquipment.length}</strong></div>
-                <div className="h-2 rounded-full bg-slate-100"><div className="h-2 rounded-full bg-sky-600" style={{width: `${(ivPrepEquipment.length / requiredEquipment.length) * 100}%`}} /></div>
-                <p>{ivPrepAmpouleChecked ? '✓' : '○'} Проверка маркировки ампулы</p>
-                <p>{ivPrepAmpouleOpened ? '✓' : '○'} Вскрытие ампулы</p>
-                <p>{ivPrepSyringeFilled ? '✓' : '○'} Набор назначенного объёма</p>
-                <p>{ivPrepNeedleChanged ? '✓' : '○'} Смена иглы</p>
-              </div>
-              <div className="mt-5 rounded-xl bg-sky-50 p-4 text-sm"><p className="font-semibold">Важно</p><p className="mt-1">Для транексамовой кислоты ампула содержит 5 мл, но по назначению набирается только 2 мл.</p></div>
-            </aside>
-          </div>
+          <IVRoomScene phase="Подготовка препарата" hotspots={prepHotspots} onHotspotClick={handlePrepRoomClick} overlay={<div className="space-y-2">{ivPrepFeedback && <div className="rounded-xl border border-sky-200 bg-white/95 p-3 text-xs font-medium text-slate-800 shadow-lg backdrop-blur">{ivPrepFeedback}</div>}{ivPrepActiveObject === 'syringe' && ivPrepAmpouleOpened && <div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-slate-900">Выберите объём шприца по назначению</p><div className="mt-2 flex flex-wrap gap-2">{['1 мл','2 мл','5 мл'].map(volume => <button key={volume} type="button" onClick={() => { setIvPrepSelectedVolume(volume); setIvPrepSyringeFilled(false); setIvPrepFeedback('Выбран объём '+volume+'. Подтвердите набор назначенной дозы.'); }} className={`rounded-lg border px-4 py-2 text-sm font-bold ${ivPrepSelectedVolume===volume?'border-sky-600 bg-sky-100 text-sky-900':'border-slate-200 bg-white text-slate-700'}`}>{volume}</button>)}</div><button type="button" disabled={!ivPrepSelectedVolume} onClick={() => { if(ivPrepSelectedVolume===correctVolume){setIvPrepSyringeFilled(true);setIvPrepFeedback('В шприц набран назначенный объём: '+correctVolume+'.');}else{setIvPrepSyringeFilled(false);setIvPrepFeedback('Объём не соответствует назначению. Сверьте лист назначения.');}}} className="mt-2 rounded-lg bg-sky-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Набрать препарат</button></div>}<div className="rounded-xl border border-white/80 bg-slate-900/75 px-3 py-2 text-xs text-white shadow-lg">Проверено: {ivPrepEquipment.length} из 6 · ампула {ivPrepAmpouleOpened?'вскрыта':'не вскрыта'} · шприц {ivPrepSyringeFilled?'наполнен':'не наполнен'} · игла {ivPrepNeedleChanged?'заменена':'не заменена'}</div></div>} />
+
         </div>
       </div>
     );
@@ -1729,81 +1662,56 @@ export default function Home() {
 
   if (stage === 'iv_arm') {
     const tourniquetCorrect = ivArmTourniquetPosition === 'middle';
-    const armComplete = tourniquetCorrect && ivArmPulseChecked && ivArmFirstSkinPrep && ivArmSecondSkinPrep && ivArmPunctureSiteSelected && ivArmFirstBloodReturn && ivArmTourniquetReleased && ivArmSecondBloodReturn;
+    const armHotspots: IVRoomHotspot[] = [
+      { id: 'upper', label: 'Верхняя треть плеча', x: 48, y: 48, w: 12, h: 10, done: ivArmTourniquetPosition === 'upper' },
+      { id: 'middle', label: 'Средняя треть плеча · жгут', x: 48, y: 57, w: 12, h: 10, done: tourniquetCorrect },
+      { id: 'lower', label: 'Нижняя треть плеча', x: 48, y: 66, w: 12, h: 9, done: ivArmTourniquetPosition === 'lower' },
+      ...(tourniquetCorrect ? [{ id: 'pulse', label: 'Проверить пульс', x: 59, y: 71, w: 9, h: 9, done: ivArmPulseChecked }] : []),
+      ...(ivArmPulseChecked ? [{ id: 'skin', label: ivArmSecondSkinPrep ? 'Кожа обработана ×2' : ivArmFirstSkinPrep ? 'Повторить обработку' : 'Обработать кожу', x: 52, y: 61, w: 12, h: 9, done: ivArmSecondSkinPrep }] : []),
+      ...(ivArmSecondSkinPrep ? [{ id: 'puncture', label: ivArmSecondBloodReturn ? 'Положение иглы подтверждено' : ivArmFirstBloodReturn ? 'Повторно проверить вену' : ivArmPunctureSiteSelected ? 'Подтвердить появление крови' : 'Выбрать место пункции', x: 53, y: 58, w: 10, h: 8, done: ivArmSecondBloodReturn }] : []),
+      ...(ivArmFirstBloodReturn && !ivArmTourniquetReleased ? [{ id: 'release', label: 'Снять жгут', x: 47, y: 49, w: 9, h: 8 }] : []),
+    ];
+    const handleArmRoomClick = (id: string) => {
+      if (['upper','middle','lower'].includes(id)) {
+        setIvArmTourniquetPosition(id);
+        setIvArmFeedback(id === 'middle' ? 'Жгут наложен на среднюю треть плеча.' : 'Неверное положение. По критерию требуется средняя треть плеча. Выберите правильную зону.');
+        return;
+      }
+      if (id === 'pulse' && tourniquetCorrect) {
+        setIvArmPulseChecked(true);
+        setIvArmFeedback('Пульс на лучевой артерии проверен.');
+        return;
+      }
+      if (id === 'skin' && ivArmPulseChecked) {
+        if (!ivArmFirstSkinPrep) { setIvArmFirstSkinPrep(true); setIvArmFeedback('Первая обработка места инъекции выполнена. Повторите обработку.'); }
+        else if (!ivArmSecondSkinPrep) { setIvArmSecondSkinPrep(true); setIvArmFeedback('Вторая обработка выполнена. Теперь выберите место пункции.'); }
+        return;
+      }
+      if (id === 'puncture' && ivArmSecondSkinPrep) {
+        if (!ivArmPunctureSiteSelected) { setIvArmPunctureSiteSelected(true); setIvArmFeedback('Место пункции выбрано. Выполните пункцию.'); }
+        else if (!ivArmFirstBloodReturn) { setIvArmFirstBloodReturn(true); setIvArmFeedback('Получено первое подтверждение нахождения иглы в вене. Теперь снимите жгут.'); }
+        else if (ivArmTourniquetReleased && !ivArmSecondBloodReturn) {
+          setIvArmSecondBloodReturn(true);
+          setIvArmFeedback('Положение иглы повторно подтверждено после снятия жгута.');
+          setIvAnswers(prev => ({ ...prev, iv_11: true, iv_12: true, iv_13: true, iv_14: true }));
+          setIvCurrentCriterion(14);
+          setStage('iv_playing');
+        }
+        return;
+      }
+      if (id === 'release' && ivArmFirstBloodReturn && !ivArmTourniquetReleased) {
+        setIvArmTourniquetReleased(true);
+        setIvArmFeedback('Жгут снят после первого подтверждения нахождения иглы в вене. Повторно проверьте положение иглы.');
+      }
+    };
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-7">
+      <div className="min-h-screen bg-slate-50 p-4 md:p-7 text-slate-800">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-100 pb-4">
-            <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ИНТЕРАКТИВНЫЙ ЭТАП 2</p><h1 className="text-2xl md:text-3xl font-bold">Подготовка руки и венепункция</h1></div>
+            <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ВНУТРИВЕННАЯ ИНЪЕКЦИЯ</p><h1 className="text-2xl md:text-3xl font-bold">Подготовка руки и венепункция</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="Подготовка руки пациента и венепункция" />
-          <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
-            <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
-              <h2 className="text-lg font-bold">Рука пациента</h2>
-              <p className="mt-2 text-sm text-slate-600">{runMode === 'training' ? 'Выберите правильное место для жгута, проверьте пульс, выполните двукратную обработку и последовательно смоделируйте подтверждение положения иглы.' : 'Выполните действия в правильной последовательности. Учебные пояснения отключены.'}</p>
-              <div className="mt-5 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-4 md:p-6">
-                <h3 className="font-bold">Интерактивная рука пациента</h3>
-                <p className="mt-1 text-sm text-slate-600">Нажимайте на зоны руки. Доступность следующего действия зависит от правильности предыдущего.</p>
-                <div className="relative mx-auto mt-4 h-72 max-w-2xl overflow-hidden rounded-xl border border-slate-100 bg-white">
-                  <div className="absolute left-[8%] top-[39%] h-24 w-[84%] rounded-full border border-orange-200 bg-gradient-to-b from-orange-100 to-orange-200 shadow-inner" />
-                  <div className="absolute left-[5%] top-[41%] h-20 w-[17%] rounded-full border border-orange-200 bg-orange-100" />
-                  <div className="absolute right-[5%] top-[41%] h-20 w-[17%] rounded-full border border-orange-200 bg-orange-100" />
-                  <div className="absolute left-[24%] right-[24%] top-[30%] flex justify-center gap-2">
-                    {[
-                      { id: 'upper', label: 'Верхняя треть' },
-                      { id: 'middle', label: 'Средняя треть' },
-                      { id: 'lower', label: 'Нижняя треть' },
-                    ].map(zone => (
-                      <button key={zone.id} onClick={() => {
-                        setIvArmTourniquetPosition(zone.id);
-                        setIvArmFeedback(zone.id === 'middle' ? 'Жгут наложен на среднюю треть плеча.' : 'Неверное положение жгута. По критерию требуется средняя треть плеча. Выберите другую зону.');
-                      }} className={`rounded-lg border-2 px-2 py-2 text-[10px] font-bold sm:text-xs ${ivArmTourniquetPosition === zone.id ? (zone.id === 'middle' ? 'border-emerald-500 bg-emerald-100 text-emerald-800' : 'border-red-400 bg-red-50 text-red-700') : 'border-slate-300 bg-white/95 text-slate-600'}`}>{zone.label}</button>
-                    ))}
-                  </div>
-                  <div className="absolute left-[42%] top-[49%] h-8 w-[16%] rounded-lg border border-sky-300 bg-sky-100/90 flex items-center justify-center text-[10px] font-bold text-sky-800">Зона вены</div>
-                  <button disabled={!tourniquetCorrect} onClick={() => { setIvArmPulseChecked(true); setIvArmFeedback('Проверка пульса на лучевой артерии отмечена.'); }} className="absolute bottom-[13%] left-[7%] rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-800 disabled:opacity-40">{ivArmPulseChecked ? 'Пульс проверен ✓' : 'Проверить пульс'}</button>
-                  <button disabled={!ivArmPulseChecked} onClick={() => {
-                    if (!ivArmFirstSkinPrep) { setIvArmFirstSkinPrep(true); setIvArmFeedback('Первая обработка места инъекции выполнена. Повторите обработку отдельным действием.'); }
-                    else if (!ivArmSecondSkinPrep) { setIvArmSecondSkinPrep(true); setIvArmFeedback('Вторая обработка места инъекции выполнена. Теперь выберите зону пункции.'); }
-                  }} className="absolute bottom-[13%] left-[37%] rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-800 disabled:opacity-40">{ivArmSecondSkinPrep ? 'Обработка ×2 ✓' : ivArmFirstSkinPrep ? 'Повторить обработку' : 'Обработать кожу'}</button>
-                  <button disabled={!ivArmSecondSkinPrep} onClick={() => {
-                    if (!ivArmPunctureSiteSelected) { setIvArmPunctureSiteSelected(true); setIvArmFeedback('Зона пункции выбрана. Выполните пункцию для первого подтверждения.'); }
-                    else if (!ivArmFirstBloodReturn) { setIvArmFirstBloodReturn(true); setIvArmFeedback('Первое появление крови смоделировано. Теперь нажмите на жгут, чтобы снять его.'); }
-                    else if (ivArmTourniquetReleased && !ivArmSecondBloodReturn) { setIvArmSecondBloodReturn(true); setIvArmFeedback('Повторное подтверждение после снятия жгута смоделировано. Этап завершён.'); }
-                  }} className="absolute right-[7%] bottom-[13%] rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-800 disabled:opacity-40">{ivArmSecondBloodReturn ? 'Положение подтверждено ✓' : ivArmFirstBloodReturn ? 'Повторная проверка' : ivArmPunctureSiteSelected ? 'Пункция / кровь' : 'Выбрать место пункции'}</button>
-                  <button disabled={!ivArmFirstBloodReturn || ivArmTourniquetReleased} onClick={() => { setIvArmTourniquetReleased(true); setIvArmFeedback('Жгут снят после первого подтверждения нахождения иглы в вене. Повторно проверьте положение иглы.'); }} className="absolute left-[42%] top-[17%] rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 disabled:opacity-40">{ivArmTourniquetReleased ? 'Жгут снят ✓' : 'Снять жгут'}</button>
-                  <div className="absolute bottom-2 left-3 right-3 flex justify-between text-[10px] text-slate-500"><span>Плечо</span><span>Предплечье</span><span>Кисть</span></div>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-                  {[
-                    ['Жгут', tourniquetCorrect],
-                    ['Пульс', ivArmPulseChecked],
-                    ['Обработка ×2', ivArmFirstSkinPrep && ivArmSecondSkinPrep],
-                    ['Пункция и подтверждение', ivArmFirstBloodReturn && ivArmTourniquetReleased && ivArmSecondBloodReturn],
-                  ].map(([label, done]) => <div key={String(label)} className={`rounded-lg border p-2 ${done ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="mr-1">{done ? '✓' : '○'}</span>{String(label)}</div>)}
-                </div>
-                <p className="mt-3 text-xs text-slate-500">Схематичное изображение руки для отработки последовательности, не анатомическая карта вен. Симуляция не измеряет реальный угол, глубину, усилие и точность венепункции на фантоме.</p>
-              </div>
-              {ivArmFeedback && <p aria-live="polite" className="mt-4 rounded-xl bg-sky-50 border border-sky-100 p-3 text-sm text-sky-900">{ivArmFeedback}</p>}
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-                <button onClick={() => setStage('iv_prep')} className="rounded-lg bg-slate-100 px-5 py-3 font-semibold text-slate-700">← К подготовке препарата</button>
-                <button disabled={!armComplete} onClick={() => { setIvAnswers(prev => ({ ...prev, iv_11: true, iv_12: true, iv_13: true, iv_14: true })); setIvCurrentCriterion(14); setStage('iv_playing'); }} className="rounded-lg bg-sky-700 px-6 py-3 font-bold text-white disabled:opacity-40">Продолжить к введению препарата →</button>
-              </div>
-              <p className="mt-3 text-xs text-slate-400">Симуляция фиксирует последовательность действий, но не измеряет реальный угол, глубину, усилие и точность венепункции на фантоме.</p>
-            </section>
-            <aside className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
-              <h3 className="font-bold">Критерии этого этапа</h3>
-              <div className="mt-3 space-y-3 text-sm">
-                {[
-                  ['Жгут на средней трети плеча и проверка пульса', tourniquetCorrect && ivArmPulseChecked],
-                  ['Двукратная обработка места инъекции', ivArmFirstSkinPrep && ivArmSecondSkinPrep],
-                  ['Первое подтверждение и снятие жгута', ivArmFirstBloodReturn && ivArmTourniquetReleased],
-                  ['Повторное подтверждение после снятия жгута', ivArmSecondBloodReturn],
-                ].map(([label, done]) => <div key={String(label)} className="flex items-start gap-2"><span className={done ? 'text-emerald-600' : 'text-slate-300'}>{done ? '✓' : '○'}</span><span>{String(label)}</span></div>)}
-              </div>
-            </aside>
-          </div>
+          <IVRoomScene phase="Подготовка руки пациента и венепункция" hotspots={armHotspots} onHotspotClick={handleArmRoomClick} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? 'Выполните действия на руке пациента' : 'Продолжайте процедуру'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">Последовательно наложите жгут, проверьте пульс, обработайте кожу дважды и выполните венепункцию.</p>}{ivArmFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivArmFeedback}</p>}</div>} />
         </div>
       </div>
     );
@@ -1967,59 +1875,8 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ЛЕЧЕБНОЕ ДЕЛО</p><h1 className="text-2xl md:text-3xl font-bold">Внутривенная инъекция</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase={ivCurrentCriterion >= 14 ? (currentIvAction?.title ?? "Завершение манипуляции") : "Пациент · документы · гигиена рук"} hotspots={ivInteractionHotspots} onHotspotClick={handleIVInteraction} />
-          <div className="mt-5 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-5">
-            <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-semibold text-sky-700">Критерий {ivCurrentCriterion + 1} из 24</span>
-                <span className="text-sm text-slate-500">{answered} отмечено · {completed} «Да»</span>
-              </div>
-              <div className="mt-3 h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-sky-600 transition-all" style={{ width: `${((ivCurrentCriterion + 1) / IV_CRITERIA.length) * 100}%` }} /></div>
-              <h2 className="mt-6 text-xl md:text-2xl font-bold text-slate-900">{runMode === 'training' ? current.title : 'Выполните следующий этап процедуры'}</h2>
-              {runMode === 'training' && <p className="mt-3 text-slate-600 leading-relaxed">{current.detail}</p>}
-              {ivCurrentCriterion === 1 && <div className="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm"><p className="font-semibold">Данные пациента</p><p>Николаенко Николай Николаевич, 30 лет</p></div>}
-              {ivCurrentCriterion === 7 && <div className="mt-4 rounded-lg bg-sky-50 border border-sky-100 p-4 text-sm"><p className="font-semibold">Лист назначения</p><p>{ivScenario.title} — {ivScenario.prescription}</p><p className="mt-2 font-semibold">Маркировка ампулы</p><p>{ivScenario.ampoule}</p><p>Объём ампулы: {ivScenario.ampouleVolume} · Назначено набрать: {ivScenario.dose}</p><p className="text-slate-500 mt-1">Срок годности на маркировке: {ivScenario.expiry}</p></div>}
-              {runMode === 'training' && <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900"><span className="font-semibold">Учебная вводная:</span> {ivCurrentCriterion === 2 ? 'Пациент отвечает: «Нормально».' : ivCurrentCriterion === 3 ? 'Пациент сообщает: «Аллергических реакций не было».' : ivCurrentCriterion === 4 ? 'Считаем, что информированное добровольное согласие получено.' : ivCurrentCriterion === 15 ? 'Во время введения пациент отвечает: «Чувствую себя как обычно».' : ivCurrentCriterion === 18 ? 'После процедуры пациент отвечает: «Всё хорошо, спасибо, доктор».' : 'Выполняйте действие по алгоритму станции. В экзаменационном режиме эта вводная не отображается.'}</div>}
-              {ivCurrentCriterion < 6 ? (
-                <div className="mt-7 rounded-xl border border-sky-200 bg-sky-50 p-4">
-                  <p className="font-semibold text-sky-900">Выполните действие непосредственно в кабинете</p>
-                  <p className="mt-2 text-sm text-sky-800">{currentIvAction?.note}</p>
-                  <p className="mt-3 text-sm text-slate-600">{ivCurrentCriterion < 6 ? 'Нажмите на пациента, планшет с документами или дозатор в изображении кабинета.' : ivCurrentCriterion === 14 ? 'Нажимайте на шприц в сцене, пока не будет введён весь назначенный объём.' : 'Нажмите на соответствующий предмет или пациента в сцене, чтобы выполнить действие.'}</p>
-                  {ivPrepFeedback && <p className="mt-3 rounded-lg bg-white p-3 text-sm font-medium text-emerald-800">{ivPrepFeedback}</p>}
-                </div>
-              ) : autoEvaluated ? <div className="mt-7 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Этот критерий уже оценён автоматически по действиям в интерактивной сцене.</div> : currentIvAction ? (
-                <div className="mt-7 rounded-xl border border-sky-200 bg-sky-50 p-4">
-                  <p className="text-sm text-sky-900">{currentIvAction.note}</p>
-                  {currentIvAction.id === 'iv_15' && (
-                    <div className="mt-4 rounded-xl border border-sky-100 bg-white p-4">
-                      <div className="flex items-center justify-between text-sm font-semibold"><span>В шприце · введено</span><span className="tabular-nums">{ivInjectedVolume.toFixed(1).replace('.', ',')} / {ivScenario.dose}</span></div>
-                      <div className="mt-3 h-4 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-sky-600 transition-all duration-300" style={{ width: `${Math.min(100, (ivInjectedVolume / Number.parseFloat(ivScenario.dose)) * 100)}%` }} /></div>
-                      <p className="mt-2 text-xs text-slate-500">Нажимайте на шприц в комнате, пока не будет введён весь назначенный объём.</p>
-                    </div>
-                  )}
+          <IVRoomScene phase={ivCurrentCriterion >= 14 ? (currentIvAction?.title ?? "Завершение манипуляции") : "Пациент · документы · гигиена рук"} hotspots={ivInteractionHotspots} onHotspotClick={handleIVInteraction} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><div className="flex items-center justify-between gap-3"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? current.title : 'Выполните действие на предметах в кабинете'}</p><span className="text-xs font-semibold text-sky-700">{completed}/24</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-sky-600" style={{width:`${(completed/24)*100}%`}} /></div>{runMode === 'training' && <p className="mt-2 text-xs text-slate-600">{current.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
 
-                  {ivActionFlags[currentIvAction.id] ? (
-                    <div className="mt-4 rounded-lg border border-emerald-200 bg-white p-4 text-sm font-semibold text-emerald-800">✓ {currentIvAction.done}</div>
-                  ) : (
-                    <p className="mt-4 rounded-lg border border-sky-100 bg-white p-3 text-sm text-slate-600">Действие ещё не выполнено. Используйте интерактивную метку в изображении кабинета.</p>
-                  )}
-                </div>
-              ) : <div className="mt-7 grid grid-cols-2 gap-3">
-                <button onClick={() => setIvAnswers(prev => ({ ...prev, [current.id]: true }))} className={`rounded-xl border-2 py-4 font-bold transition ${ivAnswers[current.id] === true ? 'border-green-500 bg-green-50 text-green-800' : 'border-slate-200 bg-white hover:border-green-400'}`}>✓ Да, выполнено</button>
-                <button onClick={() => setIvAnswers(prev => ({ ...prev, [current.id]: false }))} className={`rounded-xl border-2 py-4 font-bold transition ${ivAnswers[current.id] === false ? 'border-red-400 bg-red-50 text-red-800' : 'border-slate-200 bg-white hover:border-red-300'}`}>Нет, не выполнено</button>
-              </div>}
-              <div className="mt-6 rounded-xl border border-sky-100 bg-slate-50 p-4 text-sm text-slate-600">
-                Выполняйте действия непосредственно в процедурном кабинете. После правильного действия тренажёр автоматически перейдёт к следующему этапу и отметит соответствующий критерий.
-              </div>
-              <p className="mt-4 text-xs text-slate-400">Критерии 1–6 и 7–15 фиксируются по последовательности интерактивных действий. Критерии 16–24 выполняются отдельными действиями в симуляции. Реальная техника на фантоме датчиками не измеряется.</p>
-            </section>
-            <aside className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
-              <h3 className="font-bold text-slate-800">Назначение</h3><p className="mt-2 text-sky-800 font-semibold">{ivScenario.title}</p><p className="text-sm text-slate-600">{ivScenario.prescription}</p>
-              <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-sm font-semibold">Оценка</p><p className="mt-1 text-3xl font-bold text-sky-800">{Math.floor((completed / 24) * 100)}%</p><p className="text-xs text-slate-500">{completed} из 24 критериев «Да»</p></div>
-              <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-sm font-semibold mb-2">{runMode === 'training' ? 'Все критерии' : 'Ход выполнения'}</p><div className="space-y-1 max-h-[45vh] overflow-y-auto">{IV_CRITERIA.map((item, index) => <button key={item.id} disabled={/^iv_(0[7-9]|1[0-4])$/.test(item.id)} onClick={() => setIvCurrentCriterion(index)} className={`w-full rounded-lg px-2 py-2 text-left text-xs ${index === ivCurrentCriterion ? 'bg-sky-100 text-sky-900 font-bold' : ivAnswers[item.id] === true ? 'bg-green-50 text-green-800' : ivAnswers[item.id] === false ? 'bg-red-50 text-red-800' : 'bg-slate-50 text-slate-600'}`}>{index + 1}. {runMode === 'training' ? item.title : ivAnswers[item.id] === true ? 'Выполнено' : ivAnswers[item.id] === false ? 'Не выполнено' : 'Не отмечено'}</button>)}</div></div>
-              <button onClick={() => setStage('iv_finished')} className="mt-5 w-full rounded-lg border border-slate-200 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Завершить досрочно</button>
-            </aside>
-          </div>
         </div>
       </div>
     );
