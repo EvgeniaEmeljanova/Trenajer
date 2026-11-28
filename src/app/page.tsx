@@ -1458,6 +1458,60 @@ export default function Home() {
         setIvCurrentCriterion(prev => prev + 1);
       }
     };
+    const handlePatientOption = (message: string) => {
+      const normalized = message.toLowerCase();
+      setIvPatientChatMessages(prev => [...prev, {sender:'student',text:message}]);
+      const reply = (text:string, audio?:string) => {
+        setIvPatientChatMessages(prev => [...prev, {sender:'patient',text}]);
+        setIvPatientBubble(text);
+        if (audio) playAudio(audio);
+      };
+      if (ivCurrentCriterion === 0) {
+        if (!ivGreetingSent) {
+          setIvGreetingSent(true);
+          reply('Здравствуйте!');
+          return;
+        }
+        reply('Очень приятно. Я готов ответить на Ваши вопросы.');
+        setIvAnswers(prev => ({...prev,iv_01:true}));
+        setIvActionFlags(prev => ({...prev,iv_01:true}));
+        setIvPrepFeedback('Контакт установлен.');
+        setIvCurrentCriterion(1);
+        return;
+      }
+      if (ivCurrentCriterion === 1) {
+        const answer='Николаенко Николай Николаевич, 30 лет.';
+        reply(answer,'Николаенко Николай Николаевич, тридцать лет.');
+        setIvIdentityResponseReceived(true);
+        setIvPrepFeedback('Пациент назвал ФИО и возраст. Теперь сверьте их с медицинской документацией.');
+        return;
+      }
+      if (ivCurrentCriterion === 2) {
+        reply('Чувствую себя нормально. Спасибо.');
+        setIvAnswers(prev => ({...prev,iv_03:true}));
+        setIvActionFlags(prev => ({...prev,iv_03:true}));
+        setIvPrepFeedback('Самочувствие пациента уточнено.');
+        setIvCurrentCriterion(3);
+        return;
+      }
+      if (ivCurrentCriterion === 3) {
+        reply('Нет, аллергических реакций не было.');
+        setIvAnswers(prev => ({...prev,iv_04:true}));
+        setIvActionFlags(prev => ({...prev,iv_04:true}));
+        setIvPrepFeedback('Аллергологический анамнез уточнён.');
+        setIvPatientChatOpen(false);
+        setIvCurrentCriterion(4);
+      }
+    };
+    const patientOptions = ivCurrentCriterion === 0
+      ? (!ivGreetingSent
+        ? ['Здравствуйте!', 'Добрый день!']
+        : ['Меня зовут Анна, я медицинская сестра.', 'Я фельдшер, меня зовут Анна.', 'Я врач, меня зовут Анна.'])
+      : ivCurrentCriterion === 1
+        ? ['Представьтесь, пожалуйста, и назовите Ваш возраст.', 'Назовите, пожалуйста, Ваши ФИО и дату рождения.', 'Как Вас зовут и сколько Вам лет?']
+        : ivCurrentCriterion === 2
+          ? ['Николай Николаевич, как Вы себя чувствуете?', 'Есть ли сейчас жалобы на самочувствие?']
+          : ['Есть ли у Вас аллергия на лекарства?', 'Были ли у Вас аллергические реакции на препараты?', 'Хорошо ли Вы переносите лекарственные препараты?'];
     return (
       <div className="min-h-screen bg-slate-50 p-4 md:p-7 text-slate-800">
         <div className="mx-auto max-w-6xl">
@@ -1486,81 +1540,17 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <form className="flex gap-2 border-t border-slate-100 bg-white p-3"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const message = ivPatientChatInput.trim();
-                  if (!message) return;
-                  const normalized = message.toLowerCase();
-                  setIvPatientChatMessages(prev => [...prev, {sender:'student',text:message}]);
-                  setIvPatientChatInput('');
-                  const reply = (text:string, audio?:string) => {
-                    setIvPatientChatMessages(prev => [...prev, {sender:'patient',text}]);
-                    setIvPatientBubble(text);
-                    if (audio) playAudio(audio);
-                  };
-                  if (ivCurrentCriterion === 0) {
-                    if (!ivGreetingSent) {
-                      if (!/^(здравствуйте|добрый день|доброе утро|добрый вечер)[!. ,]*$/i.test(message)) {
-                        reply('Здравствуйте. Давайте сначала поздороваемся.');
-                        return;
-                      }
-                      setIvGreetingSent(true);
-                      reply('Здравствуйте!');
-                      return;
-                    }
-                    const introduced = /(меня зовут|я\s+[а-яё-]+)/i.test(normalized) &&
-                      /(медицинский работник|фельдшер|медицинская сестра|медсестра|врач)/i.test(normalized);
-                    if (!introduced) {
-                      reply('Представьтесь, пожалуйста, и скажите, кем Вы работаете.');
-                      return;
-                    }
-                    reply('Очень приятно. Я готов ответить на Ваши вопросы.');
-                    setIvAnswers(prev => ({...prev,iv_01:true}));
-                    setIvActionFlags(prev => ({...prev,iv_01:true}));
-                    setIvPrepFeedback('Контакт установлен.');
-                    setIvCurrentCriterion(1);
-                    return;
-                  }
-                  if (ivCurrentCriterion === 1) {
-                    const asked = /(как вас зовут|назовите.*(фио|имя)|ваше фио|представьтесь|сколько вам лет|назовите.*возраст|имя и возраст|фио и возраст)/i.test(normalized);
-                    if (!asked) { reply('Что именно Вы хотели бы у меня уточнить?'); return; }
-                    const answer='Николаенко Николай Николаевич, 30 лет.';
-                    reply(answer,'Николаенко Николай Николаевич, тридцать лет.');
-                    setIvIdentityResponseReceived(true);
-                    setIvPrepFeedback('Пациент назвал ФИО и возраст. Теперь сверьте их с медицинской документацией.');
-                    return;
-                  }
-                  if (ivCurrentCriterion === 2) {
-                    if (!/(самочувств|чувствуете|как вы себя|как себя чувствуете)/i.test(normalized)) {
-                      reply('Вы хотели что-то узнать о моём самочувствии?');
-                      return;
-                    }
-                    reply('Чувствую себя нормально. Спасибо.');
-                    setIvAnswers(prev => ({...prev,iv_03:true}));
-                    setIvActionFlags(prev => ({...prev,iv_03:true}));
-                    setIvPrepFeedback('Самочувствие пациента уточнено.');
-                    setIvCurrentCriterion(3);
-                    return;
-                  }
-                  if (ivCurrentCriterion === 3) {
-                    if (!/(аллерг|реакц|переносимост)/i.test(normalized)) {
-                      reply('Вы хотели уточнить, есть ли у меня аллергия?');
-                      return;
-                    }
-                    reply('Нет, аллергических реакций не было.');
-                    setIvAnswers(prev => ({...prev,iv_04:true}));
-                    setIvActionFlags(prev => ({...prev,iv_04:true}));
-                    setIvPrepFeedback('Аллергологический анамнез уточнён.');
-                    setIvPatientChatOpen(false);
-                    setIvCurrentCriterion(4);
-                  }
-                }}>
-                <input value={ivPatientChatInput} onChange={event => setIvPatientChatInput(event.target.value)}
-                  placeholder={ivCurrentCriterion===0 ? (ivGreetingSent ? 'Представьтесь и назовите свою роль…' : 'Поздоровайтесь с пациентом…') : ivCurrentCriterion===1 ? 'Уточните ФИО и возраст…' : ivCurrentCriterion===2 ? 'Спросите о самочувствии…' : 'Спросите об аллергии…'}
-                  className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-3 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100" />
-                <button type="submit" disabled={!ivPatientChatInput.trim()} className="rounded-xl bg-sky-700 px-5 py-3 text-sm font-bold text-white hover:bg-sky-800 disabled:opacity-40">Отправить</button>
-              </form>
+              <div className="border-t border-slate-100 bg-white p-3">
+                <p className="mb-2 text-xs font-semibold text-slate-500">Выберите реплику</p>
+                <div className="flex flex-wrap gap-2">
+                  {patientOptions.map((option,index) => (
+                    <button key={index} type="button" onClick={() => handlePatientOption(option)}
+                      className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-left text-sm font-medium text-sky-900 transition hover:border-sky-400 hover:bg-sky-100">
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>       </form>
             </div>
           )}
 
