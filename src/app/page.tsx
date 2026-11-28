@@ -1598,32 +1598,49 @@ export default function Home() {
             </div>
           )}
           {ivConsentOpen && (
-            <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-950/75 p-4" role="dialog" aria-modal="true" aria-label="Информированное добровольное согласие">
-              <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-sky-200 bg-white text-slate-900 shadow-2xl">
-                <div className="border-b border-sky-100 bg-sky-50 px-5 py-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-sky-700">Медицинская документация</p>
-                  <h2 className="mt-1 text-xl font-bold">Информированное добровольное согласие</h2>
+            <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-950/75 p-3 sm:p-5" role="dialog" aria-modal="true" aria-label="Информированное добровольное согласие">
+              <div className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-slate-300 bg-white text-slate-900 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
+                  <div><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Медицинская документация · учебная симуляция</p><h2 className="mt-1 text-lg font-bold">Информированное добровольное согласие</h2></div>
+                  <button type="button" onClick={() => setIvConsentOpen(false)} aria-label="Закрыть" className="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-200">✕</button>
                 </div>
-                <div className="p-5 md:p-7">
-                  <div className="border border-slate-300 p-5">
-                    <p className="text-center font-bold">Согласие на медицинское вмешательство</p>
-                    <p className="mt-4 text-sm leading-6">Я, <strong>Николаенко Николай Николаевич</strong>, 30 лет, подтверждаю, что мне разъяснена предстоящая внутривенная инъекция назначенного лекарственного средства: <strong>{ivScenario.title}</strong>.</p>
-                    <p className="mt-3 text-sm leading-6">Мне предоставлена информация о цели и характере медицинского вмешательства, я имел возможность задать вопросы. Согласие добровольное.</p>
-                    <div className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-                      <p>Подпись пациента: <strong>Имеется</strong></p>
-                      <p>Статус документа: <strong className="text-emerald-700">Подписано</strong></p>
+                <div className="overflow-y-auto px-5 py-5 sm:px-8">
+                  <div className="mx-auto max-w-2xl border border-slate-300 p-5 text-[13px] leading-[1.65] sm:p-7">
+                    <p className="text-center font-bold">ИНФОРМИРОВАННОЕ ДОБРОВОЛЬНОЕ СОГЛАСИЕ<br/>НА МЕДИЦИНСКОЕ ВМЕШАТЕЛЬСТВО</p>
+                    <p className="mt-5">Я, <span className="font-semibold underline decoration-dotted underline-offset-4">Николаенко Николай Николаевич</span>,</p>
+                    <p className="text-xs text-slate-500">(фамилия, имя, отчество)</p>
+                    <p className="mt-2">« 11 » января ХХ г. рождения,</p>
+                    <p className="mt-2">зарегистрированный по адресу: <span className="font-semibold">г. Москва, ул. Балтийская, 18</span></p>
+                    <p className="text-xs text-slate-500">(адрес места жительства гражданина либо его законного представителя)</p>
+                    <p className="mt-3">даю информированное добровольное согласие на следующий вид медицинского вмешательства:</p>
+                    <p className="mt-2 border-b border-slate-400 pb-2 font-semibold">Внутривенное введение лекарственного препарата</p>
+                    <p className="mt-3">Медицинским работником</p>
+                    <p className="mt-1 border-b border-slate-400 pb-2">________________________________________________</p>
+                    <p className="text-xs text-slate-500">(должность, Ф.И.О. медицинского работника)</p>
+                    <p className="mt-4">В доступной для меня форме мне разъяснены цели и методы оказания медицинской помощи, связанный с ними риск, возможные варианты медицинских вмешательств и их последствия, в том числе вероятность развития осложнений, а также предполагаемые результаты оказания медицинской помощи.</p>
+                    <p className="mt-3">Мне разъяснено, что я имею право отказаться от одного или нескольких видов медицинских вмешательств или потребовать их прекращения, за исключением случаев, предусмотренных законодательством Российской Федерации.</p>
+                    <p className="mt-3">Мне разъяснены и понятны суть моего заболевания и опасности, связанные с дальнейшим развитием этого заболевания. Я понимаю необходимость проведения указанной манипуляции (процедуры). Мне понятно, что во время манипуляции или после неё могут развиться осложнения, которые могут потребовать дополнительных вмешательств (лечения).</p>
+                    <p className="mt-3">Сведения о выбранных мною лицах, которым может быть передана информация о состоянии моего здоровья:</p>
+                    <p className="mt-2 border-b border-slate-400 pb-2">Николаенко Н.Н. · 0000000000</p>
+                    <p className="text-xs text-slate-500">(Ф.И.О. гражданина, контактный телефон)</p>
+                    <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                      <div><p className="font-semibold">Подпись пациента</p><p className="mt-5 border-b border-slate-500 pb-1 italic">Николаенко</p><p className="text-xs text-slate-500">(подпись — учебная имитация)</p></div>
+                      <div><p className="font-semibold">Ф.И.О. медицинского работника</p><p className="mt-5 border-b border-slate-500 pb-1">&nbsp;</p><p className="text-xs text-slate-500">(заполняется медицинским работником)</p></div>
                     </div>
+                    <p className="mt-4 border-b border-slate-500 pb-2">&nbsp;</p>
+                    <p className="text-xs text-slate-500">(подпись медицинского работника)</p>
+                    <p className="mt-6 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">Учебный образец для тренажёра. Не является действующим юридическим документом; реквизиты и формулировки воспроизводятся в учебных целях.</p>
                   </div>
                 </div>
-                <div className="flex flex-wrap justify-end gap-3 border-t border-sky-100 bg-slate-50 px-5 py-4">
+                <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4">
                   <button type="button" onClick={() => setIvConsentOpen(false)} className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700">Закрыть</button>
                   <button type="button" onClick={() => {
                     setIvConsentOpen(false);
                     setIvAnswers(prev => ({ ...prev, iv_05: true }));
                     setIvActionFlags(prev => ({ ...prev, iv_05: true }));
-                    setIvPrepFeedback('В документах обнаружено подписанное информированное добровольное согласие.');
+                    setIvPrepFeedback('');
                     setIvCurrentCriterion(7);
-                  }} className="rounded-xl bg-sky-700 px-5 py-3 font-bold text-white hover:bg-sky-800">Согласие имеется — подтвердить</button>
+                  }} className="rounded-xl bg-sky-700 px-5 py-3 font-bold text-white hover:bg-sky-800">Пациент подписал согласие — подтвердить</button>
                 </div>
               </div>
             </div>
