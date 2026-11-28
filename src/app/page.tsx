@@ -1390,6 +1390,7 @@ export default function Home() {
   }
 
   if (stage === 'iv_contact') {
+    const ivScenario = IV_SCENARIOS[ivScenarioIndex];
     const contactSteps = [
       { title: 'Установить контакт с пациентом', detail: 'Нажмите на пациента. Откроется чат, в котором нужно поздороваться, представиться и обозначить свою роль.', object: 'patient' },
       { title: 'Идентифицировать пациента', detail: 'Повторно нажмите на пациента, попросите назвать ФИО и возраст и сверьте ответ с данными задания.', object: 'patient' },
@@ -1418,13 +1419,11 @@ export default function Home() {
       if (ivCurrentCriterion === 1 && id === 'documents') {
         setIvPatientBubble('');
         if (!ivIdentityResponseReceived) {
-          setIvPrepFeedback('Сначала попросите пациента назвать ФИО и возраст. Затем откройте документы для сверки.');
+          setIvPrepFeedback('Сначала попросите пациента назвать ФИО и возраст. Затем откройте лист назначения для сверки.');
           return;
         }
-        setIvAnswers(prev => ({ ...prev, iv_02: true }));
-        setIvActionFlags(prev => ({ ...prev, iv_02: true }));
-        setIvPrepFeedback('ФИО и возраст пациента сверены с медицинской документацией. Критерий № 2 выполнен.');
-        setIvCurrentCriterion(2);
+        setIvPrescriptionOpen(true);
+        setIvPrepFeedback('Откройте лист назначения и сверьте ФИО и возраст пациента с ответом.');
         return;
       }
       if (id !== step.object) {
@@ -1529,6 +1528,45 @@ export default function Home() {
               <div className="mb-1 flex min-w-0 flex-col items-start gap-2">
                 <button type="button" onClick={() => setIvAkkredikHint(v => !v)} className="rounded-xl border border-blue-400/50 bg-gray-800 px-4 py-3 text-sm font-bold text-white shadow-lg hover:bg-gray-700">{ivAkkredikHint ? 'Скрыть подсказку' : 'Подсказка'}</button>
                 {ivAkkredikHint && <div className="max-w-[240px] rounded-xl border border-blue-400/40 bg-gray-800 p-3 text-sm leading-relaxed text-gray-100 shadow-xl">{ivHintText}</div>}
+              </div>
+            </div>
+          )}
+          {ivPrescriptionOpen && (
+            <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-label="Лист назначения для идентификации пациента">
+              <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-sky-200 bg-white text-slate-900 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-5 py-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-sky-700">Медицинская документация</p>
+                    <h2 className="mt-1 text-xl font-bold">Лист назначения</h2>
+                  </div>
+                  <button type="button" onClick={() => setIvPrescriptionOpen(false)} aria-label="Закрыть лист назначения" className="rounded-lg px-3 py-2 text-xl text-slate-500 hover:bg-white">✕</button>
+                </div>
+                <div className="p-5 md:p-7">
+                  <div className="border border-slate-300 p-5 shadow-inner">
+                    <p className="text-center text-xs font-semibold uppercase tracking-wide">Медицинская документация</p>
+                    <h3 className="mt-1 border-b-2 border-slate-800 pb-3 text-center text-lg font-bold">Лист врачебных назначений</h3>
+                    <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+                      <p><span className="text-slate-500">Пациент:</span><br/><strong>Николаенко Николай Николаевич</strong></p>
+                      <p><span className="text-slate-500">Возраст:</span><br/><strong>30 лет</strong></p>
+                    </div>
+                    <div className="mt-5 rounded-lg border-2 border-slate-400 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Назначение</p>
+                      <p className="mt-2 text-lg font-bold">{ivScenario.title}</p>
+                      <p className="mt-1 font-semibold">{ivScenario.prescription}</p>
+                    </div>
+                    <p className="mt-4 text-sm text-slate-600">Сверьте ФИО и возраст в листе назначения с данными, которые сообщил пациент.</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap justify-end gap-3 border-t border-sky-100 bg-slate-50 px-5 py-4">
+                  <button type="button" onClick={() => setIvPrescriptionOpen(false)} className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700">Закрыть</button>
+                  <button type="button" onClick={() => {
+                    setIvPrescriptionOpen(false);
+                    setIvAnswers(prev => ({ ...prev, iv_02: true }));
+                    setIvActionFlags(prev => ({ ...prev, iv_02: true }));
+                    setIvPrepFeedback('ФИО и возраст пациента сверены с листом назначения. Критерий № 2 выполнен.');
+                    setIvCurrentCriterion(2);
+                  }} className="rounded-xl bg-sky-700 px-5 py-3 font-bold text-white hover:bg-sky-800">Данные совпадают — подтвердить</button>
+                </div>
               </div>
             </div>
           )}
