@@ -1688,15 +1688,66 @@ export default function Home() {
       { id: 'iv_24', title: 'Сделать запись в медицинской документации', button: 'Оформить запись в медицинской карте', done: 'Отметка о выполненной процедуре внесена в медицинскую документацию.', note: 'Выберите действие оформления записи. Карта пациента соответствует назначенному сценарию.' },
     ];
     const currentIvAction = ivCurrentCriterion < 6 ? ivIntroActionSteps[ivCurrentCriterion] : ivCurrentCriterion >= 14 ? ivActionSteps[ivCurrentCriterion - 14] : null;
+    const postProcedureHotspotByCriterion: Record<number, IVRoomHotspot> = {
+      14: { id: 'syringe', label: 'Шприц · введение препарата', x: 49, y: 77, done: ivActionFlags.iv_15 },
+      15: { id: 'patient', label: 'Пациент · контроль самочувствия', x: 43, y: 40, w: 25, h: 48, done: ivActionFlags.iv_16 },
+      16: { id: 'waste', label: 'Контейнер для острых отходов', x: 92, y: 81, done: ivActionFlags.iv_17 },
+      17: { id: 'arm', label: 'Рука пациента · повязка', x: 47, y: 58, w: 20, h: 20, done: ivActionFlags.iv_18 },
+      18: { id: 'patient', label: 'Пациент · после процедуры', x: 43, y: 40, w: 25, h: 48, done: ivActionFlags.iv_19 },
+      19: { id: 'tray', label: 'Лоток · передать на обработку', x: 75, y: 80, done: ivActionFlags.iv_20 },
+      20: { id: 'patient', label: 'Пациент · рекомендации', x: 43, y: 40, w: 25, h: 48, done: ivActionFlags.iv_21 },
+      21: { id: 'gloves', label: 'Смотровые перчатки', x: 80, y: 86, done: ivActionFlags.iv_22 },
+      22: { id: 'sink', label: 'Раковина · гигиена рук', x: 57, y: 34, w: 25, h: 23, done: ivActionFlags.iv_23 },
+      23: { id: 'documents', label: 'Медицинская документация', x: 9, y: 79, w: 19, h: 23, done: ivActionFlags.iv_24 },
+    };
     const ivInteractionHotspots: IVRoomHotspot[] = ivCurrentCriterion < 6 ? [
       { id: 'patient', label: 'Пациент · диалог', x: 52, y: 48, w: 31, h: 48 },
       { id: 'documents', label: 'Документы', x: 17, y: 81, w: 22, h: 18 },
       { id: 'sink', label: 'Гигиена рук', x: 69, y: 31, w: 18, h: 22 },
-    ] : [];
+    ] : ivCurrentCriterion >= 14 && ivCurrentCriterion <= 23 ? [postProcedureHotspotByCriterion[ivCurrentCriterion]] : [];
     const handleIVInteraction = (id: string) => {
+      if (ivCurrentCriterion >= 14 && ivCurrentCriterion <= 23) {
+        const expectedByCriterion: Record<number, string> = {
+          14: 'syringe', 15: 'patient', 16: 'waste', 17: 'arm', 18: 'patient',
+          19: 'tray', 20: 'patient', 21: 'gloves', 22: 'sink', 23: 'documents',
+        };
+        if (id !== expectedByCriterion[ivCurrentCriterion]) {
+          setIvPrepFeedback('Сейчас требуется взаимодействовать с другим предметом или пациентом. Следуйте текущему этапу процедуры.');
+          return;
+        }
+        if (ivCurrentCriterion === 14) {
+          const prescribed = Number.parseFloat(ivScenario.dose);
+          const nextVolume = Math.min(prescribed, Number((ivInjectedVolume + 0.5).toFixed(1)));
+          setIvInjectedVolume(nextVolume);
+          if (nextVolume >= prescribed) {
+            setIvActionFlags(prev => ({ ...prev, iv_15: true }));
+            setIvAnswers(prev => ({ ...prev, iv_15: true }));
+            setIvPrepFeedback(`Назначенный объём ${ivScenario.dose} введён. Теперь оцените самочувствие пациента во время введения.`);
+          } else {
+            setIvPrepFeedback(`Введение продолжается: ${nextVolume.toFixed(1).replace('.', ',')} мл из ${ivScenario.dose}. Нажмите на шприц ещё раз для продолжения.`);
+          }
+          return;
+        }
+        const criterionId = IV_CRITERIA[ivCurrentCriterion].id;
+        setIvActionFlags(prev => ({ ...prev, [criterionId]: true }));
+        setIvAnswers(prev => ({ ...prev, [criterionId]: true }));
+        const responseByCriterion: Record<number, string> = {
+          15: 'Во время введения пациент отвечает: «Чувствую себя как обычно».',
+          16: 'Использованный шприц помещён в контейнер для острых отходов.',
+          17: 'Давящая повязка наложена на место инъекции.',
+          18: 'После введения пациент отвечает: «Всё хорошо, спасибо, доктор».',
+          19: 'Использованный лоток передан на дезинфекцию и последующую стерилизацию.',
+          20: 'Пациенту сообщено о необходимости снять повязку через 15–20 минут.',
+          21: 'Смотровые перчатки сняты и утилизированы.',
+          22: 'После манипуляции выполнена гигиеническая обработка рук.',
+          23: 'Запись о процедуре внесена в медицинскую документацию.',
+        };
+        setIvPrepFeedback(responseByCriterion[ivCurrentCriterion]);
+        return;
+      }
       const expected = ivCurrentCriterion <= 3 ? 'patient' : ivCurrentCriterion === 4 ? 'documents' : 'sink';
       if (id !== expected) {
-        setIvPrepFeedback(id === 'patient' ? 'Сначала выполните действие с текущим объектом по алгоритму.' : 'Сейчас требуется другой объект. Вернитесь к текущему этапу процедуры.');
+        setIvPrepFeedback('Сейчас требуется другой объект. Вернитесь к текущему этапу процедуры.');
         return;
       }
       const criterionId = IV_CRITERIA[ivCurrentCriterion].id;
@@ -1718,7 +1769,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ЛЕЧЕБНОЕ ДЕЛО</p><h1 className="text-2xl md:text-3xl font-bold">Внутривенная инъекция</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="Пациент · документы · гигиена рук" hotspots={ivInteractionHotspots} onHotspotClick={handleIVInteraction} />
+          <IVRoomScene phase={ivCurrentCriterion >= 14 ? (currentIvAction?.title ?? "Завершение манипуляции") : "Пациент · документы · гигиена рук"} hotspots={ivInteractionHotspots} onHotspotClick={handleIVInteraction} />
           <div className="mt-5 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-5">
             <section className="rounded-2xl border border-sky-100 bg-white p-5 md:p-7 shadow-sm">
               <div className="flex items-center justify-between gap-3">
@@ -1735,7 +1786,7 @@ export default function Home() {
                 <div className="mt-7 rounded-xl border border-sky-200 bg-sky-50 p-4">
                   <p className="font-semibold text-sky-900">Выполните действие непосредственно в кабинете</p>
                   <p className="mt-2 text-sm text-sky-800">{currentIvAction?.note}</p>
-                  <p className="mt-3 text-sm text-slate-600">Нажмите на пациента, планшет с документами или дозатор в изображении кабинета. Следующий этап откроется после правильного выбора объекта.</p>
+                  <p className="mt-3 text-sm text-slate-600">{ivCurrentCriterion < 6 ? 'Нажмите на пациента, планшет с документами или дозатор в изображении кабинета.' : ivCurrentCriterion === 14 ? 'Нажимайте на шприц в сцене, пока не будет введён весь назначенный объём.' : 'Нажмите на соответствующий предмет или пациента в сцене, чтобы выполнить действие.'}</p>
                   {ivPrepFeedback && <p className="mt-3 rounded-lg bg-white p-3 text-sm font-medium text-emerald-800">{ivPrepFeedback}</p>}
                 </div>
               ) : autoEvaluated ? <div className="mt-7 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Этот критерий уже оценён автоматически по действиям в интерактивной сцене.</div> : currentIvAction ? (
@@ -1743,48 +1794,16 @@ export default function Home() {
                   <p className="text-sm text-sky-900">{currentIvAction.note}</p>
                   {currentIvAction.id === 'iv_15' && (
                     <div className="mt-4 rounded-xl border border-sky-100 bg-white p-4">
-                      <div className="flex items-center justify-between text-sm font-semibold"><span>Шприц · введено</span><span className="tabular-nums">{ivInjectedVolume.toFixed(1).replace('.', ',')} / {ivScenario.dose}</span></div>
+                      <div className="flex items-center justify-between text-sm font-semibold"><span>В шприце · введено</span><span className="tabular-nums">{ivInjectedVolume.toFixed(1).replace('.', ',')} / {ivScenario.dose}</span></div>
                       <div className="mt-3 h-4 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-sky-600 transition-all duration-300" style={{ width: `${Math.min(100, (ivInjectedVolume / Number.parseFloat(ivScenario.dose)) * 100)}%` }} /></div>
-                      <p className="mt-2 text-xs text-slate-500">Каждое нажатие моделирует введение 0,5 мл. Критерий засчитывается только после введения всего назначенного объёма.</p>
+                      <p className="mt-2 text-xs text-slate-500">Нажимайте на шприц в комнате, пока не будет введён весь назначенный объём.</p>
                     </div>
                   )}
+
                   {ivActionFlags[currentIvAction.id] ? (
                     <div className="mt-4 rounded-lg border border-emerald-200 bg-white p-4 text-sm font-semibold text-emerald-800">✓ {currentIvAction.done}</div>
                   ) : (
-                    <button
-                      onClick={() => {
-                        if (currentIvAction.id === 'iv_15') {
-                          const prescribed = Number.parseFloat(ivScenario.dose);
-                          const nextVolume = Math.min(prescribed, Number((ivInjectedVolume + 0.5).toFixed(1)));
-                          setIvInjectedVolume(nextVolume);
-                          if (nextVolume >= prescribed) {
-                            setIvActionFlags(prev => ({ ...prev, iv_15: true }));
-                            setIvAnswers(prev => ({ ...prev, iv_15: true }));
-                          }
-                          return;
-                        }
-                        setIvActionFlags(prev => ({ ...prev, [currentIvAction.id]: true }));
-                        setIvAnswers(prev => ({ ...prev, [currentIvAction.id]: true }));
-                      }}
-                      disabled={
-                        (currentIvAction.id === 'iv_02' && !ivActionFlags.iv_01) ||
-                        (currentIvAction.id === 'iv_03' && !ivActionFlags.iv_02) ||
-                        (currentIvAction.id === 'iv_04' && !ivActionFlags.iv_03) ||
-                        (currentIvAction.id === 'iv_05' && !ivActionFlags.iv_04) ||
-                        (currentIvAction.id === 'iv_06' && !ivActionFlags.iv_05) ||
-                        (currentIvAction.id === 'iv_15' && (!ivArmSecondBloodReturn || ivInjectedVolume >= Number.parseFloat(ivScenario.dose))) ||
-                        (currentIvAction.id === 'iv_16' && !ivActionFlags.iv_15) ||
-                        (currentIvAction.id === 'iv_17' && !ivActionFlags.iv_16) ||
-                        (currentIvAction.id === 'iv_18' && !ivActionFlags.iv_17) ||
-                        (currentIvAction.id === 'iv_19' && !ivActionFlags.iv_18) ||
-                        (currentIvAction.id === 'iv_20' && !ivActionFlags.iv_19) ||
-                        (currentIvAction.id === 'iv_21' && !ivActionFlags.iv_20) ||
-                        (currentIvAction.id === 'iv_22' && !ivActionFlags.iv_21) ||
-                        (currentIvAction.id === 'iv_23' && !ivActionFlags.iv_22) ||
-                        (currentIvAction.id === 'iv_24' && !ivActionFlags.iv_23)
-                      }
-                      className="mt-4 w-full rounded-xl bg-sky-700 px-5 py-4 font-bold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-40"
-                    >{currentIvAction.id === 'iv_15' ? `Ввести 0,5 мл · ${ivInjectedVolume.toFixed(1).replace('.', ',')} / ${ivScenario.dose}` : currentIvAction.button}</button>
+                    <p className="mt-4 rounded-lg border border-sky-100 bg-white p-3 text-sm text-slate-600">Действие ещё не выполнено. Используйте интерактивную метку в изображении кабинета.</p>
                   )}
                 </div>
               ) : <div className="mt-7 grid grid-cols-2 gap-3">
