@@ -410,6 +410,45 @@ function IVRoomScene({
   );
 }
 
+function IVHandHygieneModal({ open, phase, onClose, onComplete }: { open: boolean; phase: 'before' | 'after'; onClose: () => void; onComplete: () => void }) {
+  const [step, setStep] = useState(0);
+  const steps = [
+    'Ладонь о ладонь',
+    'Правая ладонь по тыльной стороне левой кисти, затем наоборот',
+    'Ладони вместе, пальцы переплетены',
+    'Тыльные поверхности пальцев к противоположным ладоням',
+    'Круговое растирание больших пальцев',
+    'Круговое растирание кончиков пальцев о ладонь',
+  ];
+  if (!open) return null;
+  const done = step >= steps.length;
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/75 p-3 sm:p-5" role="dialog" aria-modal="true" aria-label="Гигиеническая обработка рук">
+      <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-sky-200 bg-white text-slate-900 shadow-2xl">
+        <div className="border-b border-sky-100 bg-sky-50 px-5 py-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-sky-700">Гигиена рук · обработка кожным антисептиком</p>
+          <h2 className="mt-1 text-xl font-bold">{phase === 'before' ? 'Перед манипуляцией' : 'После манипуляции'}</h2>
+          <p className="mt-1 text-sm text-slate-600">Нанесите кожный антисептик и последовательно выполните движения для обработки всех поверхностей кистей.</p>
+        </div>
+        <div className="p-5">
+          <div className="mb-4 flex items-center justify-between text-xs font-semibold text-slate-500"><span>Этап {Math.min(step + 1, steps.length)} из {steps.length}</span><span>{Math.round(step / steps.length * 100)}%</span></div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-sky-600 transition-all" style={{ width: `${step / steps.length * 100}%` }} /></div>
+          <div className="my-6 rounded-xl border border-sky-100 bg-sky-50/70 p-6 text-center">
+            <div className="mb-3 text-5xl" aria-hidden="true">👐</div>
+            <p className="text-lg font-bold text-sky-950">{done ? 'Обработка завершена' : steps[step]}</p>
+            <p className="mt-2 text-sm text-slate-600">{done ? 'Все этапы последовательности выполнены в симуляции.' : 'Выполните движение, затем перейдите к следующему.'}</p>
+          </div>
+          <p className="text-xs leading-relaxed text-slate-500">В тренажёре моделируется обработка кожным антисептиком. Мытьё рук с мылом дополнительно не требуется. Соблюдайте инструкцию к применяемому антисептику и время экспозиции, указанные производителем.</p>
+        </div>
+        <div className="flex flex-wrap justify-end gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
+          <button type="button" onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700">Отмена</button>
+          {!done ? <button type="button" onClick={() => setStep(value => value + 1)} className="rounded-xl bg-sky-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-sky-800">{step === 0 ? 'Антисептик нанесён · Далее' : 'Следующее движение'}</button> : <button type="button" onClick={onComplete} className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">Завершить обработку</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [stage, setStage] = useState<Stage>('menu');
   const [runMode, setRunMode] = useState<RunMode>('training');
@@ -435,6 +474,7 @@ export default function Home() {
   const [ivPrepActiveObject, setIvPrepActiveObject] = useState<string | null>(null);
   const [ivPrescriptionOpen, setIvPrescriptionOpen] = useState(false);
   const [ivConsentOpen, setIvConsentOpen] = useState(false);
+  const [ivHandHygienePhase, setIvHandHygienePhase] = useState<'before' | 'after' | null>(null);
   const [ivArmTourniquetPosition, setIvArmTourniquetPosition] = useState('');
   const [ivArmPulseChecked, setIvArmPulseChecked] = useState(false);
   const [ivArmFirstSkinPrep, setIvArmFirstSkinPrep] = useState(false);
@@ -1441,6 +1481,10 @@ export default function Home() {
         return;
       }
       if (ivCurrentCriterion === 7) {
+        setIvHandHygienePhase('before');
+        return;
+      }
+      if (ivCurrentCriterion === 7) {
         setIvAnswers(prev => ({ ...prev, iv_06: true }));
         setIvActionFlags(prev => ({ ...prev, iv_06: true }));
         setIvPrepFeedback('Гигиеническая обработка рук выполнена.');
@@ -1971,6 +2015,10 @@ export default function Home() {
           22: { id: 'sink', message: 'После манипуляции выполнена гигиеническая обработка рук.' },
           23: { id: 'documents', message: 'Отметка о выполненной процедуре внесена в медицинскую документацию.' },
         };
+        if (ivCurrentCriterion === 22 && id === 'sink') {
+          setIvHandHygienePhase('after');
+          return;
+        }
         const expected = expectedByCriterion[ivCurrentCriterion];
         if (!expected || id !== expected.id) {
           setIvPrepFeedback('Выберите соответствующий предмет в процедурном кабинете для текущего действия.');
@@ -2003,6 +2051,8 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · ЛЕЧЕБНОЕ ДЕЛО</p><h1 className="text-2xl md:text-3xl font-bold">Внутривенная инъекция</h1></div>
             <div className="rounded-xl bg-white border border-sky-200 px-5 py-3 text-center shadow-sm"><p className="text-xs text-slate-500">Осталось времени</p><p className={`text-2xl font-bold tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-sky-800'}`}>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
+          <IVHandHygieneModal open={ivHandHygienePhase === 'before'} phase="before" onClose={() => setIvHandHygienePhase(null)} onComplete={() => { setIvHandHygienePhase(null); setIvAnswers(prev => ({ ...prev, iv_06: true })); setIvActionFlags(prev => ({ ...prev, iv_06: true })); setIvPrepFeedback('Гигиеническая обработка рук кожным антисептиком выполнена.'); setIvCurrentCriterion(0); setStage('iv_prep'); }} />
+          <IVHandHygieneModal open={ivHandHygienePhase === 'after'} phase="after" onClose={() => setIvHandHygienePhase(null)} onComplete={() => { setIvHandHygienePhase(null); setIvActionFlags(prev => ({ ...prev, iv_23: true })); setIvAnswers(prev => ({ ...prev, iv_23: true })); setIvPrepFeedback('Гигиеническая обработка рук кожным антисептиком после манипуляции выполнена.'); setIvCurrentCriterion(23); }} />
           <IVRoomScene phase={ivCurrentCriterion >= 14 ? (currentIvAction?.title ?? "Завершение манипуляции") : "Пациент · документы · гигиена рук"} hotspots={ivInteractionHotspots} onHotspotClick={handleIVInteraction} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><div className="flex items-center justify-between gap-3"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? current.title : 'Выполните действие на предметах в кабинете'}</p><span className="text-xs font-semibold text-sky-700">{completed}/24</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-sky-600" style={{width:`${(completed/24)*100}%`}} /></div>{runMode === 'training' && <p className="mt-2 text-xs text-slate-600">{current.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
 
         </div>
