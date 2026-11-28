@@ -434,6 +434,7 @@ export default function Home() {
   const [ivPrepFeedback, setIvPrepFeedback] = useState('');
   const [ivPrepActiveObject, setIvPrepActiveObject] = useState<string | null>(null);
   const [ivPrescriptionOpen, setIvPrescriptionOpen] = useState(false);
+  const [ivConsentOpen, setIvConsentOpen] = useState(false);
   const [ivArmTourniquetPosition, setIvArmTourniquetPosition] = useState('');
   const [ivArmPulseChecked, setIvArmPulseChecked] = useState(false);
   const [ivArmFirstSkinPrep, setIvArmFirstSkinPrep] = useState(false);
@@ -1387,21 +1388,23 @@ export default function Home() {
   if (stage === 'iv_contact') {
     const ivScenario = IV_SCENARIOS[ivScenarioIndex];
     const contactSteps = [
-      { title: 'Установить контакт с пациентом', detail: 'Нажмите на пациента. Откроется чат, в котором нужно поздороваться, представиться и обозначить свою роль.', object: 'patient' },
-      { title: 'Идентифицировать пациента', detail: 'Повторно нажмите на пациента, попросите назвать ФИО и возраст и сверьте ответ с данными задания.', object: 'patient' },
-      { title: 'Уточнить самочувствие', detail: 'Обратитесь к пациенту по имени и отчеству и спросите о самочувствии.', object: 'patient' },
-      { title: 'Уточнить аллергологический анамнез', detail: 'Спросите пациента об аллергии в анамнезе и на назначенное лекарство.', object: 'patient' },
-      { title: 'Проверить информированное согласие', detail: 'Нажмите на планшет и проверьте наличие подписанного согласия в документации.', object: 'documents' },
+      { title: 'Установить контакт с пациентом', detail: 'Поздоровайтесь, представьтесь и обозначьте свою роль.', object: 'patient' },
+      { title: 'Идентифицировать пациента', detail: 'Попросите пациента назвать ФИО и возраст, затем сверьте сведения с листом назначения.', object: 'patient' },
+      { title: 'Предложить пациенту присесть', detail: 'После сверки данных пригласите пациента присесть в процедурное кресло.', object: 'patient' },
+      { title: 'Уточнить самочувствие пациента', detail: 'Обратитесь к пациенту по имени и отчеству: «Николай Николаевич, как Вы себя чувствуете?».', object: 'patient' },
+      { title: 'Информировать о предстоящей манипуляции', detail: 'Объясните пациенту, что ему предстоит внутривенная инъекция назначенного препарата.', object: 'patient' },
+      { title: 'Уточнить переносимость инъекций и аллергологический анамнез', detail: 'Спросите об аллергических реакциях в анамнезе и отдельно уточните реакцию на назначенное лекарственное средство.', object: 'patient' },
+      { title: 'Убедиться в наличии информированного добровольного согласия', detail: 'Повторно нажмите на документы и откройте форму информированного добровольного согласия.', object: 'documents' },
       { title: 'Выполнить гигиеническую обработку рук', detail: 'Нажмите на дозатор у раковины и выполните гигиеническую обработку рук.', object: 'sink' },
     ];
-    const step = contactSteps[Math.min(ivCurrentCriterion, 5)];
+    const step = contactSteps[Math.min(ivCurrentCriterion, 7)];
     const contactHotspots: IVRoomHotspot[] = [
       { id: 'patient', label: 'Пациент', x: 28, y: 48, w: 24, h: 78 },
       { id: 'documents', label: 'Лист документов', x: 10, y: 80, w: 18, h: 23 },
       { id: 'sink', label: 'Раковина и дозатор', x: 59, y: 36, w: 20, h: 24 },
     ];
     const handleContactClick = (id: string) => {
-      if (ivCurrentCriterion >= 0 && ivCurrentCriterion <= 3 && id === 'patient') {
+      if ([0, 1, 3, 4, 5].includes(ivCurrentCriterion) && id === 'patient') {
         if (ivCurrentCriterion === 0) {
           setIvPatientChatMessages([]);
           setIvPatientChatInput('');
@@ -1418,35 +1421,36 @@ export default function Home() {
           return;
         }
         setIvPrescriptionOpen(true);
-        setIvPrepFeedback('Откройте лист назначения и сверьте ФИО и возраст пациента с ответом.');
+        setIvPrepFeedback('Сверьте ФИО и возраст пациента с листом назначения.');
+        return;
+      }
+      if (ivCurrentCriterion === 6 && id === 'documents') {
+        setIvPatientBubble('');
+        setIvConsentOpen(true);
         return;
       }
       if (id !== step.object) {
-        setIvPrepFeedback('Сейчас выполните действие с нужным объектом: ' + (step.object === 'patient' ? 'пациентом' : step.object === 'documents' ? 'планшетом с документами' : 'дозатором у раковины') + '.');
+        setIvPrepFeedback('Сейчас выполните действие с нужным объектом: ' + (step.object === 'patient' ? 'пациентом' : step.object === 'documents' ? 'документами' : 'дозатором у раковины') + '.');
         return;
       }
-      const criterionId = IV_CRITERIA[ivCurrentCriterion].id;
-      setIvAnswers(prev => ({ ...prev, [criterionId]: true }));
-      setIvActionFlags(prev => ({ ...prev, [criterionId]: true }));
-      const response = ivCurrentCriterion === 0 ? 'Вы поздоровались, представились и обозначили свою роль.' :
-        ivCurrentCriterion === 1 ? 'Пациент: «Николаенко Николай Николаевич, 30 лет». Данные сверены.' :
-        ivCurrentCriterion === 2 ? 'Пациент: «Нормально».' :
-        ivCurrentCriterion === 3 ? 'Пациент: «Аллергических реакций не было».' :
-        ivCurrentCriterion === 4 ? 'В документации найдено подписанное информированное добровольное согласие.' :
-        'Гигиеническая обработка рук выполнена.';
-      setIvPrepFeedback(response);
-      if (ivCurrentCriterion === 5) {
+      if (ivCurrentCriterion === 2) {
+        setIvPatientSeated(true);
+        setIvPatientBubble('Хорошо, я присяду.');
+        setIvPrepFeedback('Пациент приглашён присесть в процедурное кресло.');
+        setIvCurrentCriterion(3);
+        return;
+      }
+      if (ivCurrentCriterion === 7) {
+        setIvAnswers(prev => ({ ...prev, iv_06: true }));
+        setIvActionFlags(prev => ({ ...prev, iv_06: true }));
+        setIvPrepFeedback('Гигиеническая обработка рук выполнена.');
         setIvCurrentCriterion(0);
         setStage('iv_prep');
-      } else {
-        setIvCurrentCriterion(prev => prev + 1);
       }
     };
     const handlePatientOption = (message: string) => {
-      const normalized = message.toLowerCase();
-      setIvPatientChatMessages(prev => [...prev, {sender:'student',text:message}]);
       const reply = (text:string, audio?:string) => {
-        setIvPatientChatMessages(prev => [...prev, {sender:'patient',text}]);
+        setIvPatientChatMessages(prev => [...prev, {sender:'student',text:message}, {sender:'patient',text}]);
         setIvPatientBubble(text);
         if (audio) playAudio(audio);
       };
@@ -1454,18 +1458,21 @@ export default function Home() {
         ? (!ivGreetingSent ? message === 'Здравствуйте.' : ['Меня зовут Анна, я медицинская сестра.', 'Я фельдшер, меня зовут Анна.', 'Я врач, меня зовут Анна.'].includes(message))
         : ivCurrentCriterion === 1
           ? ['Представьтесь, пожалуйста, и назовите Ваш возраст.', 'Назовите, пожалуйста, Ваши ФИО и дату рождения.', 'Как Вас зовут и сколько Вам лет?'].includes(message)
-          : ivCurrentCriterion === 2
+          : ivCurrentCriterion === 3
             ? ['Николай Николаевич, как Вы себя чувствуете?', 'Есть ли сейчас жалобы на самочувствие?'].includes(message)
-            : ['Есть ли у Вас аллергия на лекарства?', 'Были ли у Вас аллергические реакции на препараты?'].includes(message);
+            : ivCurrentCriterion === 4
+              ? ['Сейчас я выполню Вам внутривенную инъекцию назначенного препарата.', 'Вам назначена внутривенная инъекция. Я объясню ход процедуры и отвечу на Ваши вопросы.'].includes(message)
+              : ['Были ли у Вас аллергические реакции на лекарства?', 'Есть ли у Вас аллергия на назначенный препарат?', 'Были ли у Вас аллергические реакции в анамнезе и на этот препарат?'].includes(message);
       if (!valid) {
-        setIvPrepFeedback('Этот вопрос или реплика не подходит для текущего этапа. Попробуйте выбрать другой вариант.');
+        setIvPrepFeedback('Эта реплика не соответствует текущему этапу. Выберите подходящий вопрос или объяснение.');
         return;
       }
       if (ivCurrentCriterion === 0) {
         if (!ivGreetingSent) {
+          setIvPatientChatMessages(prev => [...prev, {sender:'student',text:message}, {sender:'patient',text:'Здравствуйте!'}]);
+          setIvPatientBubble('Здравствуйте!');
           setIvGreetingSent(true);
-          reply('Здравствуйте!');
-          setIvPrepFeedback('Хорошее начало. Теперь представьтесь и обозначьте свою роль.');
+          setIvPrepFeedback('Теперь представьтесь и обозначьте свою роль.');
           return;
         }
         reply('Очень приятно. Я готов ответить на Ваши вопросы.');
@@ -1479,24 +1486,30 @@ export default function Home() {
         const answer='Николаенко Николай Николаевич, 30 лет.';
         reply(answer,'Николаенко Николай Николаевич, тридцать лет.');
         setIvIdentityResponseReceived(true);
-        setIvPrepFeedback('Пациент назвал ФИО и возраст. Теперь сверьте их с медицинской документацией.');
+        setIvPrepFeedback('Пациент назвал ФИО и возраст. Откройте лист назначения и сверьте данные.');
         return;
       }
-      if (ivCurrentCriterion === 2) {
+      if (ivCurrentCriterion === 3) {
         reply('Чувствую себя нормально. Спасибо.');
         setIvAnswers(prev => ({...prev,iv_03:true}));
         setIvActionFlags(prev => ({...prev,iv_03:true}));
         setIvPrepFeedback('Самочувствие пациента уточнено.');
-        setIvCurrentCriterion(3);
+        setIvCurrentCriterion(4);
         return;
       }
-      if (ivCurrentCriterion === 3) {
-        reply('Нет, аллергических реакций не было.');
+      if (ivCurrentCriterion === 4) {
+        reply('Хорошо, я понял. Спасибо за объяснение.');
+        setIvPrepFeedback('Пациент проинформирован о предстоящей внутривенной инъекции.');
+        setIvCurrentCriterion(5);
+        return;
+      }
+      if (ivCurrentCriterion === 5) {
+        reply('Нет, аллергических реакций не было. Этот препарат ранее переносил хорошо.');
         setIvAnswers(prev => ({...prev,iv_04:true}));
         setIvActionFlags(prev => ({...prev,iv_04:true}));
-        setIvPrepFeedback('Аллергологический анамнез уточнён.');
+        setIvPrepFeedback('Переносимость инъекций и аллергологический анамнез уточнены.');
         setIvPatientChatOpen(false);
-        setIvCurrentCriterion(4);
+        setIvCurrentCriterion(6);
       }
     };
     const patientOptions = ivCurrentCriterion === 0
@@ -1505,10 +1518,12 @@ export default function Home() {
         : ['Меня зовут Анна, я медицинская сестра.', 'Я фельдшер, меня зовут Анна.', 'Я врач, меня зовут Анна.', 'Вы по записи?', 'Садитесь в кресло.'])
       : ivCurrentCriterion === 1
         ? ['Представьтесь, пожалуйста, и назовите Ваш возраст.', 'Назовите, пожалуйста, Ваши ФИО и дату рождения.', 'Как Вас зовут и сколько Вам лет?', 'Как Вы себя чувствуете?', 'Вы по записи?']
-        : ivCurrentCriterion === 2
+        : ivCurrentCriterion === 3
           ? ['Николай Николаевич, как Вы себя чувствуете?', 'Есть ли сейчас жалобы на самочувствие?', 'Назовите Ваши ФИО и возраст.', 'Есть ли у Вас аллергия на лекарства?']
-          : ['Есть ли у Вас аллергия на лекарства?', 'Были ли у Вас аллергические реакции на препараты?', 'Как Вы себя чувствуете?', 'Назовите Ваши ФИО и возраст.', 'Хорошо ли Вы переносите лекарственные препараты?'];
-    const ivHintText = ivCurrentCriterion === 0 ? 'Поздоровайтесь, представьтесь и обозначьте свою роль.' : ivCurrentCriterion === 1 ? 'Попросите пациента назвать ФИО и возраст. Затем сверьте сведения с листом назначений или медицинской документацией.' : ivCurrentCriterion === 2 ? 'Обратитесь к пациенту по имени и отчеству и уточните его самочувствие.' : ivCurrentCriterion === 3 ? 'Уточните, были ли аллергические реакции в прошлом и есть ли аллергия на назначенный препарат.' : 'Проверьте наличие добровольного информированного согласия в документах.';
+          : ivCurrentCriterion === 4
+            ? ['Сейчас я выполню Вам внутривенную инъекцию назначенного препарата.', 'Вам назначена внутривенная инъекция. Я объясню ход процедуры и отвечу на Ваши вопросы.', 'Сначала обработаю руки и подготовлю инструменты.', 'Не волнуйтесь, это быстро.']
+            : ['Были ли у Вас аллергические реакции на лекарства?', 'Есть ли у Вас аллергия на назначенный препарат?', 'Были ли у Вас аллергические реакции в анамнезе и на этот препарат?', 'Как Вы себя чувствуете?', 'Назовите Ваши ФИО и возраст.'];
+    const ivHintText = ivCurrentCriterion === 0 ? 'Поздоровайтесь, представьтесь и обозначьте свою роль.' : ivCurrentCriterion === 1 ? 'Попросите пациента назвать ФИО и возраст. Затем сверьте сведения с листом назначений.' : ivCurrentCriterion === 2 ? 'Пригласите пациента присесть в процедурное кресло.' : ivCurrentCriterion === 3 ? 'Обратитесь к Николаю Николаевичу по имени и отчеству и уточните самочувствие.' : ivCurrentCriterion === 4 ? 'Сообщите, что предстоит внутривенная инъекция назначенного препарата.' : ivCurrentCriterion === 5 ? 'Уточните аллергические реакции в анамнезе и отдельно на назначенное лекарственное средство.' : ivCurrentCriterion === 6 ? 'Повторно откройте документы и проверьте наличие подписанного информированного добровольного согласия.' : 'Выполните гигиеническую обработку рук.';
     return (
       <div className="min-h-screen bg-gray-900 p-4 md:p-7 text-gray-100">
         <div className="mx-auto max-w-6xl">
@@ -1516,7 +1531,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-blue-300">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold text-white">Пациент и подготовка к процедуре</h1></div>
             <div className="rounded-xl border border-gray-600 bg-gray-800 px-4 py-2 text-center"><p className="text-xs text-gray-400">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-blue-300">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="" imageSrc={ivPatientSeated ? "/iv-procedure-room.png" : "/iv-patient-entry.png"} imageAlt={ivPatientSeated ? "Пациент сидит в процедурном кресле" : "Пациент только что вошёл в процедурный кабинет"} hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{ivPatientSeated ? (runMode === 'training' ? step.title : 'Продолжите общение с пациентом') : (runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом')}</p>{!ivPatientSeated && ivCurrentCriterion === 2 && <button type="button" onClick={() => { setIvPatientSeated(true); setIvPatientBubble('Спасибо, я присяду.'); setIvPrepFeedback('Пациент приглашён присесть и теперь находится в процедурном кресле.'); }} className="mt-3 rounded-xl bg-sky-700 px-4 py-2.5 text-sm font-bold text-white shadow hover:bg-sky-800">Предложить пациенту присесть</button>}{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
+          <IVRoomScene phase="" imageSrc={ivPatientSeated ? "/iv-procedure-room.png" : "/iv-patient-entry.png"} imageAlt={ivPatientSeated ? "Пациент сидит в процедурном кресле" : "Пациент только что вошёл в процедурный кабинет"} hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{ivPatientSeated ? (runMode === 'training' ? step.title : 'Продолжите общение с пациентом') : (runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом')}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
           {runMode === 'training' && (
             <div className="fixed bottom-8 left-4 z-40 flex w-[min(92vw,360px)] items-end gap-3">
               <img src="/helper.png" alt="Аккредик" className="h-24 w-24 shrink-0 object-contain drop-shadow-xl" />
@@ -1558,11 +1573,42 @@ export default function Home() {
                     setIvPrescriptionOpen(false);
                     setIvAnswers(prev => ({ ...prev, iv_02: true }));
                     setIvActionFlags(prev => ({ ...prev, iv_02: true }));
-                    setIvPrepFeedback('Данные совпадают. Предложите пациенту присесть на процедурное кресло.');
+                    setIvPrepFeedback('ФИО и возраст совпадают. Теперь предложите пациенту присесть.');
                     setIvPatientSeated(false);
                     setIvPatientBubble('');
                     setIvCurrentCriterion(2);
                   }} className="rounded-xl bg-sky-700 px-5 py-3 font-bold text-white hover:bg-sky-800">Данные совпадают — подтвердить</button>
+                </div>
+              </div>
+            </div>
+          )}
+          {ivConsentOpen && (
+            <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-950/75 p-4" role="dialog" aria-modal="true" aria-label="Информированное добровольное согласие">
+              <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-sky-200 bg-white text-slate-900 shadow-2xl">
+                <div className="border-b border-sky-100 bg-sky-50 px-5 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-sky-700">Медицинская документация</p>
+                  <h2 className="mt-1 text-xl font-bold">Информированное добровольное согласие</h2>
+                </div>
+                <div className="p-5 md:p-7">
+                  <div className="border border-slate-300 p-5">
+                    <p className="text-center font-bold">Согласие на медицинское вмешательство</p>
+                    <p className="mt-4 text-sm leading-6">Я, <strong>Николаенко Николай Николаевич</strong>, 30 лет, подтверждаю, что мне разъяснена предстоящая внутривенная инъекция назначенного лекарственного средства: <strong>{ivScenario.title}</strong>.</p>
+                    <p className="mt-3 text-sm leading-6">Мне предоставлена информация о цели и характере медицинского вмешательства, я имел возможность задать вопросы. Согласие добровольное.</p>
+                    <div className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
+                      <p>Подпись пациента: <strong>Имеется</strong></p>
+                      <p>Статус документа: <strong className="text-emerald-700">Подписано</strong></p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap justify-end gap-3 border-t border-sky-100 bg-slate-50 px-5 py-4">
+                  <button type="button" onClick={() => setIvConsentOpen(false)} className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700">Закрыть</button>
+                  <button type="button" onClick={() => {
+                    setIvConsentOpen(false);
+                    setIvAnswers(prev => ({ ...prev, iv_05: true }));
+                    setIvActionFlags(prev => ({ ...prev, iv_05: true }));
+                    setIvPrepFeedback('В документах обнаружено подписанное информированное добровольное согласие.');
+                    setIvCurrentCriterion(7);
+                  }} className="rounded-xl bg-sky-700 px-5 py-3 font-bold text-white hover:bg-sky-800">Согласие имеется — подтвердить</button>
                 </div>
               </div>
             </div>
