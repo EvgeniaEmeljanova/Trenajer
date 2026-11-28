@@ -357,12 +357,16 @@ function IVRoomScene({
   onHotspotClick,
   patientSpeech,
   overlay,
+  imageSrc = "/iv-procedure-room.png",
+  imageAlt = "Процедурный кабинет для станции «Внутривенная инъекция»",
 }: {
   phase: string;
   hotspots?: IVRoomHotspot[];
   onHotspotClick?: (id: string) => void;
   patientSpeech?: string;
   overlay?: ReactNode;
+  imageSrc?: string;
+  imageAlt?: string;
 }) {
   return (
     <section className="relative mt-5 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-lg">
@@ -372,13 +376,13 @@ function IVRoomScene({
       </div>
       <div className="relative w-full overflow-hidden bg-[#e9f1f1]">
         <img
-          src="/iv-procedure-room.png"
-          alt="Процедурный кабинет для станции «Внутривенная инъекция»: пациент в кресле, процедурный столик и медицинское оборудование"
+          src={imageSrc}
+          alt={imageAlt}
           draggable={false}
           className="block h-auto w-full object-contain"
         />
         {patientSpeech && (
-          <div className="pointer-events-none absolute left-[49%] top-[25%] z-30 w-[min(42%,320px)] -translate-x-1/2 rounded-2xl border border-sky-200 bg-white/95 px-4 py-3 text-sm font-medium leading-relaxed text-slate-800 shadow-xl backdrop-blur-sm">
+          <div className="pointer-events-none absolute left-[38%] top-[5%] z-30 w-[min(42%,320px)] -translate-x-1/2 rounded-2xl border border-sky-200 bg-white/95 px-4 py-3 text-sm font-medium leading-relaxed text-slate-800 shadow-xl backdrop-blur-sm">
             <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-sky-700">Пациент говорит</span>
             {patientSpeech}
             <span className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-b border-r border-sky-200 bg-white" />
@@ -1365,7 +1369,7 @@ export default function Home() {
       <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8 flex items-center justify-center">
         <div className="w-full max-w-3xl rounded-2xl border border-sky-200 bg-white p-6 md:p-8 shadow-xl">
           <button onClick={() => setStage('station_select')} className="mb-5 text-sky-700 hover:text-sky-900">← К выбору станций</button>
-          <IVRoomScene phase="Осмотр кабинета и знакомство с заданием" />
+          <IVRoomScene phase="Пациент только что вошёл в кабинет" imageSrc="/iv-patient-entry.png" imageAlt="Пациент вошёл в процедурный кабинет; рядом кресло, лист документов, раковина и процедурный столик" />
           <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Станция 3 · Лечебное дело</p>
           <h1 className="mt-2 text-3xl font-bold text-slate-900">Внутривенная инъекция</h1>
           <div className="mt-5 rounded-xl bg-sky-50 border border-sky-100 p-5">
@@ -1388,7 +1392,7 @@ export default function Home() {
             </div>
             <p className="text-xs text-slate-500 mt-2">В экзамене подсказки скрыты. Оценивание проводится по 24 официальным критериям.</p>
           </div>
-          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback(''); setIvActionFlags({}); setIvSyringeNeedleDetached(false); setIvCottonPressed(false); setIvInjectedVolume(0); setIvPrepFeedback(''); setTimeLeft(600); setStage('iv_contact'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать подготовку препарата</button>
+          <button onClick={() => { setIvAnswers({}); setIvCurrentCriterion(0); setIvPrepEquipment([]); setIvPrepAmpouleChecked(false); setIvPrepAmpouleOpened(false); setIvPrepSelectedVolume(''); setIvPrepSyringeFilled(false); setIvPrepNeedleChanged(false); setIvPrepFeedback(''); setIvArmTourniquetPosition(''); setIvArmPulseChecked(false); setIvArmFirstSkinPrep(false); setIvArmSecondSkinPrep(false); setIvArmPunctureSiteSelected(false); setIvArmFirstBloodReturn(false); setIvArmTourniquetReleased(false); setIvArmSecondBloodReturn(false); setIvArmFeedback(''); setIvActionFlags({}); setIvSyringeNeedleDetached(false); setIvCottonPressed(false); setIvInjectedVolume(0); setIvPrepFeedback(''); setTimeLeft(600); setStage('iv_contact'); }} className="mt-7 w-full rounded-xl bg-sky-700 hover:bg-sky-800 py-4 font-bold text-white shadow-lg">Начать станцию</button>
         </div>
       </div>
     );
@@ -1406,9 +1410,9 @@ export default function Home() {
     ];
     const step = contactSteps[Math.min(ivCurrentCriterion, 5)];
     const contactHotspots: IVRoomHotspot[] = [
-      { id: 'patient', label: 'Пациент', x: 52, y: 48, w: 31, h: 48 },
-      { id: 'documents', label: 'Планшет с документами', x: 17, y: 81, w: 22, h: 18 },
-      { id: 'sink', label: 'Раковина и дозатор', x: 69, y: 31, w: 18, h: 22 },
+      { id: 'patient', label: 'Пациент', x: 28, y: 48, w: 24, h: 78 },
+      { id: 'documents', label: 'Лист документов', x: 10, y: 80, w: 18, h: 23 },
+      { id: 'sink', label: 'Раковина и дозатор', x: 59, y: 36, w: 20, h: 24 },
     ];
     const handleContactClick = (id: string) => {
       if ((ivCurrentCriterion === 0 || ivCurrentCriterion === 1) && id === 'patient') {
@@ -1461,7 +1465,7 @@ export default function Home() {
             <div><p className="text-sm font-semibold text-sky-700">СТАНЦИЯ 3 · НАЧАЛО МАНИПУЛЯЦИИ</p><h1 className="text-2xl md:text-3xl font-bold">Пациент и подготовка к процедуре</h1></div>
             <div className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-center"><p className="text-xs text-slate-500">Осталось времени</p><p className="text-2xl font-bold tabular-nums text-sky-800">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p></div>
           </div>
-          <IVRoomScene phase="Общение с пациентом · документы · гигиена рук" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
+          <IVRoomScene phase="Пациент вошёл · общение · документы · гигиена рук" imageSrc="/iv-patient-entry.png" imageAlt="Пациент только что вошёл в процедурный кабинет" hotspots={contactHotspots} onHotspotClick={handleContactClick} patientSpeech={ivPatientBubble} overlay={<div className="rounded-xl border border-sky-200 bg-white/95 p-3 shadow-xl backdrop-blur"><p className="text-sm font-bold text-sky-900">{runMode === 'training' ? step.title : 'Выполните следующий этап общения с пациентом'}</p>{runMode === 'training' && <p className="mt-1 text-xs text-slate-600">{step.detail}</p>}{ivPrepFeedback && <p className="mt-2 text-xs font-medium text-emerald-800">{ivPrepFeedback}</p>}</div>} />
           {ivPatientChatOpen && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 p-4" role="dialog" aria-modal="true" aria-label="Диалог с пациентом">
               <div className="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-2xl">
