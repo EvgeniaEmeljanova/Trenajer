@@ -1376,20 +1376,6 @@ export default function Home() {
             <p className="mt-2 leading-relaxed text-gray-100">В процедурном кабинете Вас ожидает пациент, которому необходимо провести внутривенную инъекцию лекарственного препарата, указанного в листе назначения. Озвучивайте все действия, которые считаете необходимыми.</p>
             <p className="mt-3 leading-relaxed text-gray-100">Перед выполнением манипуляции ознакомьтесь с листом назначения и медицинской документацией. Самостоятельно определите назначенный препарат и необходимую дозу.</p>
           </div>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-gray-700 bg-gray-800 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Пациент</p>
-              <p className="mt-1 font-semibold text-white">Николаенко Николай Николаевич, 30 лет</p>
-            </div>
-            <div className="rounded-xl border border-gray-700 bg-gray-800 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Продолжительность станции</p>
-              <p className="mt-1 font-semibold text-white">10 минут</p>
-            </div>
-          </div>
-          <div className="mt-5 rounded-xl border border-amber-400/40 bg-amber-950/40 p-4">
-            <p className="font-semibold text-amber-200">Обратите внимание</p>
-            <p className="mt-1 text-sm leading-relaxed text-amber-100">Оценивание проводится по 24 критериям. Для успешного прохождения необходимо набрать не менее 70%. В экзаменационном режиме подсказки Аккредика недоступны.</p>
-          </div>
           <div className="mt-5">
             <p className="mb-2 font-semibold text-gray-200">Режим прохождения</p>
             <div className="grid grid-cols-2 gap-3">
